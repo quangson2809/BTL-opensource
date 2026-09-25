@@ -46,7 +46,7 @@ jobs:
         env:
           TARGET_BRANCH: ${{ github.head_ref || github.ref_name }}
         run: |
-          if git diff --quiet -- package-lock.json; then
+          if [ -z "$(git status --porcelain -- package-lock.json)" ]; then
             echo "package-lock.json already up to date"
             exit 0
           fi
