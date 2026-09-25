@@ -1,0 +1,2 @@
+-- Phase 0 scaffold only.
+-- Business seed data starts in a later phase after the canonical specification is available.
