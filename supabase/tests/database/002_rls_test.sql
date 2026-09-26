@@ -99,13 +99,13 @@ select is(
 );
 
 select results_eq(
-  $
+  $$
     update public.khach_hang
     set ghi_chu = 'Forbidden update'
     where id = '40000000-0000-4000-8000-000000000002'
     returning id
-  $,
-  $ select null::uuid where false $,
+  $$,
+  $$ select null::uuid where false $$,
   'customer owner cannot update another account customer'
 );
 
@@ -202,13 +202,13 @@ select throws_ok(
 );
 
 select results_eq(
-  $
+  $$
     update public.quyen
     set ten_quyen = 'Unauthorized change'
     where ma_quyen = 'ACTIVITY_VIEW_SUBTREE'
     returning id
-  $,
-  $ select null::uuid where false $,
+  $$,
+  $$ select null::uuid where false $$,
   'normal user cannot modify permission catalog'
 );
 
@@ -243,13 +243,13 @@ select ok(
 );
 
 select results_eq(
-  $
+  $$
     update public.hoat_dong
     set dia_diem = 'Manager forbidden update'
     where id = '50000000-0000-4000-8000-000000000001'
     returning id
-  $,
-  $ select null::uuid where false $,
+  $$,
+  $$ select null::uuid where false $$,
   'manager subtree read does not permit updating subordinate activity'
 );
 
