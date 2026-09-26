@@ -12,7 +12,8 @@ values
   ('dddddddd-dddd-4ddd-8ddd-dddddddddddd', 'dm@example.test'),
   ('eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee', 'um@example.test'),
   ('11111111-1111-4111-8111-111111111111', 'sa@example.test'),
-  ('22222222-2222-4222-8222-222222222222', 'other-sa@example.test');
+  ('22222222-2222-4222-8222-222222222222', 'other-sa@example.test'),
+  ('33333333-3333-4333-8333-333333333333', 'sa-descendant@example.test');
 
 insert into public.tai_khoan (
   id, ho_ten, email, so_dien_thoai, ma_dai_ly, manager_id, trang_thai
@@ -23,7 +24,8 @@ values
   ('dddddddd-dddd-4ddd-8ddd-dddddddddddd', 'DM Test', 'dm@example.test', '0900000003', 'DM-001', null, 'DANG_HOAT_DONG'),
   ('eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee', 'UM Test', 'um@example.test', '0900000004', 'UM-001', 'dddddddd-dddd-4ddd-8ddd-dddddddddddd', 'DANG_HOAT_DONG'),
   ('11111111-1111-4111-8111-111111111111', 'SA Test', 'sa@example.test', '0900000005', 'SA-001', 'eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee', 'DANG_HOAT_DONG'),
-  ('22222222-2222-4222-8222-222222222222', 'Other SA', 'other-sa@example.test', '0900000006', 'SA-002', null, 'DANG_HOAT_DONG');
+  ('22222222-2222-4222-8222-222222222222', 'Other SA', 'other-sa@example.test', '0900000006', 'SA-002', null, 'DANG_HOAT_DONG'),
+  ('33333333-3333-4333-8333-333333333333', 'SA Descendant', 'sa-descendant@example.test', '0900000007', 'SA-003', '11111111-1111-4111-8111-111111111111', 'DANG_HOAT_DONG');
 
 insert into public.phan_cong_vai_tro (tai_khoan_id, vai_tro_id)
 select 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa1', id from public.vai_tro where ma_vai_tro = 'ADMIN';
@@ -37,6 +39,16 @@ insert into public.phan_cong_vai_tro (tai_khoan_id, vai_tro_id)
 select '11111111-1111-4111-8111-111111111111', id from public.vai_tro where ma_vai_tro = 'SA';
 insert into public.phan_cong_vai_tro (tai_khoan_id, vai_tro_id)
 select '22222222-2222-4222-8222-222222222222', id from public.vai_tro where ma_vai_tro = 'SA';
+insert into public.phan_cong_vai_tro (tai_khoan_id, vai_tro_id)
+select '33333333-3333-4333-8333-333333333333', id from public.vai_tro where ma_vai_tro = 'SA';
+
+-- Regression fixture for M-1: grant subtree permission to SA role without granting DM/UM.
+insert into public.phan_quyen_vai_tro (vai_tro_id, quyen_id)
+select vt.id, q.id
+from public.vai_tro vt
+cross join public.quyen q
+where vt.ma_vai_tro = 'SA'
+  and q.ma_quyen = 'ACTIVITY_VIEW_SUBTREE';
 
 insert into public.khach_hang (
   id, chu_so_huu_id, ma_khach_hang, ho_ten, so_dien_thoai, gioi_tinh,
@@ -51,7 +63,8 @@ insert into public.hoat_dong (
 )
 values
   ('50000000-0000-4000-8000-000000000001', '11111111-1111-4111-8111-111111111111', 'KHẢO_SÁT', 'Hà Nội', '2026-09-26T08:00:00+07:00', 2),
-  ('50000000-0000-4000-8000-000000000002', '22222222-2222-4222-8222-222222222222', 'GẶP_GỠ', 'Hà Nội', '2026-09-26T09:00:00+07:00', 1);
+  ('50000000-0000-4000-8000-000000000002', '22222222-2222-4222-8222-222222222222', 'GẶP_GỠ', 'Hà Nội', '2026-09-26T09:00:00+07:00', 1),
+  ('50000000-0000-4000-8000-000000000003', '33333333-3333-4333-8333-333333333333', 'TƯ_VẤN', 'Hà Nội', '2026-09-26T10:00:00+07:00', 1);
 
 insert into public.thong_bao (
   id, nguoi_tao_id, tieu_de, noi_dung, loai, trang_thai
@@ -140,12 +153,17 @@ select lives_ok(
 select is(
   (select count(*)::bigint from public.hoat_dong),
   1::bigint,
-  'SA reads only own activity without subtree permission'
+  'SA reads only own activity even when SA role has subtree permission'
 );
 
 select ok(
   exists (select 1 from public.hoat_dong where id = '50000000-0000-4000-8000-000000000001'),
   'SA can read own activity'
+);
+
+select ok(
+  not exists (select 1 from public.hoat_dong where id = '50000000-0000-4000-8000-000000000003'),
+  'SA with subtree permission cannot read descendant activity without DM/UM role'
 );
 
 select ok(
