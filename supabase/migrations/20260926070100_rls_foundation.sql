@@ -74,7 +74,8 @@ set search_path = pg_catalog, public
 as $$
   select activity_owner_id = auth.uid()
     or (
-      public.has_permission('ACTIVITY_VIEW_SUBTREE')
+      (public.has_role('DM') or public.has_role('UM'))
+      and public.has_permission('ACTIVITY_VIEW_SUBTREE')
       and public.is_in_subtree(activity_owner_id)
     );
 $$;
