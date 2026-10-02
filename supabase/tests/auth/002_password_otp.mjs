@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { execFileSync } from "node:child_process";
 import { readFile } from "node:fs/promises";
 
 import { createClient } from "@supabase/supabase-js";
@@ -6,11 +7,13 @@ import { createClient } from "@supabase/supabase-js";
 const url = process.env.API_URL;
 const anonKey = process.env.ANON_KEY;
 const serviceRoleKey = process.env.SERVICE_ROLE_KEY;
+const dbUrl = process.env.DB_URL;
 const mailpitUrl = process.env.MAILPIT_URL ?? "http://127.0.0.1:54324";
 
 assert.ok(url, "API_URL is required");
 assert.ok(anonKey, "ANON_KEY is required");
 assert.ok(serviceRoleKey, "SERVICE_ROLE_KEY is required");
+assert.ok(dbUrl, "DB_URL is required");
 
 const clientOptions = {
   auth: {
@@ -96,6 +99,24 @@ async function activateAccount(userId) {
     .eq("id", userId);
 
   assertNoError(error, "activate account");
+}
+
+function expireRecoveryOtp(address) {
+  const safeAddress = address.replaceAll("'", "''");
+
+  execFileSync(
+    "psql",
+    [
+      dbUrl,
+      "-v",
+      "ON_ERROR_STOP=1",
+      "-c",
+      `update auth.users
+       set recovery_sent_at = now() - interval '11 minutes'
+       where email = '${safeAddress}'`,
+    ],
+    { stdio: "pipe" },
+  );
 }
 
 const config = await readFile("supabase/config.toml", "utf8");
@@ -209,8 +230,30 @@ assertNoError(recoveryRequestError, "request password recovery OTP");
 const recoveryEmail = await waitForEmail(email, "Mã OTP đặt lại mật khẩu IDAILY");
 assert.ok(recoveryEmail, "recovery email must arrive in local Mailpit");
 
-const recoveryOtp = extractEightDigitOtp(recoveryEmail);
-assert.ok(recoveryOtp, "recovery email must contain an 8-digit OTP");
+const expiredRecoveryOtp = extractEightDigitOtp(recoveryEmail);
+assert.ok(expiredRecoveryOtp, "recovery email must contain an 8-digit OTP");
+
+expireRecoveryOtp(email);
+
+const expiredOtpClient = createAnonClient();
+const { error: expiredOtpError } = await expiredOtpClient.auth.verifyOtp({
+  email,
+  token: expiredRecoveryOtp,
+  type: "recovery",
+});
+assert.ok(expiredOtpError, "recovery OTP older than configured 10 minutes must be denied");
+
+await purgeAllMail();
+
+const { error: freshRecoveryRequestError } =
+  await recoveryRequestClient.auth.resetPasswordForEmail(email);
+assertNoError(freshRecoveryRequestError, "request fresh recovery OTP after expiry");
+
+const freshRecoveryEmail = await waitForEmail(email, "Mã OTP đặt lại mật khẩu IDAILY");
+assert.ok(freshRecoveryEmail, "fresh recovery email must arrive after expired OTP");
+
+const recoveryOtp = extractEightDigitOtp(freshRecoveryEmail);
+assert.ok(recoveryOtp, "fresh recovery email must contain an 8-digit OTP");
 
 const wrongOtpClient = createAnonClient();
 const { error: wrongOtpError } = await wrongOtpClient.auth.verifyOtp({
