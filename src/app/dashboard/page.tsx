@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { redirect } from "next/navigation";
 
 import { logout } from "@/app/auth/actions";
@@ -30,6 +31,9 @@ export default async function DashboardPage() {
         <h1>Xin chào, {account.ho_ten}</h1>
         <p>{account.email}</p>
         <p className="secondary-text">Trạng thái: {account.trang_thai}</p>
+        <p>
+          <Link href="/password/change">Đổi mật khẩu</Link>
+        </p>
         <form action={logout}>
           <button type="submit">Đăng xuất</button>
         </form>
