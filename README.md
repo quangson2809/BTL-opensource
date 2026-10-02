@@ -32,7 +32,7 @@ Master implementation scope được theo dõi trong `PROJECT_PLAN.md`.
 - Docker Desktop hoặc Docker-compatible runtime đang chạy
 - Supabase CLI
 
-Không cần global npm package để chạy ứng dụng. Supabase CLI chỉ cần cho database workflow local của Phase 1.
+Không cần global npm package để chạy ứng dụng. Supabase CLI dùng cho database workflow và Auth integration workflow local của Phase 1/2.
 
 ## Getting started
 
@@ -78,9 +78,9 @@ Không commit `.env.local`, secret key, service-role key hoặc database passwor
 
 - `NEXT_PUBLIC_SUPABASE_URL`: URL của Supabase development project; public client configuration.
 - `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`: Supabase publishable key dùng cho browser/server client foundation.
-- `SUPABASE_SECRET_KEY`: Supabase secret key chỉ dùng trong server action để ghi nhận/reset trạng thái đăng nhập; key này bypass RLS và tuyệt đối không được đưa vào client bundle.
+- `SUPABASE_SECRET_KEY`: Supabase secret key chỉ dùng server-side cho account-state orchestration sau khi credential đã được Supabase Auth xác minh; key này bypass RLS và tuyệt đối không được đưa vào client bundle.
 
-Phase 2 dùng secret key theo phạm vi hẹp cho auth bookkeeping. Business authorization vẫn dựa vào user JWT + RLS.
+Phase 2 không dùng secret key để đếm password failures. Quy tắc 6 lần sai/30 phút được enforce tại Supabase Auth Password Verification Hook, còn business authorization vẫn dựa vào user JWT + RLS.
 
 ## Project structure
 
@@ -111,6 +111,8 @@ supabase/
       001_schema_test.sql
       002_rls_test.sql
       003_auth_session_test.sql
+    auth/
+      001_phase2_auth.mjs
   seed.sql
 .github/
   workflows/
@@ -220,7 +222,7 @@ supabase stop --no-backup
 - normal user không self-grant role hoặc sửa permission catalog;
 - authorized Admin write cho RBAC foundation.
 
-GitHub Actions chạy database tests riêng trong `.github/workflows/database-tests.yml` và không yêu cầu production secrets.
+GitHub Actions chạy database/RLS tests và local Supabase Auth integration tests trong `.github/workflows/database-tests.yml`; workflow lấy local keys từ `supabase status -o env` và không yêu cầu production secrets.
 
 ## Phase 2 — Authentication & Session foundation
 
@@ -232,8 +234,32 @@ Foundation hiện tại triển khai:
 - login/logout server action; logout dùng current/local session scope;
 - `DANG_HOAT_DONG` là trạng thái business duy nhất được dùng protected data;
 - `CHO_PHE_DUYET`, `KHOA` và temporary lock đều bị chặn bằng restrictive RLS gate;
-- 6 lần sai liên tiếp tạo khóa tạm 30 phút; đăng nhập hợp lệ sau khi lock hết hạn reset counter;
-- pgTAP regression tests cho provisioning, account-state gate và temporary lock.
+- 6 lần sai liên tiếp tạo khóa tạm 30 phút tại Password Verification Hook; gọi trực tiếp public Auth endpoint không bypass được counter;
+- password đúng trong thời gian khóa bị Auth hook reject; JWT đã tồn tại cũng bị restrictive RLS chặn business data;
+- Phase 1 authorization RPC helpers trả false cho pending/KHOA/temp-lock thay vì lộ role/hierarchy state;
+- pgTAP regression tests cho provisioning, account-state gate, hook state machine và exposed authorization helpers;
+- Auth integration test đi qua Supabase signup/password verification/session thật trong local CI.
+
+### Password verification hook deployment decision
+
+Phase 2 chọn Password Verification Hook làm security boundary cho quy tắc 6 lần sai liên tiếp → khóa 30 phút.
+
+Local/CI bật hook trong `supabase/config.toml`:
+
+```toml
+[auth.hook.password_verification_attempt]
+enabled = true
+uri = "pg-functions://postgres/public/hook_password_verification_attempt"
+```
+
+Production target cho invariant này là **self-hosted Supabase Auth**. Auth service phải bật:
+
+```env
+GOTRUE_HOOK_PASSWORD_VERIFICATION_ATTEMPT_ENABLED=true
+GOTRUE_HOOK_PASSWORD_VERIFICATION_ATTEMPT_URI=pg-functions://postgres/public/hook_password_verification_attempt
+```
+
+Không deploy Phase 2 lên hosted plan không hỗ trợ Password Verification Hook rồi vẫn claim rằng rule 6/30 được enforce ở mọi password attempt.
 
 Chưa khóa/triển khai trong PR foundation này:
 
@@ -241,6 +267,8 @@ Chưa khóa/triển khai trong PR foundation này:
 - đổi mật khẩu bằng email OTP;
 - recovery/reset password bằng email OTP;
 - cấu hình OTP expiry cụ thể cho production.
+
+Các mục trên vẫn là decision gate; registration foundation chưa được coi là production-complete cho tới khi P2-D5/P2-D6 được chốt.
 
 ## Explicitly deferred
 
@@ -262,4 +290,4 @@ Chưa khóa/triển khai trong PR foundation này:
 
 - Phase 0 — Repository Bootstrap: merged vào `main`.
 - Phase 1 — Database + RLS Foundation: reviewed PASS và merged vào `main` qua PR #4.
-- Phase 2 — Authentication & Session: foundation đang được triển khai trên `feature/phase-2-auth-session`; OTP/password policy vẫn còn decision gate.
+- Phase 2 — Authentication & Session: foundation đang được triển khai trên `feature/phase-2-auth-session`; Password Verification Hook/self-host đã được chọn cho invariant 6/30; OTP/password policy vẫn còn decision gate.
