@@ -3,8 +3,12 @@ import Link from "next/link";
 import { verifyRecoveryOtp } from "@/app/auth/actions";
 
 const errorMessages: Record<string, string> = {
-  missing: "Vui lòng nhập email và OTP.",
+  missing: "Vui lòng nhập email, OTP và mật khẩu mới.",
+  mismatch: "Mật khẩu xác nhận không khớp.",
+  "weak-password": "Mật khẩu phải có ít nhất 8 ký tự, gồm chữ thường, chữ hoa và số.",
+  "same-password": "Mật khẩu mới phải khác mật khẩu cũ.",
   otp: "OTP không hợp lệ hoặc đã hết hạn.",
+  update: "Không thể cập nhật mật khẩu. Vui lòng yêu cầu OTP mới và thử lại.",
 };
 
 type VerifyRecoveryPageProps = {
@@ -22,7 +26,7 @@ export default async function VerifyRecoveryPage({
   return (
     <main>
       <section className="card auth-card">
-        <h1>Xác minh OTP khôi phục</h1>
+        <h1>Xác minh OTP và đặt lại mật khẩu</h1>
         {otpSent ? (
           <p className="message success">
             Nếu email tồn tại, OTP 8 số đã được gửi và có hiệu lực 10 phút.
@@ -45,7 +49,23 @@ export default async function VerifyRecoveryPage({
             OTP
             <input name="otp" inputMode="numeric" autoComplete="one-time-code" required />
           </label>
-          <button type="submit">Xác minh OTP</button>
+          <label>
+            Mật khẩu mới
+            <input name="new_password" type="password" autoComplete="new-password" required />
+          </label>
+          <label>
+            Xác nhận mật khẩu mới
+            <input
+              name="confirm_password"
+              type="password"
+              autoComplete="new-password"
+              required
+            />
+          </label>
+          <p className="secondary-text">
+            Tối thiểu 8 ký tự, có chữ thường, chữ hoa và số. Mật khẩu mới phải khác mật khẩu cũ.
+          </p>
+          <button type="submit">Xác minh và đặt lại mật khẩu</button>
         </form>
 
         <p className="secondary-text">
