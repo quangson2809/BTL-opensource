@@ -15,10 +15,6 @@ function rawField(formData: FormData, name: string) {
   return typeof value === "string" ? value : "";
 }
 
-function isTemporaryLockActive(lockedUntil: string | null) {
-  return lockedUntil !== null && Date.parse(lockedUntil) > Date.now();
-}
-
 export async function register(formData: FormData) {
   const hoTen = field(formData, "ho_ten");
   const email = field(formData, "email").toLowerCase();
@@ -61,18 +57,24 @@ export async function login(formData: FormData) {
   }
 
   const supabase = await createClient();
+
+  // The password-verification hook owns failed-attempt bookkeeping and the
+  // 6-attempt/30-minute lock. Keeping this action free of duplicate counters
+  // ensures browser, server and direct Auth API attempts share one boundary.
   const { data, error } = await supabase.auth.signInWithPassword({ email, password });
 
   if (error || !data.user) {
-    const admin = createAdminClient();
-    await admin.rpc("record_failed_login", { account_email: email });
     redirect("/login?error=invalid");
   }
 
+  // Business state remains separate from Supabase Auth identity state.
+  // The server-only client is intentionally narrow: it reads only the account
+  // state needed to choose the post-auth response. Business data access still
+  // uses the user's JWT and database RLS.
   const admin = createAdminClient();
   const { data: account, error: accountError } = await admin
     .from("tai_khoan")
-    .select("id,trang_thai,khoa_tam_den")
+    .select("id,trang_thai")
     .eq("id", data.user.id)
     .maybeSingle();
 
@@ -80,13 +82,6 @@ export async function login(formData: FormData) {
     await supabase.auth.signOut({ scope: "local" });
     redirect("/login?error=access");
   }
-
-  if (isTemporaryLockActive(account.khoa_tam_den)) {
-    await supabase.auth.signOut({ scope: "local" });
-    redirect("/login?error=temporary-lock");
-  }
-
-  await admin.rpc("reset_login_failures", { account_id: data.user.id });
 
   if (account.trang_thai === "CHO_PHE_DUYET") {
     await supabase.auth.signOut({ scope: "local" });
