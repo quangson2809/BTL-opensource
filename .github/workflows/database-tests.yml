@@ -49,7 +49,14 @@ jobs:
           API_URL="$API_URL" \
           ANON_KEY="$ANON_KEY" \
           SERVICE_ROLE_KEY="$SERVICE_ROLE_KEY" \
-          node supabase/tests/auth/001_phase2_auth.mjs
+          for test_file in supabase/tests/auth/*.mjs; do
+            echo "Running $test_file"
+            API_URL="$API_URL" \
+            ANON_KEY="$ANON_KEY" \
+            SERVICE_ROLE_KEY="$SERVICE_ROLE_KEY" \
+            MAILPIT_URL="http://127.0.0.1:54324" \
+            node "$test_file"
+          done
 
       - name: Stop local Supabase
         if: always()
