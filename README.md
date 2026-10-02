@@ -59,6 +59,7 @@ Sau khi copy environment file, điền Supabase development values:
 ```env
 NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
 NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=sb_publishable_your_key
+SUPABASE_SECRET_KEY=sb_secret_your_server_only_key
 ```
 
 Không commit `.env.local`, secret key, service-role key hoặc database password.
@@ -77,28 +78,39 @@ Không commit `.env.local`, secret key, service-role key hoặc database passwor
 
 - `NEXT_PUBLIC_SUPABASE_URL`: URL của Supabase development project; public client configuration.
 - `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`: Supabase publishable key dùng cho browser/server client foundation.
+- `SUPABASE_SECRET_KEY`: Supabase secret key chỉ dùng trong server action để ghi nhận/reset trạng thái đăng nhập; key này bypass RLS và tuyệt đối không được đưa vào client bundle.
 
-Phase 1 không yêu cầu và không định nghĩa service-role/secret key trong application environment.
+Phase 2 dùng secret key theo phạm vi hẹp cho auth bookkeeping. Business authorization vẫn dựa vào user JWT + RLS.
 
 ## Project structure
 
 ```text
 src/
   app/
+    login/
+    register/
+    dashboard/
+    access-denied/
+    auth/actions.ts
   lib/
     supabase/
+      admin.ts
       client.ts
       config.ts
+      proxy.ts
       server.ts
+  proxy.ts
 supabase/
   config.toml
   migrations/
     20260926070000_core_schema.sql
     20260926070100_rls_foundation.sql
+    20261002090000_auth_session_foundation.sql
   tests/
     database/
       001_schema_test.sql
       002_rls_test.sql
+      003_auth_session_test.sql
   seed.sql
 .github/
   workflows/
@@ -210,11 +222,28 @@ supabase stop --no-backup
 
 GitHub Actions chạy database tests riêng trong `.github/workflows/database-tests.yml` và không yêu cầu production secrets.
 
+## Phase 2 — Authentication & Session foundation
+
+Foundation hiện tại triển khai:
+
+- SA self-registration bằng Supabase email/password;
+- database trigger tạo `tai_khoan` cùng UUID với `auth.users.id`, gán role `SA`, trạng thái `CHO_PHE_DUYET`;
+- SSR session refresh qua Next.js 16 `proxy.ts`;
+- login/logout server action; logout dùng current/local session scope;
+- `DANG_HOAT_DONG` là trạng thái business duy nhất được dùng protected data;
+- `CHO_PHE_DUYET`, `KHOA` và temporary lock đều bị chặn bằng restrictive RLS gate;
+- 6 lần sai liên tiếp tạo khóa tạm 30 phút; đăng nhập hợp lệ sau khi lock hết hạn reset counter;
+- pgTAP regression tests cho provisioning, account-state gate và temporary lock.
+
+Chưa khóa/triển khai trong PR foundation này:
+
+- password complexity policy cụ thể;
+- đổi mật khẩu bằng email OTP;
+- recovery/reset password bằng email OTP;
+- cấu hình OTP expiry cụ thể cho production.
+
 ## Explicitly deferred
 
-Phase 1 chỉ là database/RLS foundation. Chưa triển khai:
-
-- login/register/logout/OTP/password reset/session application flow;
 - Admin/RBAC screens và service use cases;
 - customer UI/API workflow;
 - activity UI/API workflow;
@@ -232,4 +261,5 @@ Phase 1 chỉ là database/RLS foundation. Chưa triển khai:
 ## Current status
 
 - Phase 0 — Repository Bootstrap: merged vào `main`.
-- Phase 1 — Database + RLS Foundation: implemented trên `feature/phase-1-database-rls`, chờ independent review và **không tự merge**.
+- Phase 1 — Database + RLS Foundation: reviewed PASS và merged vào `main` qua PR #4.
+- Phase 2 — Authentication & Session: foundation đang được triển khai trên `feature/phase-2-auth-session`; OTP/password policy vẫn còn decision gate.
