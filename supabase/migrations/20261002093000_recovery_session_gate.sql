@@ -1,7 +1,7 @@
 -- Phase 2 password recovery hardening.
--- A recovery OTP creates an authenticated Supabase session. That session is
--- sufficient to update the password, but it must not become a shortcut into
--- protected business data before the user completes reset and signs in normally.
+-- The source-derived application sign-in method is email/password. Email OTP
+-- sessions (including recovery verification) may update Auth credentials, but
+-- they must not become a shortcut into protected business data.
 
 create or replace function public.current_account_has_application_access()
 returns boolean
@@ -17,11 +17,11 @@ as $$
       and tk.trang_thai = 'DANG_HOAT_DONG'
       and (tk.khoa_tam_den is null or tk.khoa_tam_den <= now())
   )
-  and not exists (
+  and exists (
     select 1
     from jsonb_array_elements(
       coalesce(auth.jwt() -> 'amr', '[]'::jsonb)
     ) as method
-    where method ->> 'method' = 'recovery'
+    where method ->> 'method' = 'password'
   );
 $$;
