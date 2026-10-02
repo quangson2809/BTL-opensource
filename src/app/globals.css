@@ -1,11 +1,13 @@
 :root {
   color-scheme: light;
   font-family: Arial, Helvetica, sans-serif;
-  background: #ffffff;
+  background: #f7f7f7;
   color: #111111;
 }
 
-* { box-sizing: border-box; }
+* {
+  box-sizing: border-box;
+}
 
 html,
 body {
@@ -13,7 +15,9 @@ body {
   min-height: 100%;
 }
 
-body { min-height: 100vh; }
+body {
+  min-height: 100vh;
+}
 
 main {
   min-height: 100vh;
@@ -22,11 +26,91 @@ main {
   padding: 2rem;
 }
 
-section { max-width: 40rem; }
+section {
+  width: 100%;
+  max-width: 40rem;
+}
 
-h1 { margin-bottom: 0.5rem; }
+.card {
+  background: #ffffff;
+  border: 1px solid #dddddd;
+  border-radius: 0.75rem;
+  padding: 2rem;
+}
+
+.auth-card {
+  max-width: 32rem;
+}
+
+h1 {
+  margin: 0 0 0.75rem;
+}
 
 p {
   margin: 0;
   line-height: 1.6;
+}
+
+.stack {
+  display: grid;
+  gap: 1rem;
+  margin-top: 1.5rem;
+}
+
+label {
+  display: grid;
+  gap: 0.4rem;
+  font-weight: 600;
+}
+
+input {
+  width: 100%;
+  border: 1px solid #bbbbbb;
+  border-radius: 0.45rem;
+  padding: 0.7rem 0.8rem;
+  font: inherit;
+  font-weight: 400;
+}
+
+button,
+.button-link {
+  display: inline-block;
+  border: 0;
+  border-radius: 0.45rem;
+  padding: 0.75rem 1rem;
+  background: #111111;
+  color: #ffffff;
+  font: inherit;
+  cursor: pointer;
+  text-decoration: none;
+}
+
+form button {
+  margin-top: 0.5rem;
+}
+
+.actions {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-top: 1.5rem;
+}
+
+.secondary-text {
+  margin-top: 1rem;
+  color: #555555;
+}
+
+.message {
+  margin-top: 1rem;
+  border-radius: 0.45rem;
+  padding: 0.75rem;
+}
+
+.message.error {
+  background: #fff1f1;
+}
+
+.message.success {
+  background: #effaf1;
 }

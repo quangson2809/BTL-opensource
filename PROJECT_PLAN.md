@@ -241,5 +241,7 @@ Không tự suy diễn các quyết định trên nếu ảnh hưởng kiến tr
 - [x] Repository đã được khởi tạo.
 - [x] Canonical-source policy đã được tạo.
 - [x] Master plan đã được chuyển sang repository mới.
-- [ ] PDF gốc cần xuất hiện tại `docs/source/Bao-cao-mon-opensource.pdf`.
-- [ ] Phase 0 chưa triển khai.
+- [x] PDF gốc đã có tại `docs/source/Bao-cao-mon-opensource.pdf`.
+- [x] Phase 0 đã merge vào `main`.
+- [x] Phase 1 đã independent review PASS và merge vào `main`.
+- [ ] Phase 2 đang triển khai; password/OTP policy còn decision gate.

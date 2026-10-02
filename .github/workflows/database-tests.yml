@@ -19,6 +19,15 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Install app dependencies
+        run: npm ci
+
       - name: Setup Supabase CLI
         uses: supabase/setup-cli@v1
         with:
@@ -32,6 +41,15 @@ jobs:
 
       - name: Run database and RLS tests
         run: supabase test db
+
+      - name: Run Auth integration tests
+        shell: bash
+        run: |
+          eval "$(supabase status -o env)"
+          API_URL="$API_URL" \
+          ANON_KEY="$ANON_KEY" \
+          SERVICE_ROLE_KEY="$SERVICE_ROLE_KEY" \
+          node supabase/tests/auth/001_phase2_auth.mjs
 
       - name: Stop local Supabase
         if: always()
