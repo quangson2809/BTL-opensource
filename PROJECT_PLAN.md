@@ -100,14 +100,23 @@ Công việc:
 
 ### Phase 2 — Authentication & Session
 
-- [ ] Đăng ký SA.
-- [ ] Trạng thái chờ phê duyệt.
-- [ ] Đăng nhập.
-- [ ] Đăng xuất.
-- [ ] Đổi/đặt lại mật khẩu.
-- [ ] OTP email.
-- [ ] Xử lý trạng thái tài khoản.
-- [ ] Khóa tạm sau nhiều lần đăng nhập sai theo đặc tả.
+- [x] Đăng ký SA.
+- [x] Trạng thái chờ phê duyệt.
+- [x] Đăng nhập.
+- [x] Đăng xuất.
+- [x] Đổi/đặt lại mật khẩu.
+- [x] OTP email.
+- [x] Xử lý trạng thái tài khoản.
+- [x] Khóa tạm sau nhiều lần đăng nhập sai theo đặc tả.
+
+Password/OTP contract:
+- minimum 8;
+- bắt buộc lowercase + uppercase + digit;
+- email OTP dài 8 số, expiry 600 giây;
+- change password dùng reauthentication OTP;
+- recovery/reset dùng recovery OTP;
+- recovery JWT không được dùng business data;
+- local/CI dùng Mailpit, production self-host dùng SMTP cấu hình ngoài repo.
 
 ### Phase 3 — Admin / RBAC
 
@@ -222,13 +231,13 @@ Không merge PR khi lint/type-check/build/test liên quan chưa pass.
 
 ## 8. Decision Log cần khóa trước khi code phụ thuộc
 
-- [ ] Auth dùng Supabase Auth hay cơ chế tự quản lý.
-- [ ] OTP/email provider.
-- [ ] Audit log strategy.
+- [x] Auth: Supabase Auth.
+- [x] OTP/email: Supabase Auth email OTP; Mailpit local/CI; production SMTP.
+- [x] Audit log: Supabase Auth audit logging; không thêm business audit table.
 - [ ] Enum strategy.
 - [ ] Delete/cascade/restrict strategy.
 - [ ] Chuẩn hóa thuật ngữ “vai trò” và “chức danh” trong code.
-- [ ] Password policy cụ thể.
+- [x] Password policy: minimum 8, lowercase + uppercase + digit, symbol optional.
 - [ ] Session duration.
 - [ ] Notification delete rule.
 - [ ] Statistics: query trực tiếp, view hay RPC.
@@ -244,4 +253,4 @@ Không tự suy diễn các quyết định trên nếu ảnh hưởng kiến tr
 - [x] PDF gốc đã có tại `docs/source/Bao-cao-mon-opensource.pdf`.
 - [x] Phase 0 đã merge vào `main`.
 - [x] Phase 1 đã independent review PASS và merge vào `main`.
-- [ ] Phase 2 đang triển khai; password/OTP policy còn decision gate.
+- [ ] Phase 2 implementation đã đủ scope source-derived và đang chờ independent review cho password/OTP completion PR.
