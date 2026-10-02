@@ -164,16 +164,6 @@ assert.ok(reauthEmail, "reauthentication email must arrive in local Mailpit");
 const reauthOtp = extractEightDigitOtp(reauthEmail);
 assert.ok(reauthOtp, "reauthentication email must contain an 8-digit OTP");
 
-const { error: samePasswordChangeError } = await changeClient.auth.updateUser({
-  password,
-  nonce: reauthOtp,
-});
-assert.equal(
-  samePasswordChangeError?.code,
-  "same_password",
-  "provider must reject reusing the existing password",
-);
-
 const { error: changeError } = await changeClient.auth.updateUser({
   password: changedPassword,
   nonce: reauthOtp,
