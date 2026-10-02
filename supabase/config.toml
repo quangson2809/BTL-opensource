@@ -6,6 +6,9 @@ enable_signup = true
 minimum_password_length = 8
 password_requirements = "lower_upper_letters_digits"
 
+[auth.rate_limit]
+email_sent = 30
+
 [auth.email]
 enable_signup = true
 enable_confirmations = false
