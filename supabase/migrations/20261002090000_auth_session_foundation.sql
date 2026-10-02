@@ -262,7 +262,6 @@ for each row execute function public.provision_self_registered_sa();
 create or replace function public.hook_password_verification_attempt(event jsonb)
 returns jsonb
 language plpgsql
-security definer
 set search_path = pg_catalog, public
 as $$
 declare
@@ -345,3 +344,17 @@ revoke all on function public.hook_password_verification_attempt(jsonb)
 grant execute on function public.hook_password_verification_attempt(jsonb)
   to supabase_auth_admin;
 grant usage on schema public to supabase_auth_admin;
+
+-- Keep the hook as SECURITY INVOKER. Supabase Auth receives only the columns it
+-- needs for this state machine, plus a dedicated RLS policy for its internal role.
+grant select (id, dang_nhap_sai_lien_tiep, khoa_tam_den)
+  on table public.tai_khoan to supabase_auth_admin;
+grant update (dang_nhap_sai_lien_tiep, khoa_tam_den)
+  on table public.tai_khoan to supabase_auth_admin;
+
+create policy tai_khoan_password_verification_hook
+on public.tai_khoan
+for all
+to supabase_auth_admin
+using (true)
+with check (true);
