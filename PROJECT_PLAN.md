@@ -115,7 +115,7 @@ Password/OTP contract:
 - email OTP dài 8 số, expiry 600 giây;
 - change password dùng reauthentication OTP;
 - recovery/reset dùng recovery OTP;
-- recovery JWT không được dùng business data;
+- business data chỉ chấp nhận JWT có password AMR; OTP/recovery JWT bị deny;
 - local/CI dùng Mailpit, production self-host dùng SMTP cấu hình ngoài repo.
 
 ### Phase 3 — Admin / RBAC
