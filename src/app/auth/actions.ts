@@ -24,19 +24,6 @@ function meetsPasswordPolicy(password: string) {
   );
 }
 
-function recoveryAuthenticationPresent(amr: unknown) {
-  return (
-    Array.isArray(amr) &&
-    amr.some(
-      (entry) =>
-        typeof entry === "object" &&
-        entry !== null &&
-        "method" in entry &&
-        entry.method === "recovery",
-    )
-  );
-}
-
 async function requireActiveBusinessAccount() {
   const supabase = await createClient();
   const { data: claimsData, error: claimsError } = await supabase.auth.getClaims();
@@ -215,11 +202,21 @@ export async function requestPasswordRecovery(formData: FormData) {
 export async function verifyRecoveryOtp(formData: FormData) {
   const email = field(formData, "email").toLowerCase();
   const otp = field(formData, "otp");
+  const password = rawField(formData, "new_password");
+  const confirmPassword = rawField(formData, "confirm_password");
 
-  if (!email || !otp) {
-    redirect(
-      `/password/recovery/verify?email=${encodeURIComponent(email)}&error=missing`,
-    );
+  const verifyPath = `/password/recovery/verify?email=${encodeURIComponent(email)}`;
+
+  if (!email || !otp || !password || !confirmPassword) {
+    redirect(`${verifyPath}&error=missing`);
+  }
+
+  if (password !== confirmPassword) {
+    redirect(`${verifyPath}&error=mismatch`);
+  }
+
+  if (!meetsPasswordPolicy(password)) {
+    redirect(`${verifyPath}&error=weak-password`);
   }
 
   const supabase = await createClient();
@@ -230,48 +227,22 @@ export async function verifyRecoveryOtp(formData: FormData) {
   });
 
   if (error || !data.session) {
-    redirect(
-      `/password/recovery/verify?email=${encodeURIComponent(email)}&error=otp`,
-    );
+    redirect(`${verifyPath}&error=otp`);
   }
 
-  redirect("/password/recovery/reset");
-}
+  // Complete recovery immediately inside the same server action. The temporary
+  // OTP-authenticated session is never promoted into an application session;
+  // database RLS independently requires a password-authenticated JWT.
+  const { error: updateError } = await supabase.auth.updateUser({ password });
 
-export async function resetRecoveredPassword(formData: FormData) {
-  const password = rawField(formData, "new_password");
-  const confirmPassword = rawField(formData, "confirm_password");
+  if (updateError) {
+    await supabase.auth.signOut({ scope: "local" });
 
-  if (!password || !confirmPassword) {
-    redirect("/password/recovery/reset?error=missing");
-  }
-
-  if (password !== confirmPassword) {
-    redirect("/password/recovery/reset?error=mismatch");
-  }
-
-  if (!meetsPasswordPolicy(password)) {
-    redirect("/password/recovery/reset?error=weak-password");
-  }
-
-  const supabase = await createClient();
-  const { data: claimsData, error: claimsError } = await supabase.auth.getClaims();
-
-  if (
-    claimsError ||
-    !recoveryAuthenticationPresent(claimsData?.claims?.amr)
-  ) {
-    redirect("/password/recovery?error=session");
-  }
-
-  const { error } = await supabase.auth.updateUser({ password });
-
-  if (error) {
-    if (error.code === "same_password") {
-      redirect("/password/recovery/reset?error=same-password");
+    if (updateError.code === "same_password") {
+      redirect(`${verifyPath}&error=same-password`);
     }
 
-    redirect("/password/recovery/reset?error=update");
+    redirect(`${verifyPath}&error=update`);
   }
 
   await supabase.auth.signOut({ scope: "local" });
