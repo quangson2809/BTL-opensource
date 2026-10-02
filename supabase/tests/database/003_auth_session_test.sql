@@ -19,13 +19,33 @@ select has_column(
 );
 
 select ok(
-  not has_function_privilege('authenticated', 'public.record_failed_login(text)', 'EXECUTE'),
-  'authenticated users cannot call failed-login bookkeeping directly'
+  not has_function_privilege(
+    'authenticated',
+    'public.hook_password_verification_attempt(jsonb)',
+    'EXECUTE'
+  ),
+  'authenticated users cannot invoke the password verification hook'
 );
 
 select ok(
-  has_function_privilege('service_role', 'public.record_failed_login(text)', 'EXECUTE'),
-  'service role can call failed-login bookkeeping'
+  has_function_privilege(
+    'supabase_auth_admin',
+    'public.hook_password_verification_attempt(jsonb)',
+    'EXECUTE'
+  ),
+  'Supabase Auth can invoke the password verification hook'
+);
+
+select is(
+  (
+    select count(*)::bigint
+    from pg_policies
+    where schemaname = 'public'
+      and policyname like '%_application_access_gate'
+      and permissive = 'RESTRICTIVE'
+  ),
+  9::bigint,
+  'all nine business tables have a restrictive Phase 2 access gate'
 );
 
 insert into auth.users (id, email)
@@ -73,6 +93,20 @@ select ok(
   'self-registered account receives SA role'
 );
 
+-- Add one known permission to SA only inside this rolled-back test so every
+-- exposed authorization helper has a positive active baseline and deny cases.
+insert into public.phan_quyen_vai_tro (
+  vai_tro_id,
+  quyen_id,
+  nguoi_gan_id
+)
+values (
+  '10000000-0000-0000-0000-000000000004',
+  '20000000-0000-0000-0000-000000000001',
+  null
+)
+on conflict (vai_tro_id, quyen_id) do nothing;
+
 set local role authenticated;
 select set_config('request.jwt.claim.role', 'authenticated', true);
 select set_config('request.jwt.claim.sub', '90000000-0000-4000-8000-000000000002', true);
@@ -81,6 +115,23 @@ select is(
   (select count(*)::bigint from public.vai_tro),
   0::bigint,
   'pending account cannot read protected business data'
+);
+
+select is(public.has_role('SA'), false, 'pending account cannot query role helper');
+select is(
+  public.has_permission('ACTIVITY_VIEW_SUBTREE'),
+  false,
+  'pending account cannot query permission helper'
+);
+select is(
+  public.is_in_subtree('90000000-0000-4000-8000-000000000002'),
+  false,
+  'pending account cannot query hierarchy helper'
+);
+select is(
+  public.can_view_activity('90000000-0000-4000-8000-000000000002'),
+  false,
+  'pending account cannot query activity authorization helper'
 );
 
 reset role;
@@ -96,6 +147,22 @@ select set_config('request.jwt.claim.sub', '90000000-0000-4000-8000-000000000002
 select ok(
   (select count(*) from public.vai_tro) > 0,
   'active account can reach business data allowed by normal RLS'
+);
+select is(public.has_role('SA'), true, 'active account can query own role');
+select is(
+  public.has_permission('ACTIVITY_VIEW_SUBTREE'),
+  true,
+  'active account can query granted permission'
+);
+select is(
+  public.is_in_subtree('90000000-0000-4000-8000-000000000002'),
+  true,
+  'active account hierarchy helper allows self'
+);
+select is(
+  public.can_view_activity('90000000-0000-4000-8000-000000000002'),
+  true,
+  'active account activity helper allows self'
 );
 
 reset role;
@@ -113,6 +180,17 @@ select is(
   0::bigint,
   'administratively locked account cannot read protected business data'
 );
+select is(public.has_role('SA'), false, 'administratively locked account cannot query role helper');
+select is(
+  public.is_in_subtree('90000000-0000-4000-8000-000000000002'),
+  false,
+  'administratively locked account cannot query hierarchy helper'
+);
+select is(
+  public.can_view_activity('90000000-0000-4000-8000-000000000002'),
+  false,
+  'administratively locked account cannot query activity helper'
+);
 
 reset role;
 
@@ -124,15 +202,51 @@ set
 where id = '90000000-0000-4000-8000-000000000002';
 
 select is(
-  (select failed_attempts from public.record_failed_login('new-sa@example.test')),
-  1,
-  'first failed login increments the counter'
+  public.hook_password_verification_attempt(
+    jsonb_build_object(
+      'user_id', '90000000-0000-4000-8000-000000000002',
+      'valid', false
+    )
+  ) ->> 'decision',
+  'continue',
+  'first invalid password remains provider-rejected while hook records it'
 );
-select is((select failed_attempts from public.record_failed_login('new-sa@example.test')), 2, 'second failed login increments the counter');
-select is((select failed_attempts from public.record_failed_login('new-sa@example.test')), 3, 'third failed login increments the counter');
-select is((select failed_attempts from public.record_failed_login('new-sa@example.test')), 4, 'fourth failed login increments the counter');
-select is((select failed_attempts from public.record_failed_login('new-sa@example.test')), 5, 'fifth failed login increments the counter');
-select is((select failed_attempts from public.record_failed_login('new-sa@example.test')), 6, 'sixth failed login increments the counter and locks');
+
+select is(
+  (
+    select dang_nhap_sai_lien_tiep
+    from public.tai_khoan
+    where id = '90000000-0000-4000-8000-000000000002'
+  ),
+  1,
+  'first invalid password increments the counter'
+);
+
+select public.hook_password_verification_attempt(
+  jsonb_build_object('user_id', '90000000-0000-4000-8000-000000000002', 'valid', false)
+);
+select public.hook_password_verification_attempt(
+  jsonb_build_object('user_id', '90000000-0000-4000-8000-000000000002', 'valid', false)
+);
+select public.hook_password_verification_attempt(
+  jsonb_build_object('user_id', '90000000-0000-4000-8000-000000000002', 'valid', false)
+);
+select public.hook_password_verification_attempt(
+  jsonb_build_object('user_id', '90000000-0000-4000-8000-000000000002', 'valid', false)
+);
+select public.hook_password_verification_attempt(
+  jsonb_build_object('user_id', '90000000-0000-4000-8000-000000000002', 'valid', false)
+);
+
+select is(
+  (
+    select dang_nhap_sai_lien_tiep
+    from public.tai_khoan
+    where id = '90000000-0000-4000-8000-000000000002'
+  ),
+  6,
+  'six invalid password verifications produce six consecutive failures'
+);
 
 select ok(
   (
@@ -140,7 +254,18 @@ select ok(
     from public.tai_khoan
     where id = '90000000-0000-4000-8000-000000000002'
   ),
-  'sixth failed login creates an approximately 30-minute lock'
+  'sixth invalid password creates an approximately 30-minute lock'
+);
+
+select is(
+  public.hook_password_verification_attempt(
+    jsonb_build_object(
+      'user_id', '90000000-0000-4000-8000-000000000002',
+      'valid', true
+    )
+  ) ->> 'decision',
+  'reject',
+  'correct password is rejected while temporary lock is active'
 );
 
 set local role authenticated;
@@ -152,6 +277,12 @@ select is(
   0::bigint,
   'temporarily locked account cannot use protected business data'
 );
+select is(public.has_role('SA'), false, 'temporarily locked account cannot query role helper');
+select is(
+  public.is_in_subtree('90000000-0000-4000-8000-000000000002'),
+  false,
+  'temporarily locked account cannot query hierarchy helper'
+);
 
 reset role;
 
@@ -159,36 +290,15 @@ update public.tai_khoan
 set khoa_tam_den = now() - interval '1 minute'
 where id = '90000000-0000-4000-8000-000000000002';
 
-set local role authenticated;
-select set_config('request.jwt.claim.role', 'authenticated', true);
-select set_config('request.jwt.claim.sub', '90000000-0000-4000-8000-000000000002', true);
-
-select ok(
-  (select count(*) from public.vai_tro) > 0,
-  'expired temporary lock no longer blocks an active account'
-);
-
-reset role;
-
 select is(
-  (select failed_attempts from public.record_failed_login('new-sa@example.test')),
-  1,
-  'first failed login after lock expiry starts a new consecutive-failure cycle'
-);
-
-select is(
-  (
-    select khoa_tam_den is null
-    from public.tai_khoan
-    where id = '90000000-0000-4000-8000-000000000002'
-  ),
-  true,
-  'new failure cycle is not immediately relocked'
-);
-
-select lives_ok(
-  $$ select public.reset_login_failures('90000000-0000-4000-8000-000000000002') $$,
-  'successful-login reset function executes'
+  public.hook_password_verification_attempt(
+    jsonb_build_object(
+      'user_id', '90000000-0000-4000-8000-000000000002',
+      'valid', true
+    )
+  ) ->> 'decision',
+  'continue',
+  'valid password after lock expiry is allowed'
 );
 
 select is(
@@ -198,7 +308,7 @@ select is(
     where id = '90000000-0000-4000-8000-000000000002'
   ),
   0,
-  'successful-login reset clears consecutive failures'
+  'valid password after lock expiry resets consecutive failures'
 );
 
 select is(
@@ -208,7 +318,35 @@ select is(
     where id = '90000000-0000-4000-8000-000000000002'
   ),
   true,
-  'successful-login reset clears temporary lock state'
+  'valid password after lock expiry clears temporary lock'
+);
+
+select public.hook_password_verification_attempt(
+  jsonb_build_object('user_id', '90000000-0000-4000-8000-000000000002', 'valid', false)
+);
+
+select is(
+  (
+    select dang_nhap_sai_lien_tiep
+    from public.tai_khoan
+    where id = '90000000-0000-4000-8000-000000000002'
+  ),
+  1,
+  'next invalid password starts a new consecutive-failure cycle'
+);
+
+select public.hook_password_verification_attempt(
+  jsonb_build_object('user_id', '90000000-0000-4000-8000-000000000002', 'valid', true)
+);
+
+select is(
+  (
+    select dang_nhap_sai_lien_tiep
+    from public.tai_khoan
+    where id = '90000000-0000-4000-8000-000000000002'
+  ),
+  0,
+  'successful verification resets a later failure cycle'
 );
 
 select * from finish();
