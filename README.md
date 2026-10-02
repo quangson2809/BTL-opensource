@@ -245,7 +245,7 @@ Foundation hiện tại triển khai:
 - pgTAP regression tests cho provisioning, account-state gate, hook state machine và exposed authorization helpers;
 - Auth integration test đi qua Supabase signup/password verification/session thật trong local CI;
 - password policy, reauthentication OTP và recovery OTP được test qua Auth API thật + Mailpit;
-- recovery session không được dùng như một business session; RLS chặn business data cho tới khi reset xong và đăng nhập lại bằng password.
+- chỉ password-authenticated session được dùng business data; OTP/recovery session bị RLS chặn cho tới khi reset xong và đăng nhập lại bằng password.
 
 ### Password verification hook deployment decision
 
@@ -283,7 +283,7 @@ Phase 2 chốt P2-D5/P2-D6 như sau:
 - local/CI dùng Mailpit đi kèm Supabase CLI;
 - production self-host phải cấu hình SMTP thật và giữ cùng password/OTP contract.
 
-Recovery OTP tạo một Supabase authenticated session có authentication method `recovery`. Migration Phase 2 chặn session loại này khỏi toàn bộ business data bằng common RLS access gate; recovery session chỉ dùng để hoàn tất reset rồi logout.
+Recovery OTP tạo một Supabase authenticated session tạm thời, nhưng runtime không được giả định sẽ luôn gắn AMR tên `recovery`. Vì Phase 2 chỉ định email/password là application sign-in method, common RLS access gate chỉ cho business data khi JWT có `amr.method = password`. OTP/recovery sessions có thể hoàn tất credential reset nhưng không thể trở thành business session. Recovery UI xác minh OTP và cập nhật mật khẩu trong cùng server action rồi logout.
 
 Không tạo custom OTP table. Supabase Auth quản lý token, expiry, single-use verification và audit events.
 
