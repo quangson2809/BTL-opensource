@@ -187,6 +187,16 @@ const { data: changedLogin, error: changedLoginError } =
   });
 assertNoError(changedLoginError, "new password login after authenticated change");
 assert.ok(changedLogin.session, "changed password must authenticate");
+
+const { data: passwordClaims, error: passwordClaimsError } =
+  await changedPasswordClient.auth.getClaims();
+assertNoError(passwordClaimsError, "read password-authenticated JWT claims");
+assert.ok(
+  Array.isArray(passwordClaims?.claims?.amr) &&
+    passwordClaims.claims.amr.some((entry) => entry.method === "password"),
+  "email/password login must carry password AMR for business access",
+);
+
 await changedPasswordClient.auth.signOut({ scope: "local" });
 
 await purgeAllMail();
