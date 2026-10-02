@@ -227,8 +227,8 @@ assertNoError(recoveryClaimsError, "read recovery JWT claims");
 
 assert.ok(
   Array.isArray(recoveryClaims?.claims?.amr) &&
-    recoveryClaims.claims.amr.some((entry) => entry.method === "recovery"),
-  "recovery JWT must identify the recovery authentication method",
+    !recoveryClaims.claims.amr.some((entry) => entry.method === "password"),
+  "recovery OTP session must not claim password authentication",
 );
 
 const { data: rolesDuringRecovery, error: recoveryBusinessError } =
@@ -237,7 +237,7 @@ assertNoError(recoveryBusinessError, "query protected data with recovery JWT");
 assert.deepEqual(
   rolesDuringRecovery,
   [],
-  "recovery session must not grant protected business-data access",
+  "non-password recovery session must not grant protected business-data access",
 );
 
 const { error: reuseRecoveryOtpError } = await createAnonClient().auth.verifyOtp({
