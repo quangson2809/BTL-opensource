@@ -106,6 +106,8 @@ supabase/
     20260926070000_core_schema.sql
     20260926070100_rls_foundation.sql
     20261002090000_auth_session_foundation.sql
+    20261002093000_recovery_session_gate.sql
+    20261002100000_unconditional_password_reauth.sql
   tests/
     database/
       001_schema_test.sql
@@ -113,6 +115,10 @@ supabase/
       003_auth_session_test.sql
     auth/
       001_phase2_auth.mjs
+      002_password_otp.mjs
+  templates/
+    recovery.html
+    reauthentication.html
   seed.sql
 .github/
   workflows/
@@ -238,7 +244,9 @@ Foundation hiện tại triển khai:
 - password đúng trong thời gian khóa bị Auth hook reject; JWT đã tồn tại cũng bị restrictive RLS chặn business data;
 - Phase 1 authorization RPC helpers trả false cho pending/KHOA/temp-lock thay vì lộ role/hierarchy state;
 - pgTAP regression tests cho provisioning, account-state gate, hook state machine và exposed authorization helpers;
-- Auth integration test đi qua Supabase signup/password verification/session thật trong local CI.
+- Auth integration test đi qua Supabase signup/password verification/session thật trong local CI;
+- password policy, reauthentication OTP và recovery OTP được test qua Auth API thật + Mailpit;
+- chỉ password-authenticated session được dùng business data; OTP/recovery session bị RLS chặn cho tới khi reset xong và đăng nhập lại bằng password.
 
 ### Password verification hook deployment decision
 
@@ -261,14 +269,28 @@ GOTRUE_HOOK_PASSWORD_VERIFICATION_ATTEMPT_URI=pg-functions://postgres/public/hoo
 
 Không deploy Phase 2 lên hosted plan không hỗ trợ Password Verification Hook rồi vẫn claim rằng rule 6/30 được enforce ở mọi password attempt.
 
-Chưa khóa/triển khai trong PR foundation này:
+### Password + OTP decisions
 
-- password complexity policy cụ thể;
-- đổi mật khẩu bằng email OTP;
-- recovery/reset password bằng email OTP;
-- cấu hình OTP expiry cụ thể cho production.
+Phase 2 chốt P2-D5/P2-D6 như sau:
 
-Các mục trên vẫn là decision gate; registration foundation chưa được coi là production-complete cho tới khi P2-D5/P2-D6 được chốt.
+- mật khẩu tối thiểu 8 ký tự;
+- bắt buộc có chữ thường + chữ hoa + chữ số;
+- không bắt buộc ký tự đặc biệt;
+- Supabase Auth là nơi enforce password policy; server actions mirror rule để trả lỗi UX sớm;
+- mật khẩu mới phải khác mật khẩu cũ; Supabase Auth trả `same_password` khi vi phạm;
+- authenticated password change dùng email reauthentication OTP và OTP này là bắt buộc kể cả với fresh password session;
+- forgotten-password recovery dùng recovery OTP, sau đó mới cho đặt mật khẩu mới;
+- OTP email dài 8 số và hết hạn sau 600 giây (10 phút);
+- local/CI dùng Mailpit đi kèm Supabase CLI;
+- production self-host phải cấu hình SMTP thật và giữ cùng password/OTP contract.
+
+Recovery OTP tạo một Supabase authenticated session tạm thời, nhưng runtime không được giả định sẽ luôn gắn AMR tên `recovery`. Vì Phase 2 chỉ định email/password là application sign-in method, common RLS access gate chỉ cho business data khi JWT có `amr.method = password`. OTP/recovery sessions có thể hoàn tất credential reset nhưng không thể trở thành business session. Recovery UI xác minh OTP và cập nhật mật khẩu trong cùng server action rồi logout.
+
+Supabase Auth/GoTrue hiện chỉ bắt reauthentication nonce khi password session đã cũ hơn 24 giờ. Để giữ contract Phase 2 mạnh hơn mà vẫn để GoTrue tự generate/verify nonce, self-hosted/local deployment cài migration compatibility shim: khi Auth ghi AMR `password`, `auth.sessions.created_at` của session đó được backdate 25 giờ. Vì vậy direct `PUT /user`/SDK password update trên fresh password session cũng đi qua chính GoTrue nonce verifier; thiếu nonce, nonce sai hoặc hết hạn đều bị provider từ chối. Recovery/OTP sessions không bị backdate.
+
+**Deployment constraint:** trong khi shim này còn tồn tại, không bật time-boxed session lifetime dựa trên `auth.sessions.created_at`. Nếu self-hosted GoTrue sau này hỗ trợ configurable unconditional reauthentication threshold, bỏ shim và dùng provider option chính thức trước khi chốt Session duration.
+
+Không tạo custom OTP table. Supabase Auth quản lý token, expiry, single-use verification và audit events.
 
 ## Explicitly deferred
 
@@ -290,4 +312,4 @@ Các mục trên vẫn là decision gate; registration foundation chưa được
 
 - Phase 0 — Repository Bootstrap: merged vào `main`.
 - Phase 1 — Database + RLS Foundation: reviewed PASS và merged vào `main` qua PR #4.
-- Phase 2 — Authentication & Session: foundation đang được triển khai trên `feature/phase-2-auth-session`; Password Verification Hook/self-host đã được chọn cho invariant 6/30; OTP/password policy vẫn còn decision gate.
+- Phase 2 — Authentication & Session: auth/session foundation đã merge qua PR #6; password policy + email OTP change/recovery đang được hoàn thiện trên `feature/phase-2-password-otp` và chờ independent review.

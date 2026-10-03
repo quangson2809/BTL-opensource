@@ -110,6 +110,15 @@ on conflict (vai_tro_id, quyen_id) do nothing;
 set local role authenticated;
 select set_config('request.jwt.claim.role', 'authenticated', true);
 select set_config('request.jwt.claim.sub', '90000000-0000-4000-8000-000000000002', true);
+select set_config(
+  'request.jwt.claims',
+  jsonb_build_object(
+    'role', 'authenticated',
+    'sub', '90000000-0000-4000-8000-000000000002',
+    'amr', jsonb_build_array(jsonb_build_object('method', 'password', 'timestamp', 0))
+  )::text,
+  true
+);
 
 select is(
   (select count(*)::bigint from public.vai_tro),
@@ -143,6 +152,15 @@ where id = '90000000-0000-4000-8000-000000000002';
 set local role authenticated;
 select set_config('request.jwt.claim.role', 'authenticated', true);
 select set_config('request.jwt.claim.sub', '90000000-0000-4000-8000-000000000002', true);
+select set_config(
+  'request.jwt.claims',
+  jsonb_build_object(
+    'role', 'authenticated',
+    'sub', '90000000-0000-4000-8000-000000000002',
+    'amr', jsonb_build_array(jsonb_build_object('method', 'password', 'timestamp', 0))
+  )::text,
+  true
+);
 
 select ok(
   (select count(*) from public.vai_tro) > 0,
@@ -174,6 +192,15 @@ where id = '90000000-0000-4000-8000-000000000002';
 set local role authenticated;
 select set_config('request.jwt.claim.role', 'authenticated', true);
 select set_config('request.jwt.claim.sub', '90000000-0000-4000-8000-000000000002', true);
+select set_config(
+  'request.jwt.claims',
+  jsonb_build_object(
+    'role', 'authenticated',
+    'sub', '90000000-0000-4000-8000-000000000002',
+    'amr', jsonb_build_array(jsonb_build_object('method', 'password', 'timestamp', 0))
+  )::text,
+  true
+);
 
 select is(
   (select count(*)::bigint from public.vai_tro),
@@ -271,6 +298,15 @@ select is(
 set local role authenticated;
 select set_config('request.jwt.claim.role', 'authenticated', true);
 select set_config('request.jwt.claim.sub', '90000000-0000-4000-8000-000000000002', true);
+select set_config(
+  'request.jwt.claims',
+  jsonb_build_object(
+    'role', 'authenticated',
+    'sub', '90000000-0000-4000-8000-000000000002',
+    'amr', jsonb_build_array(jsonb_build_object('method', 'password', 'timestamp', 0))
+  )::text,
+  true
+);
 
 select is(
   (select count(*)::bigint from public.vai_tro),

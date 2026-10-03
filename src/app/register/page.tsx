@@ -5,6 +5,7 @@ import { register } from "@/app/auth/actions";
 const errorMessages: Record<string, string> = {
   missing: "Vui lòng điền đầy đủ thông tin bắt buộc.",
   registration: "Không thể đăng ký tài khoản. Hãy kiểm tra thông tin và thử lại.",
+  "weak-password": "Mật khẩu phải có ít nhất 8 ký tự, gồm chữ thường, chữ hoa và số.",
 };
 
 type RegisterPageProps = {
@@ -45,6 +46,9 @@ export default async function RegisterPage({ searchParams }: RegisterPageProps) 
             Mật khẩu
             <input name="password" type="password" autoComplete="new-password" required />
           </label>
+          <p className="secondary-text">
+            Tối thiểu 8 ký tự, có chữ thường, chữ hoa và số.
+          </p>
           <button type="submit">Tạo tài khoản</button>
         </form>
 

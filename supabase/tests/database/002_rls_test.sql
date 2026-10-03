@@ -84,6 +84,15 @@ select set_config('request.jwt.claim.role', 'authenticated', true);
 
 -- SA identity.
 select set_config('request.jwt.claim.sub', '11111111-1111-4111-8111-111111111111', true);
+select set_config(
+  'request.jwt.claims',
+  jsonb_build_object(
+    'role', 'authenticated',
+    'sub', '11111111-1111-4111-8111-111111111111',
+    'amr', jsonb_build_array(jsonb_build_object('method', 'password', 'timestamp', 0))
+  )::text,
+  true
+);
 
 select is(
   (select count(*)::bigint from public.khach_hang),
@@ -232,6 +241,15 @@ select results_eq(
 
 -- ADMIN must not bypass customer ownership.
 select set_config('request.jwt.claim.sub', 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa2', true);
+select set_config(
+  'request.jwt.claims',
+  jsonb_build_object(
+    'role', 'authenticated',
+    'sub', 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa2',
+    'amr', jsonb_build_array(jsonb_build_object('method', 'password', 'timestamp', 0))
+  )::text,
+  true
+);
 
 select is(
   (select count(*)::bigint from public.khach_hang),
@@ -249,6 +267,15 @@ select lives_ok(
 
 -- Recursive hierarchy: DM -> UM -> SA. DM/UM seed roles carry ACTIVITY_VIEW_SUBTREE.
 select set_config('request.jwt.claim.sub', 'dddddddd-dddd-4ddd-8ddd-dddddddddddd', true);
+select set_config(
+  'request.jwt.claims',
+  jsonb_build_object(
+    'role', 'authenticated',
+    'sub', 'dddddddd-dddd-4ddd-8ddd-dddddddddddd',
+    'amr', jsonb_build_array(jsonb_build_object('method', 'password', 'timestamp', 0))
+  )::text,
+  true
+);
 
 select ok(
   exists (select 1 from public.hoat_dong where id = '50000000-0000-4000-8000-000000000001'),
@@ -272,6 +299,15 @@ select results_eq(
 );
 
 select set_config('request.jwt.claim.sub', 'eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee', true);
+select set_config(
+  'request.jwt.claims',
+  jsonb_build_object(
+    'role', 'authenticated',
+    'sub', 'eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee',
+    'amr', jsonb_build_array(jsonb_build_object('method', 'password', 'timestamp', 0))
+  )::text,
+  true
+);
 
 select ok(
   exists (select 1 from public.hoat_dong where id = '50000000-0000-4000-8000-000000000001'),

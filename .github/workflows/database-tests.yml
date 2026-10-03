@@ -46,10 +46,13 @@ jobs:
         shell: bash
         run: |
           eval "$(supabase status -o env)"
-          API_URL="$API_URL" \
-          ANON_KEY="$ANON_KEY" \
-          SERVICE_ROLE_KEY="$SERVICE_ROLE_KEY" \
-          node supabase/tests/auth/001_phase2_auth.mjs
+          export API_URL ANON_KEY SERVICE_ROLE_KEY DB_URL
+          export MAILPIT_URL="http://127.0.0.1:54324"
+
+          for test_file in supabase/tests/auth/*.mjs; do
+            echo "Running $test_file"
+            node "$test_file"
+          done
 
       - name: Stop local Supabase
         if: always()

@@ -3,10 +3,26 @@ project_id = "idaily"
 [auth]
 site_url = "http://localhost:3000"
 enable_signup = true
+minimum_password_length = 8
+password_requirements = "lower_upper_letters_digits"
+
+[auth.rate_limit]
+email_sent = 30
 
 [auth.email]
 enable_signup = true
 enable_confirmations = false
+secure_password_change = true
+otp_length = 8
+otp_expiry = 600
+
+[auth.email.template.recovery]
+subject = "Mã OTP đặt lại mật khẩu IDAILY"
+content_path = "./supabase/templates/recovery.html"
+
+[auth.email.template.reauthentication]
+subject = "Mã OTP đổi mật khẩu IDAILY"
+content_path = "./supabase/templates/reauthentication.html"
 
 [auth.hook.password_verification_attempt]
 enabled = true
