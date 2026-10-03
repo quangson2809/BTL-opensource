@@ -119,6 +119,213 @@ function expireRecoveryOtp(address) {
   );
 }
 
+function expireReauthenticationOtp(address) {
+  const safeAddress = address.replaceAll("'", "''");
+
+  execFileSync(
+    "psql",
+    [
+      dbUrl,
+      "-v",
+      "ON_ERROR_STOP=1",
+      "-c",
+      `update auth.users
+       set reauthentication_sent_at = now() - interval '11 minutes'
+       where email = '${safeAddress}'`,
+    ],
+    { stdio: "pipe" },
+  );
+}
+
+async function seedRecoveryIsolationFixtures(userId) {
+  const permissionId = "20000000-0000-0000-0000-000000000001";
+  const saRoleId = "10000000-0000-0000-0000-000000000004";
+  const customerId = crypto.randomUUID();
+  const activityId = crypto.randomUUID();
+  const notificationId = crypto.randomUUID();
+  const recipientId = crypto.randomUUID();
+  const rolePermissionId = crypto.randomUUID();
+
+  const { error: rolePermissionError } = await admin
+    .from("phan_quyen_vai_tro")
+    .insert({
+      id: rolePermissionId,
+      vai_tro_id: saRoleId,
+      quyen_id: permissionId,
+      nguoi_gan_id: null,
+    });
+  assertNoError(rolePermissionError, "grant test permission to SA");
+
+  const { error: customerError } = await admin.from("khach_hang").insert({
+    id: customerId,
+    chu_so_huu_id: userId,
+    ma_khach_hang: `KH-OTP-${suffix}`,
+    ho_ten: "Recovery Isolation Customer",
+    so_dien_thoai: `05${String(Date.now()).slice(-8)}`,
+    gioi_tinh: "Nam",
+    ngay_sinh: "1990-01-01",
+    dia_chi: "Hà Nội",
+    so_thich: "Kiểm thử",
+    ghi_chu: "Recovery isolation fixture",
+    loai_khach_hang: "MUC_TIEU",
+    tinh_trang: "BẠN",
+    nhom_tinh_cach: "D",
+  });
+  assertNoError(customerError, "create customer fixture");
+
+  const { error: activityError } = await admin.from("hoat_dong").insert({
+    id: activityId,
+    tai_khoan_id: userId,
+    loai_hoat_dong: "GẶP_GỠ",
+    dia_diem: "Hà Nội",
+    thoi_gian: new Date().toISOString(),
+    so_khach_hang_ket_noi: 1,
+  });
+  assertNoError(activityError, "create activity fixture");
+
+  const { error: notificationError } = await admin.from("thong_bao").insert({
+    id: notificationId,
+    nguoi_tao_id: userId,
+    tieu_de: "Recovery isolation",
+    noi_dung: "Fixture",
+    loai: "TIN_TỨC",
+    trang_thai: "ĐÃ_GỬI",
+  });
+  assertNoError(notificationError, "create notification fixture");
+
+  const { error: recipientError } = await admin.from("thong_bao_nguoi_nhan").insert({
+    id: recipientId,
+    thong_bao_id: notificationId,
+    tai_khoan_id: userId,
+    da_doc: false,
+  });
+  assertNoError(recipientError, "create notification-recipient fixture");
+
+  return {
+    userId,
+    saRoleId,
+    permissionId,
+    rolePermissionId,
+    customerId,
+    activityId,
+    notificationId,
+    recipientId,
+  };
+}
+
+async function assertVisibleById(client, table, id, label) {
+  const { data, error } = await client.from(table).select("id").eq("id", id);
+  assertNoError(error, `${label}: query ${table}`);
+  assert.equal(data.length, 1, `${label}: expected visible row in ${table}`);
+}
+
+async function assertHiddenById(client, table, id, label) {
+  const { data, error } = await client.from(table).select("id").eq("id", id);
+  assertNoError(error, `${label}: query ${table}`);
+  assert.deepEqual(data, [], `${label}: ${table} must be hidden`);
+}
+
+async function assertNormalBusinessMatrix(client, fixture) {
+  await assertVisibleById(client, "tai_khoan", fixture.userId, "password session");
+  await assertVisibleById(client, "vai_tro", fixture.saRoleId, "password session");
+  await assertVisibleById(client, "quyen", fixture.permissionId, "password session");
+
+  const { data: ownAssignment, error: ownAssignmentError } = await client
+    .from("phan_cong_vai_tro")
+    .select("id")
+    .eq("tai_khoan_id", fixture.userId);
+  assertNoError(ownAssignmentError, "password session: query role assignment");
+  assert.ok(ownAssignment.length > 0, "password session: own role assignment must be visible");
+
+  await assertVisibleById(
+    client,
+    "phan_quyen_vai_tro",
+    fixture.rolePermissionId,
+    "password session",
+  );
+  await assertVisibleById(client, "khach_hang", fixture.customerId, "password session");
+  await assertVisibleById(client, "hoat_dong", fixture.activityId, "password session");
+  await assertVisibleById(client, "thong_bao", fixture.notificationId, "password session");
+  await assertVisibleById(
+    client,
+    "thong_bao_nguoi_nhan",
+    fixture.recipientId,
+    "password session",
+  );
+
+  const { data: hasRole, error: hasRoleError } = await client.rpc("has_role", {
+    role_code: "SA",
+  });
+  assertNoError(hasRoleError, "password session: has_role");
+  assert.equal(hasRole, true, "password session: has_role must have positive control");
+
+  const { data: hasPermission, error: hasPermissionError } = await client.rpc(
+    "has_permission",
+    { permission_code: "ACTIVITY_VIEW_SUBTREE" },
+  );
+  assertNoError(hasPermissionError, "password session: has_permission");
+  assert.equal(
+    hasPermission,
+    true,
+    "password session: has_permission must have positive control",
+  );
+
+  const { data: inSubtree, error: inSubtreeError } = await client.rpc(
+    "is_in_subtree",
+    { target_account_id: fixture.userId },
+  );
+  assertNoError(inSubtreeError, "password session: is_in_subtree");
+  assert.equal(inSubtree, true, "password session: self must be in subtree helper");
+
+  const { data: canView, error: canViewError } = await client.rpc(
+    "can_view_activity",
+    { activity_owner_id: fixture.userId },
+  );
+  assertNoError(canViewError, "password session: can_view_activity");
+  assert.equal(canView, true, "password session: own activity must be allowed");
+}
+
+async function assertRecoveryBusinessMatrix(client, fixture) {
+  await assertHiddenById(client, "tai_khoan", fixture.userId, "recovery session");
+  await assertHiddenById(client, "vai_tro", fixture.saRoleId, "recovery session");
+  await assertHiddenById(client, "quyen", fixture.permissionId, "recovery session");
+  await assertHiddenById(
+    client,
+    "phan_quyen_vai_tro",
+    fixture.rolePermissionId,
+    "recovery session",
+  );
+  await assertHiddenById(client, "khach_hang", fixture.customerId, "recovery session");
+  await assertHiddenById(client, "hoat_dong", fixture.activityId, "recovery session");
+  await assertHiddenById(client, "thong_bao", fixture.notificationId, "recovery session");
+  await assertHiddenById(
+    client,
+    "thong_bao_nguoi_nhan",
+    fixture.recipientId,
+    "recovery session",
+  );
+
+  const { data: assignments, error: assignmentsError } = await client
+    .from("phan_cong_vai_tro")
+    .select("id")
+    .eq("tai_khoan_id", fixture.userId);
+  assertNoError(assignmentsError, "recovery session: query role assignment");
+  assert.deepEqual(assignments, [], "recovery session: role assignment must be hidden");
+
+  const rpcCases = [
+    ["has_role", { role_code: "SA" }],
+    ["has_permission", { permission_code: "ACTIVITY_VIEW_SUBTREE" }],
+    ["is_in_subtree", { target_account_id: fixture.userId }],
+    ["can_view_activity", { activity_owner_id: fixture.userId }],
+  ];
+
+  for (const [name, args] of rpcCases) {
+    const { data, error } = await client.rpc(name, args);
+    assertNoError(error, `recovery session: ${name}`);
+    assert.equal(data, false, `recovery session: ${name} must not leak state`);
+  }
+}
+
 const config = await readFile("supabase/config.toml", "utf8");
 assert.match(config, /minimum_password_length\s*=\s*8/);
 assert.match(config, /password_requirements\s*=\s*"lower_upper_letters_digits"/);
@@ -174,6 +381,15 @@ const { data: login, error: loginError } = await changeClient.auth.signInWithPas
 assertNoError(loginError, "login before authenticated password change");
 assert.ok(login.session, "authenticated password change needs a session");
 
+const { error: noNonceError } = await changeClient.auth.updateUser({
+  password: "NoNoncePass9",
+});
+assert.equal(
+  noNonceError?.code,
+  "reauthentication_needed",
+  "fresh password session must not bypass email OTP by omitting nonce",
+);
+
 await purgeAllMail();
 
 const { error: reauthError } = await changeClient.auth.reauthenticate();
@@ -185,11 +401,43 @@ assert.ok(reauthEmail, "reauthentication email must arrive in local Mailpit");
 const reauthOtp = extractEightDigitOtp(reauthEmail);
 assert.ok(reauthOtp, "reauthentication email must contain an 8-digit OTP");
 
-const { error: changeError } = await changeClient.auth.updateUser({
-  password: changedPassword,
+const { error: wrongReauthError } = await changeClient.auth.updateUser({
+  password: "WrongOtpPass9",
+  nonce: "00000000",
+});
+assert.equal(
+  wrongReauthError?.code,
+  "reauthentication_not_valid",
+  "fresh password session with wrong reauthentication OTP must be denied",
+);
+
+expireReauthenticationOtp(email);
+
+const { error: expiredReauthError } = await changeClient.auth.updateUser({
+  password: "ExpiredOtpPass9",
   nonce: reauthOtp,
 });
-assertNoError(changeError, "change password with reauthentication OTP");
+assert.ok(
+  expiredReauthError,
+  "fresh password session with expired reauthentication OTP must be denied",
+);
+
+await purgeAllMail();
+
+const { error: freshReauthError } = await changeClient.auth.reauthenticate();
+assertNoError(freshReauthError, "request fresh reauthentication OTP");
+
+const freshReauthEmail = await waitForEmail(email, "Mã OTP đổi mật khẩu IDAILY");
+assert.ok(freshReauthEmail, "fresh reauthentication email must arrive in local Mailpit");
+
+const freshReauthOtp = extractEightDigitOtp(freshReauthEmail);
+assert.ok(freshReauthOtp, "fresh reauthentication email must contain an 8-digit OTP");
+
+const { error: changeError } = await changeClient.auth.updateUser({
+  password: changedPassword,
+  nonce: freshReauthOtp,
+});
+assertNoError(changeError, "change password with valid reauthentication OTP");
 
 await changeClient.auth.signOut({ scope: "local" });
 
@@ -208,6 +456,19 @@ const { data: changedLogin, error: changedLoginError } =
   });
 assertNoError(changedLoginError, "new password login after authenticated change");
 assert.ok(changedLogin.session, "changed password must authenticate");
+
+const { error: reusedNonceError } = await changedPasswordClient.auth.updateUser({
+  password: "ReuseNoncePass9",
+  nonce: freshReauthOtp,
+});
+assert.equal(
+  reusedNonceError?.code,
+  "reauthentication_not_valid",
+  "consumed reauthentication OTP must not be reusable in a new password session",
+);
+
+const isolationFixture = await seedRecoveryIsolationFixtures(userId);
+await assertNormalBusinessMatrix(changedPasswordClient, isolationFixture);
 
 const { data: passwordClaims, error: passwordClaimsError } =
   await changedPasswordClient.auth.getClaims();
@@ -284,14 +545,7 @@ assert.ok(
   "recovery OTP session must not claim password authentication",
 );
 
-const { data: rolesDuringRecovery, error: recoveryBusinessError } =
-  await recoveryClient.from("vai_tro").select("id");
-assertNoError(recoveryBusinessError, "query protected data with recovery JWT");
-assert.deepEqual(
-  rolesDuringRecovery,
-  [],
-  "non-password recovery session must not grant protected business-data access",
-);
+await assertRecoveryBusinessMatrix(recoveryClient, isolationFixture);
 
 const { error: reuseRecoveryOtpError } = await createAnonClient().auth.verifyOtp({
   email,
