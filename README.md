@@ -107,6 +107,7 @@ supabase/
     20260926070100_rls_foundation.sql
     20261002090000_auth_session_foundation.sql
     20261002093000_recovery_session_gate.sql
+    20261002100000_unconditional_password_reauth.sql
   tests/
     database/
       001_schema_test.sql
@@ -277,13 +278,17 @@ Phase 2 chốt P2-D5/P2-D6 như sau:
 - không bắt buộc ký tự đặc biệt;
 - Supabase Auth là nơi enforce password policy; server actions mirror rule để trả lỗi UX sớm;
 - mật khẩu mới phải khác mật khẩu cũ; Supabase Auth trả `same_password` khi vi phạm;
-- authenticated password change dùng email reauthentication OTP;
+- authenticated password change dùng email reauthentication OTP và OTP này là bắt buộc kể cả với fresh password session;
 - forgotten-password recovery dùng recovery OTP, sau đó mới cho đặt mật khẩu mới;
 - OTP email dài 8 số và hết hạn sau 600 giây (10 phút);
 - local/CI dùng Mailpit đi kèm Supabase CLI;
 - production self-host phải cấu hình SMTP thật và giữ cùng password/OTP contract.
 
 Recovery OTP tạo một Supabase authenticated session tạm thời, nhưng runtime không được giả định sẽ luôn gắn AMR tên `recovery`. Vì Phase 2 chỉ định email/password là application sign-in method, common RLS access gate chỉ cho business data khi JWT có `amr.method = password`. OTP/recovery sessions có thể hoàn tất credential reset nhưng không thể trở thành business session. Recovery UI xác minh OTP và cập nhật mật khẩu trong cùng server action rồi logout.
+
+Supabase Auth/GoTrue hiện chỉ bắt reauthentication nonce khi password session đã cũ hơn 24 giờ. Để giữ contract Phase 2 mạnh hơn mà vẫn để GoTrue tự generate/verify nonce, self-hosted/local deployment cài migration compatibility shim: khi Auth ghi AMR `password`, `auth.sessions.created_at` của session đó được backdate 25 giờ. Vì vậy direct `PUT /user`/SDK password update trên fresh password session cũng đi qua chính GoTrue nonce verifier; thiếu nonce, nonce sai hoặc hết hạn đều bị provider từ chối. Recovery/OTP sessions không bị backdate.
+
+**Deployment constraint:** trong khi shim này còn tồn tại, không bật time-boxed session lifetime dựa trên `auth.sessions.created_at`. Nếu self-hosted GoTrue sau này hỗ trợ configurable unconditional reauthentication threshold, bỏ shim và dùng provider option chính thức trước khi chốt Session duration.
 
 Không tạo custom OTP table. Supabase Auth quản lý token, expiry, single-use verification và audit events.
 
