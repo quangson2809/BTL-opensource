@@ -113,7 +113,7 @@ Password/OTP contract:
 - minimum 8;
 - bắt buộc lowercase + uppercase + digit;
 - email OTP dài 8 số, expiry 600 giây;
-- change password dùng reauthentication OTP;
+- change password dùng reauthentication OTP bắt buộc cho mọi password session, kể cả fresh session;
 - recovery/reset dùng recovery OTP;
 - business data chỉ chấp nhận JWT có password AMR; OTP/recovery JWT bị deny;
 - local/CI dùng Mailpit, production self-host dùng SMTP cấu hình ngoài repo.
@@ -238,7 +238,7 @@ Không merge PR khi lint/type-check/build/test liên quan chưa pass.
 - [ ] Delete/cascade/restrict strategy.
 - [ ] Chuẩn hóa thuật ngữ “vai trò” và “chức danh” trong code.
 - [x] Password policy: minimum 8, lowercase + uppercase + digit, symbol optional.
-- [ ] Session duration.
+- [ ] Session duration — không bật time-boxed lifetime khi unconditional-reauth compatibility shim còn backdate `auth.sessions.created_at`; resolve cùng việc bỏ shim/provider support.
 - [ ] Notification delete rule.
 - [ ] Statistics: query trực tiếp, view hay RPC.
 
