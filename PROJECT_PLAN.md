@@ -15,6 +15,17 @@ Các nhóm người dùng:
 - **UM:** trưởng nhóm kinh doanh.
 - **SA:** đại lý/nhân viên kinh doanh.
 
+### Mục tiêu delivery hiện tại — MVP only
+
+Yêu cầu của project coordinator: **chỉ cần MVP**, ưu tiên bản chạy được, đúng các use case cốt lõi và đủ để demo/deploy; không dành thời gian cho polish hoặc hardening không chặn MVP.
+
+- Mốc mục tiêu: **10/10/2026** nếu không phát sinh blocker mới.
+- UI ưu tiên đơn giản, rõ chức năng; không yêu cầu design system hoàn thiện.
+- Chỉ triển khai requirement source-derived cần cho luồng nghiệp vụ chính.
+- Test bắt buộc tập trung vào auth/RLS/ownership/permission và các happy-path + deny-path quan trọng.
+- Edge case hiếm, tối ưu hiệu năng sâu, audit/observability nâng cao và production hardening không chặn chức năng được đưa vào backlog sau MVP.
+- Không hạ các security invariant đã khóa: Auth/RLS, ownership, scope theo hierarchy, secret handling và các review gate hiện có vẫn bắt buộc.
+
 ## 2. Stack theo tài liệu
 
 - Next.js + React + TypeScript
@@ -118,17 +129,19 @@ Password/OTP contract:
 - business data chỉ chấp nhận JWT có password AMR; OTP/recovery JWT bị deny;
 - local/CI dùng Mailpit, production self-host dùng SMTP cấu hình ngoài repo.
 
-### Phase 3 — Admin / RBAC
+### Phase 3 — Admin / RBAC — MVP
 
-- [ ] CRUD/vòng đời tài khoản.
-- [ ] Phê duyệt, khóa, xóa tài khoản.
-- [ ] CRUD chức danh/vai trò.
-- [ ] Gán/thu hồi chức danh.
-- [ ] CRUD quyền.
-- [ ] Gán/thu hồi quyền cho chức danh.
+Ưu tiên luồng tối thiểu để vận hành hệ thống:
+
+- [ ] Danh sách tài khoản.
+- [ ] Phê duyệt tài khoản SA.
+- [ ] Khóa/mở khóa tài khoản.
+- [ ] Gán/thu hồi vai trò.
+- [ ] Xem danh sách vai trò/quyền và mapping cần thiết.
 - [ ] Không gán quyền trực tiếp cho tài khoản.
+- [ ] CRUD nâng cao cho role/permission catalog chỉ làm nếu source-derived use case bắt buộc cho MVP.
 
-### Phase 4 — Customer + Personnel
+### Phase 4 — Customer + Personnel — MVP
 
 Khách hàng:
 - [ ] Thêm, danh sách, chi tiết, cập nhật, xóa.
@@ -142,7 +155,7 @@ Nhân sự:
 - [ ] Thống kê tóm tắt khách hàng/hoạt động.
 - [ ] Không cho quản lý mở/sửa/xóa hồ sơ khách hàng cấp dưới trái đặc tả.
 
-### Phase 5 — Business Activity
+### Phase 5 — Business Activity — MVP
 
 - [ ] Tạo hoạt động.
 - [ ] Lịch sử hoạt động.
@@ -150,7 +163,7 @@ Nhân sự:
 - [ ] DM/UM xem hoạt động cấp dưới.
 - [ ] Hỗ trợ loại hoạt động khảo sát, gặp gỡ, tư vấn.
 
-### Phase 6 — Notification
+### Phase 6 — Notification — MVP
 
 - [ ] DM tạo thông báo.
 - [ ] Chưa gửi/đã gửi.
@@ -158,7 +171,7 @@ Nhân sự:
 - [ ] Cập nhật/xóa theo business rule.
 - [ ] Đã đọc/chưa đọc theo người nhận.
 
-### Phase 7 — Reports & Statistics
+### Phase 7 — Reports & Statistics — MVP
 
 - [ ] Cá nhân.
 - [ ] Nhóm.
@@ -168,18 +181,20 @@ Nhân sự:
 - [ ] Xuất Excel.
 - [ ] Mọi query/export phải tuân thủ scope.
 
-### Phase 8 — Testing + Security Hardening
+### Phase 8 — MVP Hardening
 
-- [ ] Unit test.
-- [ ] Integration test.
-- [ ] RLS test.
-- [ ] Permission matrix.
-- [ ] Ownership test.
-- [ ] Auth/session test.
+Chỉ các gate bắt buộc trước demo/deploy:
+
+- [ ] Integration test các luồng nghiệp vụ chính.
+- [ ] RLS/permission/ownership regression.
+- [ ] Auth/session regression.
 - [ ] Secret leakage check.
 - [ ] CI validation.
+- [ ] Smoke test toàn bộ MVP.
 
-### Phase 9 — Deployment & Acceptance
+Sau MVP mới mở rộng unit-test coverage, fuzz/edge-case coverage, performance/observability và security hardening không chặn release.
+
+### Phase 9 — MVP Deployment & Acceptance
 
 - [ ] Supabase production.
 - [ ] Apply migration/RLS.
@@ -238,7 +253,7 @@ Không merge PR khi lint/type-check/build/test liên quan chưa pass.
 - [ ] Delete/cascade/restrict strategy.
 - [ ] Chuẩn hóa thuật ngữ “vai trò” và “chức danh” trong code.
 - [x] Password policy: minimum 8, lowercase + uppercase + digit, symbol optional.
-- [ ] Session duration — không bật time-boxed lifetime khi unconditional-reauth compatibility shim còn backdate `auth.sessions.created_at`; resolve cùng việc bỏ shim/provider support.
+- [ ] Session duration — **defer sau MVP**. Không bật time-boxed lifetime khi unconditional-reauth compatibility shim còn backdate `auth.sessions.created_at`; đồng thời không bật MFA/low-AAL lifetime dựa trên cùng timestamp. Production phải pin/review GoTrue version trước khi dùng shim.
 - [ ] Notification delete rule.
 - [ ] Statistics: query trực tiếp, view hay RPC.
 
@@ -253,4 +268,6 @@ Không tự suy diễn các quyết định trên nếu ảnh hưởng kiến tr
 - [x] PDF gốc đã có tại `docs/source/Bao-cao-mon-opensource.pdf`.
 - [x] Phase 0 đã merge vào `main`.
 - [x] Phase 1 đã independent review PASS và merge vào `main`.
-- [ ] Phase 2 implementation đã đủ scope source-derived và đang chờ independent review cho password/OTP completion PR.
+- [x] Phase 2 đã independent review PASS và merge vào `main` qua PR #7.
+- [x] Roadmap chuyển sang **MVP-only**, target 10/10/2026 nếu không có blocker mới.
+- [ ] Reviewer LOW F-3 của PR #7 được defer sang production hardening: document/pin GoTrue compatibility và tránh Timebox/AllowLowAAL conflict khi shim còn dùng `auth.sessions.created_at`.
