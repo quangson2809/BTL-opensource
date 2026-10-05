@@ -84,7 +84,7 @@ export default async function NotificationsPage({
                 <p>{notification.noi_dung}</p>
                 <p className="secondary-text">
                   {notification.loai} · {notification.trang_thai} ·{" "}
-                  {new Date(notification.created_at).toLocaleString("vi-VN")}
+                  {new Date(notification.created_at).toLocaleString("vi-VN", { timeZone: "Asia/Ho_Chi_Minh" })}
                 </p>
                 {owned ? (
                   <p className="secondary-text">
