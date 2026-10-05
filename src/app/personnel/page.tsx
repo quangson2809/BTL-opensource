@@ -67,7 +67,7 @@ export default async function PersonnelPage() {
             <article
               className="personnel-row"
               key={account.id}
-              style={{ marginLeft: \`\${Math.min(depth, 6) * 1.5}rem\` }}
+              style={{ marginLeft: `${Math.min(depth, 6) * 1.5}rem` }}
             >
               <p>
                 <strong>{account.ho_ten}</strong> — {account.ma_dai_ly}
@@ -75,7 +75,7 @@ export default async function PersonnelPage() {
               <p className="secondary-text">
                 {account.email} · {account.trang_thai}
               </p>
-              <Link href={\`/personnel/\${account.id}\`}>
+              <Link href={`/personnel/${account.id}`}>
                 Xem chi tiết và thống kê
               </Link>
             </article>
