@@ -60,14 +60,14 @@ export async function createCustomer(formData: FormData) {
     redirect("/customers/new?error=create");
   }
 
-  redirect(\`/customers/\${data.id}?status=created\`);
+  redirect(`/customers/${data.id}?status=created`);
 }
 
 export async function updateCustomer(formData: FormData) {
   const customerId = field(formData, "customer_id");
   const payload = customerPayload(formData);
   if (!customerId || !payload) {
-    redirect(\`/customers/\${customerId || "unknown"}/edit?error=invalid\`);
+    redirect(`/customers/${customerId || "unknown"}/edit?error=invalid`);
   }
 
   const { supabase } = await requireBusinessAccount();
@@ -79,10 +79,10 @@ export async function updateCustomer(formData: FormData) {
     .maybeSingle();
 
   if (error || !data) {
-    redirect(\`/customers/\${customerId}/edit?error=update\`);
+    redirect(`/customers/${customerId}/edit?error=update`);
   }
 
-  redirect(\`/customers/\${customerId}?status=updated\`);
+  redirect(`/customers/${customerId}?status=updated`);
 }
 
 export async function deleteCustomer(formData: FormData) {
@@ -100,7 +100,7 @@ export async function deleteCustomer(formData: FormData) {
     .maybeSingle();
 
   if (error || !data) {
-    redirect(\`/customers/\${customerId}?error=delete\`);
+    redirect(`/customers/${customerId}?error=delete`);
   }
 
   redirect("/customers?status=deleted");
