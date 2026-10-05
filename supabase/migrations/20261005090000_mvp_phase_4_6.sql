@@ -97,8 +97,11 @@ as $$
     and exists (
       select 1
       from public.thong_bao tb
+      join public.thong_bao_nguoi_nhan tbn
+        on tbn.thong_bao_id = tb.id
       where tb.id = target_notification_id
         and tb.trang_thai = 'ĐÃ_GỬI'
+        and tbn.tai_khoan_id = auth.uid()
     );
 $$;
 
