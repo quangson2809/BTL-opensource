@@ -41,7 +41,7 @@ export async function createNotification(formData: FormData) {
     redirect("/notifications/new?error=create");
   }
 
-  redirect(\`/notifications?status=created&id=\${data}\`);
+  redirect(`/notifications?status=created&id=${data}`);
 }
 
 export async function sendNotification(formData: FormData) {
