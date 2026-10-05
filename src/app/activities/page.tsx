@@ -80,7 +80,7 @@ export default async function ActivitiesPage({
                 </p>
                 <p>{activity.dia_diem}</p>
                 <p className="secondary-text">
-                  {new Date(activity.thoi_gian).toLocaleString("vi-VN")} ·{" "}
+                  {new Date(activity.thoi_gian).toLocaleString("vi-VN", { timeZone: "Asia/Ho_Chi_Minh" })} ·{" "}
                   {activity.so_khach_hang_ket_noi} khách hàng kết nối
                 </p>
                 {owned ? (
