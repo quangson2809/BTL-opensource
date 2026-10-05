@@ -28,7 +28,7 @@ function activityPayload(formData: FormData) {
     return null;
   }
 
-  const parsedTime = new Date(thoiGian);
+  const parsedTime = new Date(`${thoiGian}:00+07:00`);
   if (Number.isNaN(parsedTime.getTime())) {
     return null;
   }
