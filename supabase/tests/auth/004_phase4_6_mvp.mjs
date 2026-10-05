@@ -41,16 +41,11 @@ async function createFixture(label, roleId, managerId = null) {
   assert.ok(identity.user, label + " Auth fixture must exist");
 
   const id = identity.user.id;
-  const digits = String(
-    Math.abs(id.split("").reduce((sum, ch) => sum + ch.charCodeAt(0), 0)),
-  )
-    .padStart(8, "0")
-    .slice(-8);
   const { error: accountError } = await setup.from("tai_khoan").insert({
     id,
     ho_ten: "Phase 4-6 " + label,
     email,
-    so_dien_thoai: "06" + digits,
+    so_dien_thoai: "P46-PHONE-" + label + "-" + suffix,
     ma_dai_ly: "P46-" + label.toUpperCase() + "-" + suffix,
     manager_id: managerId,
     trang_thai: "DANG_HOAT_DONG",
