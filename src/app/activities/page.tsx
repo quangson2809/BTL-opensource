@@ -31,7 +31,7 @@ export default async function ActivitiesPage({
   const names = new Map(
     (accountResult.data ?? []).map((account) => [
       account.id,
-      \`\${account.ho_ten} (\${account.ma_dai_ly})\`,
+      `${account.ho_ten} (${account.ma_dai_ly})`,
     ]),
   );
   const activities = (activityResult.data ?? []).filter(
@@ -85,7 +85,7 @@ export default async function ActivitiesPage({
                 </p>
                 {owned ? (
                   <div className="actions">
-                    <Link href={\`/activities/\${activity.id}/edit\`}>
+                    <Link href={`/activities/${activity.id}/edit`}>
                       Chỉnh sửa
                     </Link>
                     <form action={deleteActivity}>
