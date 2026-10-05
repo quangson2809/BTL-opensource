@@ -35,7 +35,7 @@ export default async function EditCustomerPage({
       <section className="card wide-card">
         <h1>Chỉnh sửa khách hàng</h1>
         <p>
-          <Link href={\`/customers/\${customer.id}\`}>Quay lại chi tiết</Link>
+          <Link href={`/customers/${customer.id}`}>Quay lại chi tiết</Link>
         </p>
         {query.error ? (
           <p className="message error">Không thể cập nhật dữ liệu.</p>
