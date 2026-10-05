@@ -62,24 +62,59 @@ using (
   )
 );
 
+-- Use narrow SECURITY DEFINER helpers so notification and recipient RLS policies
+-- do not recursively query each other.
+create or replace function public.can_creator_read_notification_recipient(
+  target_notification_id uuid
+)
+returns boolean
+language sql
+stable
+security definer
+set search_path = pg_catalog, public
+as $$
+  select public.current_account_has_application_access()
+    and exists (
+      select 1
+      from public.thong_bao tb
+      where tb.id = target_notification_id
+        and tb.nguoi_tao_id = auth.uid()
+    );
+$$;
+
+create or replace function public.can_recipient_read_sent_notification(
+  target_notification_id uuid,
+  target_account_id uuid
+)
+returns boolean
+language sql
+stable
+security definer
+set search_path = pg_catalog, public
+as $$
+  select public.current_account_has_application_access()
+    and target_account_id = auth.uid()
+    and exists (
+      select 1
+      from public.thong_bao tb
+      where tb.id = target_notification_id
+        and tb.trang_thai = 'ĐÃ_GỬI'
+    );
+$$;
+
+revoke all on function public.can_creator_read_notification_recipient(uuid) from public;
+revoke all on function public.can_recipient_read_sent_notification(uuid, uuid) from public;
+grant execute on function public.can_creator_read_notification_recipient(uuid) to authenticated;
+grant execute on function public.can_recipient_read_sent_notification(uuid, uuid) to authenticated;
+
 drop policy if exists thong_bao_nguoi_nhan_select_own on public.thong_bao_nguoi_nhan;
 create policy thong_bao_nguoi_nhan_select_scope
 on public.thong_bao_nguoi_nhan
 for select
 to authenticated
 using (
-  exists (
-    select 1
-    from public.thong_bao tb
-    where tb.id = thong_bao_nguoi_nhan.thong_bao_id
-      and (
-        tb.nguoi_tao_id = auth.uid()
-        or (
-          thong_bao_nguoi_nhan.tai_khoan_id = auth.uid()
-          and tb.trang_thai = 'ĐÃ_GỬI'
-        )
-      )
-  )
+  public.can_creator_read_notification_recipient(thong_bao_id)
+  or public.can_recipient_read_sent_notification(thong_bao_id, tai_khoan_id)
 );
 
 drop policy if exists thong_bao_nguoi_nhan_update_own on public.thong_bao_nguoi_nhan;
@@ -87,24 +122,8 @@ create policy thong_bao_nguoi_nhan_update_sent_own
 on public.thong_bao_nguoi_nhan
 for update
 to authenticated
-using (
-  tai_khoan_id = auth.uid()
-  and exists (
-    select 1
-    from public.thong_bao tb
-    where tb.id = thong_bao_nguoi_nhan.thong_bao_id
-      and tb.trang_thai = 'ĐÃ_GỬI'
-  )
-)
-with check (
-  tai_khoan_id = auth.uid()
-  and exists (
-    select 1
-    from public.thong_bao tb
-    where tb.id = thong_bao_nguoi_nhan.thong_bao_id
-      and tb.trang_thai = 'ĐÃ_GỬI'
-  )
-);
+using (public.can_recipient_read_sent_notification(thong_bao_id, tai_khoan_id))
+with check (public.can_recipient_read_sent_notification(thong_bao_id, tai_khoan_id));
 
 create or replace function public.dm_create_notification(
   notification_title text,
