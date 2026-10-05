@@ -115,7 +115,7 @@ export default async function CustomersPage({ searchParams }: CustomersPageProps
                 {customer.nhom_tinh_cach}
               </p>
               <p className="secondary-text">
-                <Link href={\`/customers/\${customer.id}\`}>Xem chi tiết</Link>
+                <Link href={`/customers/${customer.id}`}>Xem chi tiết</Link>
               </p>
             </article>
           ))}
