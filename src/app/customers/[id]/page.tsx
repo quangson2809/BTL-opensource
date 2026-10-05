@@ -36,7 +36,7 @@ export default async function CustomerDetailPage({
         <h1>{customer.ho_ten}</h1>
         <div className="actions">
           <Link href="/customers">Danh sách khách hàng</Link>
-          <Link href={\`/customers/\${customer.id}/edit\`}>Chỉnh sửa</Link>
+          <Link href={`/customers/${customer.id}/edit`}>Chỉnh sửa</Link>
         </div>
         {query.status === "created" ? (
           <p className="message success">Đã tạo khách hàng.</p>
