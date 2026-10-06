@@ -3,7 +3,7 @@ import path from "node:path";
 
 const root = process.cwd();
 const sourceRoot = path.join(root, "src");
-const sourceExtensions = new Set([".js", ".jsx", ".ts", ".tsx"]);
+const sourceExtensions = new Set([".js", ".jsx", ".ts", ".tsx", ".mjs", ".cjs"]);
 const clientBanned = [
   "SUPABASE_SECRET_KEY",
   "SERVICE_ROLE_KEY",
@@ -33,19 +33,35 @@ const sourceFiles = (await filesUnder(sourceRoot)).filter((file) =>
   sourceExtensions.has(path.extname(file)),
 );
 
+const rootEntries = await readdir(root, { withFileTypes: true });
+const configFiles = rootEntries
+  .filter(
+    (entry) =>
+      entry.isFile() &&
+      (entry.name.startsWith(".env") ||
+        entry.name.startsWith("next.config.") ||
+        entry.name === "package.json"),
+  )
+  .map((entry) => path.join(root, entry.name));
+
+const filesForGlobalPublicSecretScan = [...sourceFiles, ...configFiles];
 const violations = [];
 
-for (const file of sourceFiles) {
-  const text = await readFile(file, "utf8");
+for (const file of filesForGlobalPublicSecretScan) {
+  const fileText = await readFile(file, "utf8");
   const relative = path.relative(root, file);
 
   for (const token of globallyBanned) {
-    if (text.includes(token)) {
+    if (fileText.includes(token)) {
       violations.push(`${relative}: forbidden public secret token ${token}`);
     }
   }
+}
 
-  const firstMeaningfulLine = text
+for (const file of sourceFiles) {
+  const fileText = await readFile(file, "utf8");
+  const relative = path.relative(root, file);
+  const firstMeaningfulLine = fileText
     .split(/\r?\n/)
     .map((line) => line.trim())
     .find((line) => line && !line.startsWith("//"));
@@ -55,11 +71,21 @@ for (const file of sourceFiles) {
 
   if (isClientModule) {
     for (const token of clientBanned) {
-      if (text.includes(token)) {
-        violations.push(`${relative}: client module references server secret boundary ${token}`);
+      if (fileText.includes(token)) {
+        violations.push(
+          `${relative}: client module references server secret boundary ${token}`,
+        );
       }
     }
   }
+}
+
+const adminModulePath = path.join(root, "src/lib/supabase/admin.ts");
+const adminModule = await readFile(adminModulePath, "utf8");
+if (!adminModule.includes('import "server-only";')) {
+  violations.push(
+    "src/lib/supabase/admin.ts: missing server-only compiler boundary marker",
+  );
 }
 
 if (violations.length > 0) {
@@ -71,5 +97,5 @@ if (violations.length > 0) {
 }
 
 console.log(
-  `Secret-boundary check passed for ${sourceFiles.length} source files.`,
+  `Secret-boundary check passed for ${sourceFiles.length} source files and ${configFiles.length} root config/environment files.`,
 );
