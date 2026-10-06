@@ -77,11 +77,11 @@ jobs:
             sleep 1
           done
 
-          for route in / /login /register /password/recovery; do
+          for route in / /login /register /password/recovery /password/change; do
             curl -fsS "http://127.0.0.1:3000$route" >/dev/null
           done
 
-          for route in /dashboard /password/change /customers /customers/new /activities /activities/new /notifications /notifications/new /reports /personnel /admin/accounts /admin/roles; do
+          for route in /dashboard /customers /customers/new /activities /activities/new /notifications /notifications/new /reports /personnel /admin/accounts /admin/roles; do
             status="$(curl -sS -o /dev/null -w '%{http_code}' "http://127.0.0.1:3000$route")"
             case "$status" in
               301|302|303|307|308) ;;
