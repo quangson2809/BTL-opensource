@@ -29,22 +29,53 @@ Never expose `SUPABASE_SECRET_KEY` as a `NEXT_PUBLIC_*` value.
 
 ### Database
 
-Apply migrations in repository order, then seed only the deterministic role/permission catalog:
+The production-required role/permission catalog is migration-owned. `supabase/seed.sql` is intentionally a no-op, so a production database does not depend on a deployment runner executing seed hooks.
+
+Set the real self-hosted PostgreSQL connection string outside source control:
 
 ```bash
-supabase db push
+export PROD_DB_URL='postgresql://<user>:<password>@<host>:5432/<database>?sslmode=require'
 ```
 
-Verify the migration set includes:
+Review the exact migration plan, then apply it to that explicit target:
+
+```bash
+supabase db push --db-url "$PROD_DB_URL" --dry-run
+supabase db push --db-url "$PROD_DB_URL"
+```
+
+Do not use a plain `supabase db push` for self-hosted production unless the CLI has been intentionally linked to that exact target.
+
+The migration set must include:
 
 - core schema/RLS;
 - Phase 2 Auth/session gates;
 - unconditional password reauthentication compatibility shim;
 - Phase 3 Admin/RBAC RPCs;
 - Phase 4-6 customer/personnel/activity/notification boundary;
-- Phase 7 reporting aggregate RPC.
+- Phase 7 reporting aggregate RPC;
+- production-required `ADMIN`/`DM`/`UM`/`SA` role catalog, `ACTIVITY_VIEW_SUBTREE`, DM/UM permission mappings, and customer-created-at integrity protection.
 
-Run production-safe verification queries for role/permission seed presence before opening traffic.
+Before Admin bootstrap or opening traffic, verify the migrated catalog directly against the production database:
+
+```bash
+psql "$PROD_DB_URL" -v ON_ERROR_STOP=1 <<'SQL'
+select ma_vai_tro
+from public.vai_tro
+where ma_vai_tro in ('ADMIN', 'DM', 'UM', 'SA')
+order by ma_vai_tro;
+
+select vt.ma_vai_tro, q.ma_quyen
+from public.phan_quyen_vai_tro pqvt
+join public.vai_tro vt on vt.id = pqvt.vai_tro_id
+join public.quyen q on q.id = pqvt.quyen_id
+where vt.ma_vai_tro in ('DM', 'UM')
+  and q.ma_quyen = 'ACTIVITY_VIEW_SUBTREE'
+order by vt.ma_vai_tro;
+SQL
+```
+
+Expected result: four required roles and exactly the DM/UM `ACTIVITY_VIEW_SUBTREE` mappings. If any are missing, stop deployment rather than bootstrapping users against a partial catalog.
 
 ### Auth password-verification hook
 
