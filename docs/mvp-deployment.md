@@ -83,7 +83,9 @@ Before production acceptance:
 4. do not enable low-AAL/session-lifetime behavior that interprets the backdated timestamp as real session age;
 5. replace the shim before enabling those features if a future GoTrue version exposes a supported unconditional reauthentication threshold.
 
-The exact production GoTrue version is intentionally not invented in source control. It must be recorded from the real production environment during provisioning.
+CI is pinned to Supabase CLI `2.119.0`. The validated local stack used by this CLI currently pulls GoTrue `v2.197.0`; treat that as the tested development/CI baseline, not as an automatic production pin.
+
+Production must either pin that tested Auth version/digest or explicitly validate a different version before acceptance. Record the exact production version or immutable digest from the real environment.
 
 ## 3. Vercel project
 
