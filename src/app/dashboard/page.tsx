@@ -31,6 +31,7 @@ export default async function DashboardPage() {
           <Link href="/customers">Khách hàng</Link>
           <Link href="/activities">Hoạt động</Link>
           <Link href="/notifications">Thông báo</Link>
+          <Link href="/reports">Báo cáo</Link>
           {isManager ? <Link href="/personnel">Nhân sự</Link> : null}
           {isAdmin ? <Link href="/admin/accounts">Quản trị</Link> : null}
           <Link href="/password/change">Đổi mật khẩu</Link>
