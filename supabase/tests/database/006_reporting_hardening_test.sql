@@ -76,6 +76,29 @@ values
     'GẶP_GỠ', 'Hà Nội', '2026-10-06T04:00:00Z', 9
   );
 
+-- Fixed draft proves non-owner DM cannot send even when the target UUID is known.
+insert into public.thong_bao (
+  id, nguoi_tao_id, tieu_de, noi_dung, loai, trang_thai
+)
+values (
+  'c7300000-0000-4000-8000-000000000001',
+  'c7000000-0000-4000-8000-000000000001',
+  'P79 fixed non-owner draft',
+  'Known draft UUID',
+  'TIN_TỨC',
+  'CHƯA_GỬI'
+);
+
+insert into public.thong_bao_nguoi_nhan (
+  id, thong_bao_id, tai_khoan_id, da_doc
+)
+values (
+  'c7400000-0000-4000-8000-000000000001',
+  'c7300000-0000-4000-8000-000000000001',
+  'c7000000-0000-4000-8000-000000000002',
+  false
+);
+
 set local role authenticated;
 select set_config('request.jwt.claim.role', 'authenticated', true);
 
@@ -132,13 +155,62 @@ select ok(
 );
 
 select throws_ok(
-  $$
+  $
     select *
     from public.report_scope('2026-10-06T00:00:00Z', '2026-10-06T00:00:00Z')
-  $$,
+  $,
   '22023',
   null,
   'report rejects invalid period'
+);
+
+-- SA reporting remains self-only.
+select set_config('request.jwt.claim.sub', 'c7000000-0000-4000-8000-000000000002', true);
+select set_config(
+  'request.jwt.claims',
+  jsonb_build_object(
+    'role', 'authenticated',
+    'sub', 'c7000000-0000-4000-8000-000000000002',
+    'amr', jsonb_build_array(jsonb_build_object('method', 'password', 'timestamp', 0))
+  )::text,
+  true
+);
+
+select is(
+  (
+    select count(*)::bigint
+    from public.report_scope(
+      '2026-10-05T17:00:00Z',
+      '2026-10-06T17:00:00Z'
+    )
+  ),
+  1::bigint,
+  'SA report contains only self'
+);
+
+select ok(
+  exists (
+    select 1
+    from public.report_scope(
+      '2026-10-05T17:00:00Z',
+      '2026-10-06T17:00:00Z'
+    )
+    where account_id = 'c7000000-0000-4000-8000-000000000002'
+      and is_self
+  ),
+  'SA report row is bound to auth.uid'
+);
+
+-- Restore DM for manager and notification tests.
+select set_config('request.jwt.claim.sub', 'c7000000-0000-4000-8000-000000000001', true);
+select set_config(
+  'request.jwt.claims',
+  jsonb_build_object(
+    'role', 'authenticated',
+    'sub', 'c7000000-0000-4000-8000-000000000001',
+    'amr', jsonb_build_array(jsonb_build_object('method', 'password', 'timestamp', 0))
+  )::text,
+  true
 );
 
 -- Manager can read subordinate activity but cannot delete it.
@@ -241,18 +313,14 @@ select set_config(
 );
 
 select throws_ok(
-  $$
+  $
     select public.dm_send_notification(
-      (
-        select id
-        from public.thong_bao
-        where tieu_de = 'P79 owned draft'
-      )
+      'c7300000-0000-4000-8000-000000000001'
     )
-  $$,
+  $,
   '22023',
   null,
-  'non-owner DM cannot send another DM draft'
+  'non-owner DM cannot send another DM draft even with known UUID'
 );
 
 -- Owner sends once; resend is rejected.
