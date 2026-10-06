@@ -255,7 +255,7 @@ Không merge PR khi lint/type-check/build/test liên quan chưa pass.
 - [x] Password policy: minimum 8, lowercase + uppercase + digit, symbol optional.
 - [ ] Session duration — **defer sau MVP**. Không bật time-boxed lifetime khi unconditional-reauth compatibility shim còn backdate `auth.sessions.created_at`; đồng thời không bật MFA/low-AAL lifetime dựa trên cùng timestamp. Production phải pin/review GoTrue version trước khi dùng shim.
 - [ ] Notification delete rule.
-- [ ] Statistics: query trực tiếp, view hay RPC.
+- [x] Statistics: dùng narrow `SECURITY DEFINER` RPC dưới caller JWT để trả aggregate theo scope; không mở raw customer rows. Export dùng cùng RPC để giữ authorization contract thống nhất.
 
 Không tự suy diễn các quyết định trên nếu ảnh hưởng kiến trúc hoặc business behavior.
 
@@ -273,4 +273,6 @@ Không tự suy diễn các quyết định trên nếu ảnh hưởng kiến tr
 - [ ] Reviewer LOW F-3 của PR #7 được defer sang production hardening: document/pin GoTrue compatibility và tránh Timebox/AllowLowAAL conflict khi shim còn dùng `auth.sessions.created_at`.
 
 - [x] Phase 3 đã independent review PASS và merge vào \`main\` qua PR #10.
-- [ ] Phase 4-6 source-confirmed MVP đang ở PR #11, chờ CI + independent review trước merge.
+- [x] Phase 4-6 source-confirmed MVP đã independent review PASS và merge vào `main` qua PR #11.
+
+- [ ] Phase 7-9 MVP đang triển khai trên `feature/mvp-phase-7-9-batch`; review sau khi CI + database/auth regression + preview smoke gate hoàn tất.
