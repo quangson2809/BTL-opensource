@@ -183,9 +183,9 @@ begin
   returning id into notification_id;
 
   insert into public.thong_bao_nguoi_nhan (thong_bao_id, tai_khoan_id)
-  select notification_id, recipient_id
+  select notification_id, recipients.scoped_recipient_id
   from (
-    select distinct unnest(recipient_ids) as recipient_id
+    select distinct unnest(recipient_ids) as scoped_recipient_id
   ) recipients;
 
   return notification_id;
