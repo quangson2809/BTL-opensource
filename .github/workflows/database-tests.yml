@@ -81,7 +81,7 @@ jobs:
             curl -fsS "http://127.0.0.1:3000$route" >/dev/null
           done
 
-          for route in /dashboard /customers /activities /notifications /reports /personnel /admin/accounts; do
+          for route in /dashboard /password/change /customers /customers/new /activities /activities/new /notifications /notifications/new /reports /personnel /admin/accounts /admin/roles; do
             status="$(curl -sS -o /dev/null -w '%{http_code}' "http://127.0.0.1:3000$route")"
             case "$status" in
               301|302|303|307|308) ;;
@@ -92,6 +92,13 @@ jobs:
                 ;;
             esac
           done
+
+          export_status="$(curl -sS -o /dev/null -w '%{http_code}' "http://127.0.0.1:3000/reports/export?period=day&anchor=2026-10-06")"
+          if [ "$export_status" != "401" ]; then
+            echo "Report export must reject unauthenticated requests, got HTTP $export_status"
+            cat /tmp/idaily-next.log
+            exit 1
+          fi
 
           kill "$APP_PID"
           wait "$APP_PID" 2>/dev/null || true
