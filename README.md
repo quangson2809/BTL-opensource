@@ -73,6 +73,7 @@ Không commit `.env.local`, secret key, service-role key hoặc database passwor
 | `npm run start` | Chạy production build |
 | `npm run lint` | Chạy ESLint |
 | `npm run type-check` | Chạy TypeScript checker với `--noEmit` |
+| `npm run security-check` | Kiểm tra client bundle không tham chiếu server secret boundary |
 
 ## Environment variables
 
@@ -169,15 +170,15 @@ Không tạo bảng `nhom`, bảng báo cáo/thống kê, `customer_activity` ju
 - `thong_bao`: Phase 1 chỉ thiết lập safe read cho creator/recipient; create/update/delete notification được defer sang Phase 6.
 - Không dùng service-role như cơ chế authorization thông thường.
 
-### Seed foundation
+### Required RBAC catalog
 
-`supabase/seed.sql` seed deterministic:
+The application-required catalog is migration-owned so fresh self-hosted production databases receive the same required authorization foundation as local/CI:
 
 - roles: `ADMIN`, `DM`, `UM`, `SA`;
-- permission: `ACTIVITY_VIEW_SUBTREE`, mapping trực tiếp tới use case DM/UM xem hoạt động cấp dưới;
-- gán permission trên cho `DM` và `UM`.
+- permission: `ACTIVITY_VIEW_SUBTREE`;
+- permission mapping for `DM` and `UM`.
 
-Seed không tạo production user, password, email/password thật, service-role key hoặc credential.
+`supabase/seed.sql` is intentionally a no-op. It does not contain production users, passwords, service-role keys, credentials, or application-required catalog rows.
 
 ## Local database workflow
 
@@ -205,7 +206,7 @@ Dừng local stack:
 supabase stop --no-backup
 ```
 
-`supabase db reset` là verification bắt buộc khi thay đổi migration; migration files là source of truth của schema.
+`supabase db reset` là verification bắt buộc khi thay đổi migration; migration files are the source of truth for schema **and the required RBAC catalog**. Production does not depend on seed execution.
 
 ## Database tests
 
@@ -310,6 +311,49 @@ Không tạo custom OTP table. Supabase Auth quản lý token, expiry, single-us
 
 ## Current status
 
-- Phase 0 — Repository Bootstrap: merged vào `main`.
-- Phase 1 — Database + RLS Foundation: reviewed PASS và merged vào `main` qua PR #4.
-- Phase 2 — Authentication & Session: auth/session foundation đã merge qua PR #6; password policy + email OTP change/recovery đang được hoàn thiện trên `feature/phase-2-password-otp` và chờ independent review.
+- Phase 0 — Repository Bootstrap: merged.
+- Phase 1 — Database + RLS Foundation: independent review PASS, merged via PR #4.
+- Phase 2 — Authentication & Session: independent review PASS, merged via PR #7.
+- Phase 3 — Admin/RBAC MVP: independent review PASS, merged via PR #10.
+- Phase 4-6 — Customer/Personnel, Activity, Notification MVP: independent review PASS, merged via PR #11.
+- Phase 7-9 release batch: reporting/hardening/deployment preparation is tracked in PR #12.
+- Production deployment is not considered complete until the evidence checklist in `docs/mvp-deployment.md` is satisfied.
+
+
+## MVP business modules
+
+Current MVP implementation includes:
+
+- Phase 3 Admin/RBAC: account list/detail, approve/lock/unlock, assign/revoke roles, role/permission views.
+- Phase 4 Customer/Personnel: owner-scoped customer CRUD/search/filter, hierarchy view and aggregate subordinate summary.
+- Phase 5 Activity: own activity create/update/delete plus DM/UM subtree read.
+- Phase 6 Notification: DM draft/create/send with subtree recipients and per-recipient read state.
+- Phase 7 Reports: day/week/month scoped aggregates, personal/team/overview comparison, and UTF-8 CSV export that opens directly in Excel.
+
+Notification update/delete remains intentionally deferred until its canonical business rule is locked.
+
+## Security and verification
+
+GitHub CI runs:
+
+- lint;
+- TypeScript type-check;
+- client secret-boundary check;
+- production build.
+
+Database workflow runs from a clean local Supabase stack:
+
+- migration + deterministic seed replay;
+- pgTAP schema/RLS/regression tests;
+- Auth integration tests using real local Supabase Auth;
+- MVP route smoke against a running Next.js development server.
+
+Reporting and export use the caller JWT and the same scoped aggregate RPC. Raw subordinate customer rows remain protected by the existing customer ownership RLS boundary.
+
+## Production deployment
+
+See `docs/mvp-deployment.md`.
+
+Production acceptance requires a real self-hosted Supabase/Auth environment with the password-verification hook enabled, real SMTP, recorded GoTrue/Auth version or immutable digest, and a Vercel project linked to this repository.
+
+The repository intentionally does not contain production credentials.

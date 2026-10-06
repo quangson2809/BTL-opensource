@@ -11,6 +11,10 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
 jobs:
   database:
     runs-on: ubuntu-latest
@@ -31,7 +35,7 @@ jobs:
       - name: Setup Supabase CLI
         uses: supabase/setup-cli@v1
         with:
-          version: latest
+          version: 2.119.0
 
       - name: Start local Supabase
         run: supabase start
@@ -53,6 +57,56 @@ jobs:
             echo "Running $test_file"
             node "$test_file"
           done
+
+      - name: Run MVP route smoke
+        shell: bash
+        run: |
+          eval "$(supabase status -o env)"
+          export NEXT_PUBLIC_SUPABASE_URL="$API_URL"
+          export NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY="$ANON_KEY"
+          export SUPABASE_SECRET_KEY="$SERVICE_ROLE_KEY"
+
+          npm run dev > /tmp/idaily-next.log 2>&1 &
+          APP_PID=$!
+          trap 'kill "$APP_PID" 2>/dev/null || true' EXIT
+
+          for attempt in {1..60}; do
+            if curl -fsS http://127.0.0.1:3000/login >/dev/null; then
+              break
+            fi
+            if [ "$attempt" -eq 60 ]; then
+              cat /tmp/idaily-next.log
+              exit 1
+            fi
+            sleep 1
+          done
+
+          for route in / /login /register /password/recovery /password/change; do
+            curl -fsS "http://127.0.0.1:3000$route" >/dev/null
+          done
+
+          for route in /dashboard /customers /customers/new /activities /activities/new /notifications /notifications/new /reports /personnel /admin/accounts /admin/roles; do
+            status="$(curl -sS -o /dev/null -w '%{http_code}' "http://127.0.0.1:3000$route")"
+            case "$status" in
+              301|302|303|307|308) ;;
+              *)
+                echo "Expected auth redirect for $route, got HTTP $status"
+                cat /tmp/idaily-next.log
+                exit 1
+                ;;
+            esac
+          done
+
+          export_status="$(curl -sS -o /dev/null -w '%{http_code}' "http://127.0.0.1:3000/reports/export?period=day&anchor=2026-10-06")"
+          if [ "$export_status" != "401" ]; then
+            echo "Report export must reject unauthenticated requests, got HTTP $export_status"
+            cat /tmp/idaily-next.log
+            exit 1
+          fi
+
+          kill "$APP_PID"
+          wait "$APP_PID" 2>/dev/null || true
+          trap - EXIT
 
       - name: Stop local Supabase
         if: always()
