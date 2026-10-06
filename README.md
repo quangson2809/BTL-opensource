@@ -170,15 +170,15 @@ Không tạo bảng `nhom`, bảng báo cáo/thống kê, `customer_activity` ju
 - `thong_bao`: Phase 1 chỉ thiết lập safe read cho creator/recipient; create/update/delete notification được defer sang Phase 6.
 - Không dùng service-role như cơ chế authorization thông thường.
 
-### Seed foundation
+### Required RBAC catalog
 
-`supabase/seed.sql` seed deterministic:
+The application-required catalog is migration-owned so fresh self-hosted production databases receive the same required authorization foundation as local/CI:
 
 - roles: `ADMIN`, `DM`, `UM`, `SA`;
-- permission: `ACTIVITY_VIEW_SUBTREE`, mapping trực tiếp tới use case DM/UM xem hoạt động cấp dưới;
-- gán permission trên cho `DM` và `UM`.
+- permission: `ACTIVITY_VIEW_SUBTREE`;
+- permission mapping for `DM` and `UM`.
 
-Seed không tạo production user, password, email/password thật, service-role key hoặc credential.
+`supabase/seed.sql` is intentionally a no-op. It does not contain production users, passwords, service-role keys, credentials, or application-required catalog rows.
 
 ## Local database workflow
 
@@ -206,7 +206,7 @@ Dừng local stack:
 supabase stop --no-backup
 ```
 
-`supabase db reset` là verification bắt buộc khi thay đổi migration; migration files là source of truth của schema.
+`supabase db reset` là verification bắt buộc khi thay đổi migration; migration files are the source of truth for schema **and the required RBAC catalog**. Production does not depend on seed execution.
 
 ## Database tests
 
