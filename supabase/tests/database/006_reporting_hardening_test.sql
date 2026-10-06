@@ -155,10 +155,10 @@ select ok(
 );
 
 select throws_ok(
-  $
+  $$
     select *
     from public.report_scope('2026-10-06T00:00:00Z', '2026-10-06T00:00:00Z')
-  $,
+  $$,
   '22023',
   null,
   'report rejects invalid period'
@@ -313,11 +313,11 @@ select set_config(
 );
 
 select throws_ok(
-  $
+  $$
     select public.dm_send_notification(
       'c7300000-0000-4000-8000-000000000001'
     )
-  $,
+  $$,
   '22023',
   null,
   'non-owner DM cannot send another DM draft even with known UUID'
