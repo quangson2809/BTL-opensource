@@ -144,6 +144,11 @@ assert.equal(
 );
 
 const saRow = report.find((row) => row.account_id === sa.id);
+assert.equal(
+  saRow.customer_count,
+  1,
+  "rejected created_at forgery must leave customer in current report period",
+);
 assert.equal(saRow.activity_count, 1, "DM aggregate must count subordinate activity");
 assert.equal(
   saRow.connected_customer_count,
