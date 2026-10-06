@@ -133,43 +133,43 @@ Password/OTP contract:
 
 Ưu tiên luồng tối thiểu để vận hành hệ thống:
 
-- [ ] Danh sách tài khoản.
-- [ ] Phê duyệt tài khoản SA.
-- [ ] Khóa/mở khóa tài khoản.
-- [ ] Gán/thu hồi vai trò.
-- [ ] Xem danh sách vai trò/quyền và mapping cần thiết.
-- [ ] Không gán quyền trực tiếp cho tài khoản.
+- [x] Danh sách tài khoản.
+- [x] Phê duyệt tài khoản SA.
+- [x] Khóa/mở khóa tài khoản.
+- [x] Gán/thu hồi vai trò.
+- [x] Xem danh sách vai trò/quyền và mapping cần thiết.
+- [x] Không gán quyền trực tiếp cho tài khoản.
 - [ ] CRUD nâng cao cho role/permission catalog chỉ làm nếu source-derived use case bắt buộc cho MVP.
 
 ### Phase 4 — Customer + Personnel — MVP
 
 Khách hàng:
-- [ ] Thêm, danh sách, chi tiết, cập nhật, xóa.
-- [ ] Tìm kiếm.
-- [ ] Lọc.
-- [ ] Enforce ownership.
+- [x] Thêm, danh sách, chi tiết, cập nhật, xóa.
+- [x] Tìm kiếm.
+- [x] Lọc.
+- [x] Enforce ownership.
 
 Nhân sự:
-- [ ] Cây nhân sự.
-- [ ] Chi tiết nhân sự trong scope.
-- [ ] Thống kê tóm tắt khách hàng/hoạt động.
-- [ ] Không cho quản lý mở/sửa/xóa hồ sơ khách hàng cấp dưới trái đặc tả.
+- [x] Cây nhân sự.
+- [x] Chi tiết nhân sự trong scope.
+- [x] Thống kê tóm tắt khách hàng/hoạt động.
+- [x] Không cho quản lý mở/sửa/xóa hồ sơ khách hàng cấp dưới trái đặc tả.
 
 ### Phase 5 — Business Activity — MVP
 
-- [ ] Tạo hoạt động.
-- [ ] Lịch sử hoạt động.
-- [ ] Cập nhật/xóa hoạt động của chính mình.
-- [ ] DM/UM xem hoạt động cấp dưới.
-- [ ] Hỗ trợ loại hoạt động khảo sát, gặp gỡ, tư vấn.
+- [x] Tạo hoạt động.
+- [x] Lịch sử hoạt động.
+- [x] Cập nhật/xóa hoạt động của chính mình.
+- [x] DM/UM xem hoạt động cấp dưới.
+- [x] Hỗ trợ loại hoạt động khảo sát, gặp gỡ, tư vấn.
 
 ### Phase 6 — Notification — MVP
 
-- [ ] DM tạo thông báo.
-- [ ] Chưa gửi/đã gửi.
-- [ ] Chọn người nhận trong scope.
-- [ ] Cập nhật/xóa theo business rule.
-- [ ] Đã đọc/chưa đọc theo người nhận.
+- [x] DM tạo thông báo.
+- [x] Chưa gửi/đã gửi.
+- [x] Chọn người nhận trong scope.
+- [ ] Cập nhật/xóa theo business rule — **defer** cho đến khi notification delete/update rule được canonical source/Decision Log khóa; không tự suy diễn.
+- [x] Đã đọc/chưa đọc theo người nhận.
 
 ### Phase 7 — Reports & Statistics — MVP
 
@@ -271,3 +271,6 @@ Không tự suy diễn các quyết định trên nếu ảnh hưởng kiến tr
 - [x] Phase 2 đã independent review PASS và merge vào `main` qua PR #7.
 - [x] Roadmap chuyển sang **MVP-only**, target 10/10/2026 nếu không có blocker mới.
 - [ ] Reviewer LOW F-3 của PR #7 được defer sang production hardening: document/pin GoTrue compatibility và tránh Timebox/AllowLowAAL conflict khi shim còn dùng `auth.sessions.created_at`.
+
+- [x] Phase 3 đã independent review PASS và merge vào \`main\` qua PR #10.
+- [ ] Phase 4-6 source-confirmed MVP đang ở PR #11, chờ CI + independent review trước merge.

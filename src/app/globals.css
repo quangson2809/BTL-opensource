@@ -114,3 +114,64 @@ form button {
 .message.success {
   background: #effaf1;
 }
+
+
+select,
+textarea {
+  width: 100%;
+  border: 1px solid #bbbbbb;
+  border-radius: 0.45rem;
+  padding: 0.7rem 0.8rem;
+  font: inherit;
+  font-weight: 400;
+  background: #ffffff;
+}
+
+textarea {
+  min-height: 7rem;
+  resize: vertical;
+}
+
+.wide-card {
+  max-width: 64rem;
+}
+
+.filter-grid,
+.details-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr));
+  gap: 1rem;
+  margin-top: 1.5rem;
+}
+
+.filter-grid button {
+  align-self: end;
+}
+
+.personnel-row {
+  border-left: 3px solid #dddddd;
+  padding: 0.75rem 1rem;
+}
+
+.actions form {
+  margin: 0;
+}
+
+.actions form button {
+  margin-top: 0;
+}
+
+@media (max-width: 40rem) {
+  main {
+    padding: 1rem;
+  }
+
+  .card {
+    padding: 1.25rem;
+  }
+
+  .actions {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}
