@@ -173,24 +173,24 @@ Nhân sự:
 
 ### Phase 7 — Reports & Statistics — MVP
 
-- [ ] Cá nhân.
-- [ ] Nhóm.
-- [ ] Tổng quan.
-- [ ] Ngày/tuần/tháng.
-- [ ] So sánh cá nhân/nhóm.
-- [ ] Xuất Excel.
-- [ ] Mọi query/export phải tuân thủ scope.
+- [x] Cá nhân.
+- [x] Nhóm.
+- [x] Tổng quan.
+- [x] Ngày/tuần/tháng.
+- [x] So sánh cá nhân/nhóm.
+- [x] Xuất Excel-compatible UTF-8 CSV cho MVP.
+- [x] Mọi query/export dùng cùng scoped aggregate RPC và tuân thủ scope.
 
 ### Phase 8 — MVP Hardening
 
 Chỉ các gate bắt buộc trước demo/deploy:
 
-- [ ] Integration test các luồng nghiệp vụ chính.
-- [ ] RLS/permission/ownership regression.
-- [ ] Auth/session regression.
-- [ ] Secret leakage check.
-- [ ] CI validation.
-- [ ] Smoke test toàn bộ MVP.
+- [x] Integration test các luồng nghiệp vụ chính.
+- [x] RLS/permission/ownership regression.
+- [x] Auth/session regression.
+- [x] Secret leakage check.
+- [x] CI validation gate (release PR phải xanh trên exact head trước review-ready).
+- [x] MVP route smoke + business-flow integration gate.
 
 Sau MVP mới mở rộng unit-test coverage, fuzz/edge-case coverage, performance/observability và security hardening không chặn release.
 
@@ -200,9 +200,11 @@ Sau MVP mới mở rộng unit-test coverage, fuzz/edge-case coverage, performan
 - [ ] Apply migration/RLS.
 - [ ] Vercel environments.
 - [ ] Preview + production deployment.
-- [ ] Smoke test.
+- [ ] Production smoke test.
 - [ ] Đối chiếu use case trong PDF.
-- [ ] Hoàn thiện README vận hành.
+- [x] Hoàn thiện README + production deployment runbook.
+
+**Production gate:** chưa mark complete khi chưa có production Supabase/Auth + SMTP, Vercel project/env và acceptance evidence thật. Repo không chứa production credential; Vercel hiện chưa có project linked với repo này.
 
 ## 6. Thứ tự triển khai
 
@@ -275,4 +277,4 @@ Không tự suy diễn các quyết định trên nếu ảnh hưởng kiến tr
 - [x] Phase 3 đã independent review PASS và merge vào \`main\` qua PR #10.
 - [x] Phase 4-6 source-confirmed MVP đã independent review PASS và merge vào `main` qua PR #11.
 
-- [ ] Phase 7-9 MVP đang triển khai trên `feature/mvp-phase-7-9-batch`; review sau khi CI + database/auth regression + preview smoke gate hoàn tất.
+- [ ] Phase 7 + Phase 8 và Phase 9 deployment preparation đang ở PR #12; review sau khi exact-head CI + database/auth + route-smoke PASS. Production provisioning/deploy chỉ thực hiện sau review PASS và khi production environment tồn tại.
