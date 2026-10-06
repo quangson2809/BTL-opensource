@@ -16,7 +16,8 @@ type ReportRow = {
 
 function csvCell(value: unknown) {
   const text = String(value ?? "");
-  return `"${text.replaceAll('"', '""')}"`;
+  const safeText = /^[=+\-@\t\r]/.test(text) ? "'" + text : text;
+  return `"${safeText.replaceAll('"', '""')}"`;
 }
 
 export async function GET(request: Request) {
