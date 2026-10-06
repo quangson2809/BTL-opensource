@@ -73,21 +73,41 @@ const sa = await fixture("sa", SA_ROLE_ID, dm.id);
 const outsider = await fixture("outside", SA_ROLE_ID);
 const dm2 = await fixture("dm2", DM_ROLE_ID);
 
-const { error: customerError } = await sa.client.from("khach_hang").insert({
-  chu_so_huu_id: sa.id,
-  ma_khach_hang: "P79-KH-" + suffix,
-  ho_ten: "Khách report integration",
-  so_dien_thoai: "P79-KH-PHONE-" + suffix,
-  gioi_tinh: "Nam",
-  ngay_sinh: "1990-01-01",
-  dia_chi: "Hà Nội",
-  so_thich: "Đọc sách",
-  ghi_chu: "Phase 7 report",
-  loai_khach_hang: "MUC_TIEU",
-  tinh_trang: "BẠN",
-  nhom_tinh_cach: "D",
-});
+const { data: customer, error: customerError } = await sa.client
+  .from("khach_hang")
+  .insert({
+    chu_so_huu_id: sa.id,
+    ma_khach_hang: "P79-KH-" + suffix,
+    ho_ten: "Khách report integration",
+    so_dien_thoai: "P79-KH-PHONE-" + suffix,
+    gioi_tinh: "Nam",
+    ngay_sinh: "1990-01-01",
+    dia_chi: "Hà Nội",
+    so_thich: "Đọc sách",
+    ghi_chu: "Phase 7 report",
+    loai_khach_hang: "MUC_TIEU",
+    tinh_trang: "BẠN",
+    nhom_tinh_cach: "D",
+    created_at: "2000-01-01T00:00:00Z",
+  })
+  .select("id,created_at")
+  .single();
 assertNoError(customerError, "SA create report customer");
+assert.ok(customer?.id, "report customer id must exist");
+assert.ok(
+  new Date(customer.created_at).getTime() > Date.now() - 60_000,
+  "database must replace caller-supplied customer created_at with server time",
+);
+
+const forgedUpdate = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
+const { error: customerTimestampError } = await sa.client
+  .from("khach_hang")
+  .update({ created_at: forgedUpdate })
+  .eq("id", customer.id);
+assert.ok(
+  customerTimestampError,
+  "owner direct API update cannot mutate customer created_at",
+);
 
 const activityTime = new Date();
 const periodStart = new Date(activityTime.getTime() - 60 * 60 * 1000).toISOString();
