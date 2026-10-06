@@ -54,6 +54,49 @@ jobs:
             node "$test_file"
           done
 
+      - name: Run MVP route smoke
+        shell: bash
+        run: |
+          eval "$(supabase status -o env)"
+          export NEXT_PUBLIC_SUPABASE_URL="$API_URL"
+          export NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY="$ANON_KEY"
+          export SUPABASE_SECRET_KEY="$SERVICE_ROLE_KEY"
+
+          npm run dev > /tmp/idaily-next.log 2>&1 &
+          APP_PID=$!
+          trap 'kill "$APP_PID" 2>/dev/null || true' EXIT
+
+          for attempt in {1..60}; do
+            if curl -fsS http://127.0.0.1:3000/login >/dev/null; then
+              break
+            fi
+            if [ "$attempt" -eq 60 ]; then
+              cat /tmp/idaily-next.log
+              exit 1
+            fi
+            sleep 1
+          done
+
+          for route in / /login /register /password/recovery; do
+            curl -fsS "http://127.0.0.1:3000$route" >/dev/null
+          done
+
+          for route in /dashboard /customers /activities /notifications /reports /personnel /admin/accounts; do
+            status="$(curl -sS -o /dev/null -w '%{http_code}' "http://127.0.0.1:3000$route")"
+            case "$status" in
+              301|302|303|307|308) ;;
+              *)
+                echo "Expected auth redirect for $route, got HTTP $status"
+                cat /tmp/idaily-next.log
+                exit 1
+                ;;
+            esac
+          done
+
+          kill "$APP_PID"
+          wait "$APP_PID" 2>/dev/null || true
+          trap - EXIT
+
       - name: Stop local Supabase
         if: always()
         run: supabase stop --no-backup
