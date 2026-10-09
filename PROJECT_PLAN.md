@@ -257,7 +257,7 @@ Không merge PR khi lint/type-check/build/test liên quan chưa pass.
 - [ ] Chuẩn hóa thuật ngữ “vai trò” và “chức danh” trong code.
 - [x] Password policy: minimum 8, lowercase + uppercase + digit, symbol optional.
 - [x] MVP production Auth exception (2026-10-09): dùng hosted Supabase Free. Password Verification Attempt Hook chỉ có Teams/Enterprise, nên exact per-account 6 failures -> 30-minute lock được defer khỏi production MVP acceptance. Không thay bằng Next.js-only counter vì public Auth endpoint có thể bypass. Production dùng provider rate limits/abuse protection + existing password policy; local/CI vẫn test hook state machine. Nếu canonical PDF bắt buộc exact 6/30, ghi nhận đây là known MVP deviation.
-- [ ] Session duration — **defer sau MVP**. Không bật time-boxed lifetime khi unconditional-reauth compatibility shim còn backdate `auth.sessions.created_at`; đồng thời không bật MFA/low-AAL lifetime dựa trên cùng timestamp. Production phải pin/review GoTrue version trước khi dùng shim.
+- [ ] Session duration — **defer sau MVP**. Không bật time-boxed lifetime khi unconditional-reauth compatibility shim còn backdate `auth.sessions.created_at`; đồng thời không bật MFA/low-AAL lifetime dựa trên cùng timestamp. Trên hosted Supabase, acceptance phải verify reauthentication end-to-end trên project thật thay vì claim immutable GoTrue pin.
 - [ ] Notification delete rule.
 - [x] Statistics: dùng narrow `SECURITY DEFINER` RPC dưới caller JWT để trả aggregate theo scope; không mở raw customer rows. Export dùng cùng RPC để giữ authorization contract thống nhất.
 
