@@ -9,7 +9,7 @@ Before production deployment:
 - the release PR has independent review PASS;
 - GitHub CI is green;
 - database/RLS tests and Auth integration tests are green from a clean `supabase db reset`;
-- the production Supabase/Auth environment is provisioned;
+- the production hosted Supabase project is provisioned;
 - the Vercel project is linked to `quangson2809/BTL-opensource`;
 - production secrets exist only in the deployment platform, never in Git.
 
@@ -31,20 +31,15 @@ Never expose `SUPABASE_SECRET_KEY` as a `NEXT_PUBLIC_*` value.
 
 The production-required role/permission catalog is migration-owned. `supabase/seed.sql` is intentionally a no-op, so a production database does not depend on a deployment runner executing seed hooks.
 
-Set the real self-hosted PostgreSQL connection string outside source control:
+For the hosted project, prefer the connected Supabase project tooling used by the deployment operator. If the CLI is used instead, link the exact project and review the migration plan before apply:
 
 ```bash
-export PROD_DB_URL='postgresql://<user>:<password>@<host>:5432/<database>?sslmode=require'
+supabase link --project-ref <production-project-ref>
+supabase db push --dry-run
+supabase db push
 ```
 
-Review the exact migration plan, then apply it to that explicit target:
-
-```bash
-supabase db push --db-url "$PROD_DB_URL" --dry-run
-supabase db push --db-url "$PROD_DB_URL"
-```
-
-Do not use a plain `supabase db push` for self-hosted production unless the CLI has been intentionally linked to that exact target.
+Never put the database password or service key in source control or deployment logs.
 
 The migration set must include:
 
@@ -77,46 +72,58 @@ SQL
 
 Expected result: four required roles and exactly the DM/UM `ACTIVITY_VIEW_SUBTREE` mappings. If any are missing, stop deployment rather than bootstrapping users against a partial catalog.
 
-### Auth password-verification hook
+### Hosted Free Auth exception
 
-The 6 consecutive password failures -> 30 minute temporary lock invariant requires the Password Verification Hook.
+The original Phase 2 design contains a Password Verification Hook for the exact "6 consecutive failures -> 30 minute temporary lock" invariant. Local/CI keeps this hook enabled and regression-tested.
 
-Production self-hosted Auth must enable:
+MVP production uses hosted Supabase Free. Supabase's current Auth Hooks documentation lists **Password Verification Attempt Hook as Teams/Enterprise only**, so the Free production project cannot enforce that exact per-account threshold at the provider boundary.
 
-```env
-GOTRUE_HOOK_PASSWORD_VERIFICATION_ATTEMPT_ENABLED=true
-GOTRUE_HOOK_PASSWORD_VERIFICATION_ATTEMPT_URI=pg-functions://postgres/public/hook_password_verification_attempt
-```
+Production MVP therefore:
 
-Do not claim the 6/30 invariant is production-enforced if this hook is unavailable.
+- does **not** claim exact 6/30 enforcement;
+- does not move failed-attempt bookkeeping into Next.js/server actions, because direct public Auth API calls could bypass such a counter;
+- relies on Supabase Auth password policy and provider-managed rate limiting/abuse protection;
+- keeps the existing lock columns/hook function as forward-compatible schema for a future supported plan/self-hosted deployment;
+- treats exact 6/30 as a documented known MVP deviation if the canonical PDF requires it.
+
+Leaked-password protection is also not an MVP acceptance requirement on the Free plan. A Security Advisor warning for that feature is documented rather than misreported as enabled.
 
 ### SMTP / OTP
 
-Production Auth must configure real SMTP while preserving:
+For a classroom/demo deployment with no paid email service, Supabase's default SMTP may be used **only with pre-authorized project-team email addresses**. It is not suitable for unrestricted/public production email delivery.
+
+The demo acceptance path must preserve:
 
 - password minimum 8;
 - lowercase + uppercase + digit;
-- OTP length 8;
-- OTP expiry 600 seconds;
-- secure password change enabled.
+- secure password change enabled;
+- **email OTP length = 8 numeric digits** on the *actual hosted project*;
+- **OTP expiry = 600 seconds** on the *actual hosted project*;
+- reauthentication and recovery email flows actually working for the chosen demo account.
 
-Test both reauthentication OTP and recovery OTP before acceptance.
+#### Hosted OTP parameter gate — required before acceptance
 
-### GoTrue compatibility pin
+1. Open the real hosted Supabase project `kulaguukpngkzpwforok` (Authentication settings) or use its authenticated Management API; inspect **actual** email OTP length and expiry. Record the observed **numeric values**, date, project ref and redacted settings evidence in Issue #13. Do not infer hosted settings from `supabase/config.toml` or successful local CI.
+2. Confirm **length = 8 digits** and **expiry = 600 seconds**. Record both individual PASS/FAIL results explicitly. If configurable, set them to 8 and 600, then read the settings back. Never claim a config update without a verified readback.
+3. Run a real hosted reauthentication OTP flow and a hosted recovery OTP flow with the selected pre-authorized demo email; confirm delivery, code format, successful verification, rejection of an invalid code and enforced application session gate. Preserve redacted test evidence (do not store OTP codes, credentials or tokens in Git/issues). Validate expiry through a provider setting readback; if expiry behavior is directly tested, use a disposable account and do not claim that an untested TTL was observed.
+4. If hosted settings cannot be inspected or modified, **do not mark OTP acceptance PASS**. Record `UNVERIFIED`, the blocker and the exact access/config gap in Issue #13.
+5. If hosted settings are demonstrably not 8/600 and cannot be fixed, record the observed values as **BC-003 proposed business deviation** in `docs/business-change-log.md`, obtain explicit project-owner approval, update the PR/Decision Log and run independent review **before** accepting the changed contract. Do not silently lower the requirement.
+
+Supabase default SMTP is demo-only for **pre-authorized project-team addresses**, not general production email delivery. If the project cannot send reauthentication/recovery email to the selected demo address, stop the acceptance gate and use a pre-authorized team address or configure a free custom SMTP provider.
+
+### Hosted Auth compatibility verification
 
 The current unconditional password-reauthentication compatibility shim backdates `auth.sessions.created_at` for password sessions.
 
-Before production acceptance:
+For hosted Supabase, the Auth runtime is managed by Supabase and an immutable self-hosted GoTrue image/digest is not an MVP acceptance requirement. Instead:
 
-1. record the exact GoTrue/Auth image version or immutable digest;
-2. verify reauthentication behavior against that pinned version;
+1. verify reauthentication OTP end-to-end on the actual hosted project;
+2. verify recovery OTP end-to-end on the actual hosted project;
 3. keep session time-boxing disabled while the shim depends on `auth.sessions.created_at`;
 4. do not enable low-AAL/session-lifetime behavior that interprets the backdated timestamp as real session age;
-5. replace the shim before enabling those features if a future GoTrue version exposes a supported unconditional reauthentication threshold.
+5. record the hosted project ref, plan, acceptance date and observed behavior.
 
-CI is pinned to Supabase CLI `2.119.0`. The validated local stack used by this CLI currently pulls GoTrue `v2.197.0`; treat that as the tested development/CI baseline, not as an automatic production pin.
-
-Production must either pin that tested Auth version/digest or explicitly validate a different version before acceptance. Record the exact production version or immutable digest from the real environment.
+CI remains pinned to Supabase CLI `2.119.0`; its local GoTrue version is only a regression-test baseline, not a production-version claim.
 
 ## 3. Vercel project
 
@@ -154,8 +161,8 @@ Before promoting to production:
 - login/logout works;
 - password change requires email reauthentication OTP;
 - recovery OTP resets password then forces normal password login;
-- six consecutive bad password attempts trigger temporary lock;
-- locked account with an existing JWT loses business-data access.
+- hosted Auth rejects invalid credentials and application state gates still block `CHO_PHE_DUYET` / `KHOA` accounts;
+- do **not** include exact 6/30 temporary-lock behavior in hosted Free acceptance; it is a documented MVP exception.
 
 ### Admin/RBAC
 
@@ -210,10 +217,13 @@ Record:
 - GitHub CI run IDs;
 - database/Auth test run ID and PASS result;
 - production migration result;
-- pinned GoTrue/Auth version or digest;
+- hosted Supabase project ref + plan and the documented Auth-plan exception;
+- **hosted OTP length numeric value and expiry (seconds)** observed from real Auth settings; settings evidence/date and independent PASS/FAIL for 8 and 600;
+- hosted reauthentication/recovery test evidence (redacted, no OTP/password/JWT);
+- deviations and project-owner decisions from `docs/business-change-log.md` with corresponding Issue/PR references;
 - Vercel Preview deployment URL/ID;
 - Vercel Production deployment URL/ID;
 - smoke-test result;
 - any canonical-PDF requirement that remains unverifiable.
 
-Do not mark Phase 9 complete until this evidence exists.
+Do not mark Phase 9 complete until this evidence exists. An OTP setting left UNVERIFIED or a proposed deviation without a separate owner decision/re-review is not PASS.

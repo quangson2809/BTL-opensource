@@ -24,7 +24,7 @@ Yêu cầu của project coordinator: **chỉ cần MVP**, ưu tiên bản chạ
 - Chỉ triển khai requirement source-derived cần cho luồng nghiệp vụ chính.
 - Test bắt buộc tập trung vào auth/RLS/ownership/permission và các happy-path + deny-path quan trọng.
 - Edge case hiếm, tối ưu hiệu năng sâu, audit/observability nâng cao và production hardening không chặn chức năng được đưa vào backlog sau MVP.
-- Không hạ các security invariant đã khóa: Auth/RLS, ownership, scope theo hierarchy, secret handling và các review gate hiện có vẫn bắt buộc.
+- Không hạ Auth/RLS, ownership, hierarchy scope, secret handling hoặc review gates. Mọi deployment exception do giới hạn hạ tầng phải được ghi rõ trong Decision Log và không được claim như đã đáp ứng canonical requirement.
 
 ## 2. Stack theo tài liệu
 
@@ -118,7 +118,8 @@ Công việc:
 - [x] Đổi/đặt lại mật khẩu.
 - [x] OTP email.
 - [x] Xử lý trạng thái tài khoản.
-- [x] Khóa tạm sau nhiều lần đăng nhập sai theo đặc tả.
+- [x] Local/CI: khóa tạm sau nhiều lần đăng nhập sai được regression-test bằng Password Verification Hook.
+- [ ] Production exact 6-failure/30-minute lock — **deferred khỏi MVP acceptance** trên hosted Supabase Free; không triển khai counter application-side có thể bypass.
 
 Password/OTP contract:
 - minimum 8;
@@ -127,7 +128,7 @@ Password/OTP contract:
 - change password dùng reauthentication OTP bắt buộc cho mọi password session, kể cả fresh session;
 - recovery/reset dùng recovery OTP;
 - business data chỉ chấp nhận JWT có password AMR; OTP/recovery JWT bị deny;
-- local/CI dùng Mailpit, production self-host dùng SMTP cấu hình ngoài repo.
+- local/CI dùng Mailpit; hosted Supabase Free **chỉ dùng default SMTP cho demo với địa chỉ email thuộc project team được pre-authorize**. Muốn gửi email đến người dùng bất kỳ / triển khai public phải cấu hình custom SMTP và kiểm thử lại.
 
 ### Phase 3 — Admin / RBAC — MVP
 
@@ -204,7 +205,7 @@ Sau MVP mới mở rộng unit-test coverage, fuzz/edge-case coverage, performan
 - [ ] Đối chiếu use case trong PDF.
 - [x] Hoàn thiện README + production deployment runbook.
 
-**Production gate:** chưa mark complete khi chưa có production Supabase/Auth + SMTP, Vercel project/env và acceptance evidence thật. Repo không chứa production credential; Vercel hiện chưa có project linked với repo này.
+**Production gate:** chưa mark complete khi chưa có production Supabase hosted project, usable demo email/OTP path, Vercel project/env và acceptance evidence thật. Free-plan exceptions (exact 6/30 lock, leaked-password protection, unrestricted SMTP) phải được ghi rõ và không được claim là implemented.
 
 ## 6. Thứ tự triển khai
 
@@ -246,16 +247,19 @@ Commit convention:
 
 Không merge PR khi lint/type-check/build/test liên quan chưa pass.
 
+**Báo cáo tác động nghiệp vụ bắt buộc cho mọi PR:** ghi rõ `Business impact: YES/NO`, mô tả hành vi/yêu cầu trước và sau, phân biệt `thay đổi nghiệp vụ` với `đổi tiêu chí triển khai/demo`, nêu phạm vi bị ảnh hưởng và dẫn `docs/business-change-log.md` + vị trí tương ứng trong PDF (nếu đã xác minh). Nếu chưa đọc được PDF, ghi `PDF reference: UNVERIFIED`; không được tự sửa hay claim thay đổi đã được phản ánh vào PDF. Các khác biệt phải có Decision Log/Issue và quyết định của chủ dự án trước khi acceptance.
+
 ## 8. Decision Log cần khóa trước khi code phụ thuộc
 
 - [x] Auth: Supabase Auth.
-- [x] OTP/email: Supabase Auth email OTP; Mailpit local/CI; production SMTP.
+- [x] OTP/email: Supabase Auth email OTP; Mailpit local/CI; **hosted Free classroom/demo** có thể dùng default SMTP **chỉ với email pre-authorized trong project team**; gửi email công khai/không giới hạn địa chỉ cần custom SMTP. Hosted production acceptance vẫn phải xác minh OTP 8 chữ số / hết hạn 600 giây.
 - [x] Audit log: Supabase Auth audit logging; không thêm business audit table.
 - [ ] Enum strategy.
 - [ ] Delete/cascade/restrict strategy.
 - [ ] Chuẩn hóa thuật ngữ “vai trò” và “chức danh” trong code.
 - [x] Password policy: minimum 8, lowercase + uppercase + digit, symbol optional.
-- [ ] Session duration — **defer sau MVP**. Không bật time-boxed lifetime khi unconditional-reauth compatibility shim còn backdate `auth.sessions.created_at`; đồng thời không bật MFA/low-AAL lifetime dựa trên cùng timestamp. Production phải pin/review GoTrue version trước khi dùng shim.
+- [x] MVP production Auth exception (2026-10-09, **BC-001** ở `docs/business-change-log.md`): dùng hosted Supabase Free. Password Verification Attempt Hook chỉ có Teams/Enterprise, nên exact per-account 6 failures -> 30-minute lock được defer khỏi production MVP acceptance. Không thay bằng Next.js-only counter vì public Auth endpoint có thể bypass. Production dùng provider rate limits/abuse protection + existing password policy; local/CI vẫn test hook state machine. Nếu canonical PDF bắt buộc exact 6/30, ghi nhận đây là known MVP deviation.
+- [ ] Session duration — **defer sau MVP**. Không bật time-boxed lifetime khi unconditional-reauth compatibility shim còn backdate `auth.sessions.created_at`; đồng thời không bật MFA/low-AAL lifetime dựa trên cùng timestamp. Trên hosted Supabase, acceptance phải verify reauthentication end-to-end trên project thật thay vì claim immutable GoTrue pin.
 - [ ] Notification delete rule.
 - [x] Statistics: dùng narrow `SECURITY DEFINER` RPC dưới caller JWT để trả aggregate theo scope; không mở raw customer rows. Export dùng cùng RPC để giữ authorization contract thống nhất.
 
@@ -272,9 +276,12 @@ Không tự suy diễn các quyết định trên nếu ảnh hưởng kiến tr
 - [x] Phase 1 đã independent review PASS và merge vào `main`.
 - [x] Phase 2 đã independent review PASS và merge vào `main` qua PR #7.
 - [x] Roadmap chuyển sang **MVP-only**, target 10/10/2026 nếu không có blocker mới.
-- [ ] Reviewer LOW F-3 của PR #7 được defer sang production hardening: document/pin GoTrue compatibility và tránh Timebox/AllowLowAAL conflict khi shim còn dùng `auth.sessions.created_at`.
+- [x] Reviewer LOW F-3 của PR #7 được xử lý theo hosted-managed exception: giữ Timebox/AllowLowAAL disabled khi shim còn dùng `auth.sessions.created_at`; production acceptance dùng end-to-end OTP verification thay vì claim immutable self-hosted GoTrue pin.
 
 - [x] Phase 3 đã independent review PASS và merge vào \`main\` qua PR #10.
 - [x] Phase 4-6 source-confirmed MVP đã independent review PASS và merge vào `main` qua PR #11.
 
-- [ ] Phase 7 + Phase 8 và Phase 9 deployment preparation đang ở PR #12; review sau khi exact-head CI + database/auth + route-smoke PASS. Production provisioning/deploy chỉ thực hiện sau review PASS và khi production environment tồn tại.
+- [x] Phase 7 + Phase 8 và Phase 9 deployment preparation đã independent review PASS và merge qua PR #12.
+- [x] Production function ACL hardening đã independent review PASS và merge qua PR #14.
+- [ ] Phase 9 production acceptance tiếp tục ở Issue #13 với hosted Supabase Free; exact 6/30 lock là documented MVP exception.
+- [ ] Hosted OTP acceptance (BC-003): xác minh và ghi bằng chứng từ **project thực tế** cho OTP **length=8** và **expiry=600 seconds**, đồng thời test reauthentication/recovery. Nếu khác: ghi observed settings, lấy quyết định thay đổi nghiệp vụ và re-review trước khi đánh dấu PASS; không coi local/CI là production evidence.

@@ -93,9 +93,11 @@ export async function login(formData: FormData) {
 
   const supabase = await createClient();
 
-  // The password-verification hook owns failed-attempt bookkeeping and the
-  // 6-attempt/30-minute lock. Keeping this action free of duplicate counters
-  // ensures browser, server and direct Auth API attempts share one boundary.
+  // Keep failed-attempt bookkeeping out of this server action. Local/CI can
+  // exercise the stronger Password Verification Hook, while hosted Free
+  // production relies on Supabase provider rate limiting. An app-only counter
+  // would not be a security boundary because the public Auth API is callable
+  // directly, so production does not claim an exact 6-attempt/30-minute lock.
   const { data, error } = await supabase.auth.signInWithPassword({ email, password });
 
   if (error || !data.user) {

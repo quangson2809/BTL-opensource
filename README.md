@@ -81,7 +81,7 @@ Không commit `.env.local`, secret key, service-role key hoặc database passwor
 - `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`: Supabase publishable key dùng cho browser/server client foundation.
 - `SUPABASE_SECRET_KEY`: Supabase secret key chỉ dùng server-side cho account-state orchestration sau khi credential đã được Supabase Auth xác minh; key này bypass RLS và tuyệt đối không được đưa vào client bundle.
 
-Phase 2 không dùng secret key để đếm password failures. Quy tắc 6 lần sai/30 phút được enforce tại Supabase Auth Password Verification Hook, còn business authorization vẫn dựa vào user JWT + RLS.
+Local/CI vẫn giữ Password Verification Hook để regression-test state machine 6 lần sai/30 phút, nhưng production MVP dùng hosted Supabase Free nên **không claim exact 6/30 enforcement**. Production dựa vào Supabase Auth password policy + provider abuse/rate-limit controls; business authorization vẫn dựa vào user JWT + RLS. Đây là MVP deployment exception được ghi trong `PROJECT_PLAN.md` và **BC-001** tại [`docs/business-change-log.md`](docs/business-change-log.md), nơi nêu tác động nghiệp vụ và hướng cập nhật tài liệu gốc.
 
 ## Project structure
 
@@ -172,7 +172,7 @@ Không tạo bảng `nhom`, bảng báo cáo/thống kê, `customer_activity` ju
 
 ### Required RBAC catalog
 
-The application-required catalog is migration-owned so fresh self-hosted production databases receive the same required authorization foundation as local/CI:
+The application-required catalog is migration-owned so fresh production databases (including hosted Supabase) receive the same required authorization foundation as local/CI:
 
 - roles: `ADMIN`, `DM`, `UM`, `SA`;
 - permission: `ACTIVITY_VIEW_SUBTREE`;
@@ -240,10 +240,10 @@ Foundation hiện tại triển khai:
 - SSR session refresh qua Next.js 16 `proxy.ts`;
 - login/logout server action; logout dùng current/local session scope;
 - `DANG_HOAT_DONG` là trạng thái business duy nhất được dùng protected data;
-- `CHO_PHE_DUYET`, `KHOA` và temporary lock đều bị chặn bằng restrictive RLS gate;
-- 6 lần sai liên tiếp tạo khóa tạm 30 phút tại Password Verification Hook; gọi trực tiếp public Auth endpoint không bypass được counter;
-- password đúng trong thời gian khóa bị Auth hook reject; JWT đã tồn tại cũng bị restrictive RLS chặn business data;
-- Phase 1 authorization RPC helpers trả false cho pending/KHOA/temp-lock thay vì lộ role/hierarchy state;
+- `CHO_PHE_DUYET`, `KHOA` và temporary lock (nếu được thiết lập bởi môi trường có hook) đều bị chặn bằng restrictive RLS gate;
+- local/CI regression-test state machine 6 lần sai liên tiếp -> khóa tạm 30 phút bằng Password Verification Hook;
+- production hosted Supabase Free không hỗ trợ Password Verification Attempt Hook, nên exact 6/30 được defer khỏi MVP acceptance thay vì triển khai một application-side counter có thể bị bypass qua public Auth endpoint;
+- Phase 1 authorization RPC helpers trả false cho pending/KHOA/active temporary-lock state thay vì lộ role/hierarchy state;
 - pgTAP regression tests cho provisioning, account-state gate, hook state machine và exposed authorization helpers;
 - Auth integration test đi qua Supabase signup/password verification/session thật trong local CI;
 - password policy, reauthentication OTP và recovery OTP được test qua Auth API thật + Mailpit;
@@ -251,9 +251,7 @@ Foundation hiện tại triển khai:
 
 ### Password verification hook deployment decision
 
-Phase 2 chọn Password Verification Hook làm security boundary cho quy tắc 6 lần sai liên tiếp → khóa 30 phút.
-
-Local/CI bật hook trong `supabase/config.toml`:
+Local/CI tiếp tục bật hook trong `supabase/config.toml` để regression-test cơ chế mạnh hơn:
 
 ```toml
 [auth.hook.password_verification_attempt]
@@ -261,14 +259,11 @@ enabled = true
 uri = "pg-functions://postgres/public/hook_password_verification_attempt"
 ```
 
-Production target cho invariant này là **self-hosted Supabase Auth**. Auth service phải bật:
+**MVP production exception (2026-10-09):** production dùng hosted Supabase Free. Theo Supabase Auth Hooks documentation hiện hành, Password Verification Attempt Hook chỉ có trên Teams/Enterprise. Vì vậy MVP production **không claim** rule per-account "6 lần sai liên tiếp -> khóa 30 phút".
 
-```env
-GOTRUE_HOOK_PASSWORD_VERIFICATION_ATTEMPT_ENABLED=true
-GOTRUE_HOOK_PASSWORD_VERIFICATION_ATTEMPT_URI=pg-functions://postgres/public/hook_password_verification_attempt
-```
+Không chuyển counter sang Next.js/server action vì public Supabase Auth endpoint vẫn có thể được gọi trực tiếp và sẽ làm cơ chế đó không phải security boundary. Production MVP thay thế bằng password policy của Supabase Auth + provider-managed rate limiting/abuse protection. Exact 6/30 remains deferred; nếu sau này chuyển sang plan hỗ trợ hook hoặc self-hosted Auth, có thể bật lại mà không đổi business schema.
 
-Không deploy Phase 2 lên hosted plan không hỗ trợ Password Verification Hook rồi vẫn claim rằng rule 6/30 được enforce ở mọi password attempt.
+Nếu canonical PDF bắt buộc exact 6/30, đây là known MVP deviation và phải được nêu khi demo/acceptance; không được trình bày như đã đáp ứng đầy đủ.
 
 ### Password + OTP decisions
 
@@ -281,13 +276,13 @@ Phase 2 chốt P2-D5/P2-D6 như sau:
 - mật khẩu mới phải khác mật khẩu cũ; Supabase Auth trả `same_password` khi vi phạm;
 - authenticated password change dùng email reauthentication OTP và OTP này là bắt buộc kể cả với fresh password session;
 - forgotten-password recovery dùng recovery OTP, sau đó mới cho đặt mật khẩu mới;
-- OTP email dài 8 số và hết hạn sau 600 giây (10 phút);
+- OTP email dài 8 số và hết hạn sau 600 giây (10 phút); **đây vẫn là yêu cầu acceptance trên hosted project**, chưa được coi là đã xác minh chỉ từ local/CI;
 - local/CI dùng Mailpit đi kèm Supabase CLI;
-- production self-host phải cấu hình SMTP thật và giữ cùng password/OTP contract.
+- production hosted Free có thể dùng Supabase default SMTP **chỉ cho demo với địa chỉ email đã được pre-authorized trong project team**; public/unrestricted email delivery cần custom SMTP và không được claim nếu chưa cấu hình.
 
 Recovery OTP tạo một Supabase authenticated session tạm thời, nhưng runtime không được giả định sẽ luôn gắn AMR tên `recovery`. Vì Phase 2 chỉ định email/password là application sign-in method, common RLS access gate chỉ cho business data khi JWT có `amr.method = password`. OTP/recovery sessions có thể hoàn tất credential reset nhưng không thể trở thành business session. Recovery UI xác minh OTP và cập nhật mật khẩu trong cùng server action rồi logout.
 
-Supabase Auth/GoTrue hiện chỉ bắt reauthentication nonce khi password session đã cũ hơn 24 giờ. Để giữ contract Phase 2 mạnh hơn mà vẫn để GoTrue tự generate/verify nonce, self-hosted/local deployment cài migration compatibility shim: khi Auth ghi AMR `password`, `auth.sessions.created_at` của session đó được backdate 25 giờ. Vì vậy direct `PUT /user`/SDK password update trên fresh password session cũng đi qua chính GoTrue nonce verifier; thiếu nonce, nonce sai hoặc hết hạn đều bị provider từ chối. Recovery/OTP sessions không bị backdate.
+Supabase Auth/GoTrue hiện chỉ bắt reauthentication nonce khi password session đã cũ hơn 24 giờ. Migration compatibility shim hiện vẫn được cài trong local/CI và production database: khi Auth ghi AMR `password`, `auth.sessions.created_at` của session đó được backdate 25 giờ. Production hosted service phải được acceptance-test end-to-end cho password-change OTP; vì GoTrue runtime do Supabase quản lý, MVP không claim một immutable self-hosted Auth image pin. Recovery/OTP sessions không bị backdate.
 
 **Deployment constraint:** trong khi shim này còn tồn tại, không bật time-boxed session lifetime dựa trên `auth.sessions.created_at`. Nếu self-hosted GoTrue sau này hỗ trợ configurable unconditional reauthentication threshold, bỏ shim và dùng provider option chính thức trước khi chốt Session duration.
 
@@ -316,7 +311,8 @@ Không tạo custom OTP table. Supabase Auth quản lý token, expiry, single-us
 - Phase 2 — Authentication & Session: independent review PASS, merged via PR #7.
 - Phase 3 — Admin/RBAC MVP: independent review PASS, merged via PR #10.
 - Phase 4-6 — Customer/Personnel, Activity, Notification MVP: independent review PASS, merged via PR #11.
-- Phase 7-9 release batch: reporting/hardening/deployment preparation is tracked in PR #12.
+- Phase 7-9 release batch và production ACL hardening đã merge; production deployment/acceptance tiếp tục được theo dõi ở Issue #13.
+- Hosted Supabase Free production candidate đã được provision/migrated. Exact 6/30 password lock là documented MVP exception do plan không hỗ trợ Password Verification Attempt Hook.
 - Production deployment is not considered complete until the evidence checklist in `docs/mvp-deployment.md` is satisfied.
 
 
@@ -354,6 +350,6 @@ Reporting and export use the caller JWT and the same scoped aggregate RPC. Raw s
 
 See `docs/mvp-deployment.md`.
 
-Production acceptance requires a real self-hosted Supabase/Auth environment with the password-verification hook enabled, real SMTP, recorded GoTrue/Auth version or immutable digest, and a Vercel project linked to this repository.
+MVP production acceptance targets hosted Supabase Free + Vercel. It explicitly does **not** claim exact 6-failure/30-minute account lock, leaked-password protection, unrestricted SMTP delivery, or an immutable GoTrue image pin on this free managed plan. Password/OTP behavior actually used by the demo must still be smoke-tested, and a Vercel project must be linked to this repository.
 
 The repository intentionally does not contain production credentials.
