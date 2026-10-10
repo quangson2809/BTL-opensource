@@ -81,7 +81,7 @@ Không commit `.env.local`, secret key, service-role key hoặc database passwor
 - `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`: Supabase publishable key dùng cho browser/server client foundation.
 - `SUPABASE_SECRET_KEY`: Supabase secret key chỉ dùng server-side cho account-state orchestration sau khi credential đã được Supabase Auth xác minh; key này bypass RLS và tuyệt đối không được đưa vào client bundle.
 
-Local/CI vẫn giữ Password Verification Hook để regression-test state machine 6 lần sai/30 phút, nhưng production MVP dùng hosted Supabase Free nên **không claim exact 6/30 enforcement**. Production dựa vào Supabase Auth password policy + provider abuse/rate-limit controls; business authorization vẫn dựa vào user JWT + RLS. Đây là MVP deployment exception được ghi trong `PROJECT_PLAN.md`.
+Local/CI vẫn giữ Password Verification Hook để regression-test state machine 6 lần sai/30 phút, nhưng production MVP dùng hosted Supabase Free nên **không claim exact 6/30 enforcement**. Production dựa vào Supabase Auth password policy + provider abuse/rate-limit controls; business authorization vẫn dựa vào user JWT + RLS. Đây là MVP deployment exception được ghi trong `PROJECT_PLAN.md` và **BC-001** tại [`docs/business-change-log.md`](docs/business-change-log.md), nơi nêu tác động nghiệp vụ và hướng cập nhật tài liệu gốc.
 
 ## Project structure
 
@@ -172,7 +172,7 @@ Không tạo bảng `nhom`, bảng báo cáo/thống kê, `customer_activity` ju
 
 ### Required RBAC catalog
 
-The application-required catalog is migration-owned so fresh self-hosted production databases receive the same required authorization foundation as local/CI:
+The application-required catalog is migration-owned so fresh production databases (including hosted Supabase) receive the same required authorization foundation as local/CI:
 
 - roles: `ADMIN`, `DM`, `UM`, `SA`;
 - permission: `ACTIVITY_VIEW_SUBTREE`;
@@ -276,7 +276,7 @@ Phase 2 chốt P2-D5/P2-D6 như sau:
 - mật khẩu mới phải khác mật khẩu cũ; Supabase Auth trả `same_password` khi vi phạm;
 - authenticated password change dùng email reauthentication OTP và OTP này là bắt buộc kể cả với fresh password session;
 - forgotten-password recovery dùng recovery OTP, sau đó mới cho đặt mật khẩu mới;
-- OTP email dài 8 số và hết hạn sau 600 giây (10 phút);
+- OTP email dài 8 số và hết hạn sau 600 giây (10 phút); **đây vẫn là yêu cầu acceptance trên hosted project**, chưa được coi là đã xác minh chỉ từ local/CI;
 - local/CI dùng Mailpit đi kèm Supabase CLI;
 - production hosted Free có thể dùng Supabase default SMTP **chỉ cho demo với địa chỉ email đã được pre-authorized trong project team**; public/unrestricted email delivery cần custom SMTP và không được claim nếu chưa cấu hình.
 
