@@ -97,9 +97,19 @@ The demo acceptance path must preserve:
 - password minimum 8;
 - lowercase + uppercase + digit;
 - secure password change enabled;
+- **email OTP length = 8 numeric digits** on the *actual hosted project*;
+- **OTP expiry = 600 seconds** on the *actual hosted project*;
 - reauthentication and recovery email flows actually working for the chosen demo account.
 
-Local/CI remains the source of truth for the configured 8-digit / 600-second OTP contract. Hosted settings must be checked where the plan/dashboard exposes them. If the hosted project cannot send reauthentication/recovery email to the selected demo account, stop acceptance and configure a no-cost custom SMTP provider or use another pre-authorized team address.
+#### Hosted OTP parameter gate — required before acceptance
+
+1. Open the real hosted Supabase project `kulaguukpngkzpwforok` (Authentication settings) or use its authenticated Management API; inspect **actual** email OTP length and expiry. Record the observed **numeric values**, date, project ref and redacted settings evidence in Issue #13. Do not infer hosted settings from `supabase/config.toml` or successful local CI.
+2. Confirm **length = 8 digits** and **expiry = 600 seconds**. Record both individual PASS/FAIL results explicitly. If configurable, set them to 8 and 600, then read the settings back. Never claim a config update without a verified readback.
+3. Run a real hosted reauthentication OTP flow and a hosted recovery OTP flow with the selected pre-authorized demo email; confirm delivery, code format, successful verification, rejection of an invalid code and enforced application session gate. Preserve redacted test evidence (do not store OTP codes, credentials or tokens in Git/issues). Validate expiry through a provider setting readback; if expiry behavior is directly tested, use a disposable account and do not claim that an untested TTL was observed.
+4. If hosted settings cannot be inspected or modified, **do not mark OTP acceptance PASS**. Record `UNVERIFIED`, the blocker and the exact access/config gap in Issue #13.
+5. If hosted settings are demonstrably not 8/600 and cannot be fixed, record the observed values as **BC-003 proposed business deviation** in `docs/business-change-log.md`, obtain explicit project-owner approval, update the PR/Decision Log and run independent review **before** accepting the changed contract. Do not silently lower the requirement.
+
+Supabase default SMTP is demo-only for **pre-authorized project-team addresses**, not general production email delivery. If the project cannot send reauthentication/recovery email to the selected demo address, stop the acceptance gate and use a pre-authorized team address or configure a free custom SMTP provider.
 
 ### Hosted Auth compatibility verification
 
@@ -208,9 +218,12 @@ Record:
 - database/Auth test run ID and PASS result;
 - production migration result;
 - hosted Supabase project ref + plan and the documented Auth-plan exception;
+- **hosted OTP length numeric value and expiry (seconds)** observed from real Auth settings; settings evidence/date and independent PASS/FAIL for 8 and 600;
+- hosted reauthentication/recovery test evidence (redacted, no OTP/password/JWT);
+- deviations and project-owner decisions from `docs/business-change-log.md` with corresponding Issue/PR references;
 - Vercel Preview deployment URL/ID;
 - Vercel Production deployment URL/ID;
 - smoke-test result;
 - any canonical-PDF requirement that remains unverifiable.
 
-Do not mark Phase 9 complete until this evidence exists.
+Do not mark Phase 9 complete until this evidence exists. An OTP setting left UNVERIFIED or a proposed deviation without a separate owner decision/re-review is not PASS.
