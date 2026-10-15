@@ -11,7 +11,8 @@
     "start": "next start",
     "lint": "eslint .",
     "type-check": "tsc --noEmit",
-    "security-check": "node scripts/check-secrets.mjs"
+    "security-check": "node scripts/check-secrets.mjs",
+    "seed:local-demo": "node scripts/seed-local-demo.mjs"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.7",
