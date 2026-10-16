@@ -36,10 +36,20 @@ This inventory is a first pass over the inspected actions, not a claim that ever
 - `ActionFeedback`: maps known safe `error` and `status` codes to Vietnamese copy, with a generic fallback for unknown codes. Errors use `role=alert`; success uses `role=status`.
 - `PendingSubmitButton`: uses React's `useFormStatus` to disable the submit control and change its label while the containing form is pending.
 
+## UI adoption in this phase
+
+- Customer create/edit: shared error feedback and pending submit control.
+- Activity create/edit: shared error feedback and pending submit control.
+- Activity delete: pending state plus explicit confirmation.
+- Notification draft create: shared error feedback and pending submit control.
+- Notification send/read: pending state; sending asks for confirmation.
+- Admin account approve/lock/unlock and role assign/revoke: pending state; lock/revoke asks for confirmation.
+- Password-change OTP request and password change: pending state.
+- Customer, activity and notification list pages: shared feedback mapping for known error/status codes.
+
 ## Remaining work / acceptance
 
-- Adopt shared feedback and pending controls incrementally across existing mutation forms.
-- Add focused tests for error-code mapping, fallback behavior, and pending button semantics where the repository's test harness supports component tests.
+- Add focused component tests for error-code mapping, fallback behavior, confirmation cancellation and pending button semantics if/when a component-test harness is introduced.
 - Review date/time, numeric and enum validation against existing database constraints before broad refactoring.
 - Review mutation duplicate behavior per operation; do not claim exactly-once behavior from disabled buttons.
-- Run lint, TypeScript, secret-boundary check, production build, database/Auth tests, and browser smoke on the exact PR head before merge.
+- Run lint, TypeScript, secret-boundary check, production build, database/Auth tests, and browser smoke on the exact PR head before merge. CI workflows now accept PRs targeting feature branches so stacked phase PRs can be checked independently.
