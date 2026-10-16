@@ -30,8 +30,8 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
     <main>
       <section className="card auth-card">
         <h1>Đăng nhập IDAILY</h1>
-        {statusMessage ? <p className="message success">{statusMessage}</p> : null}
-        {errorMessage ? <p className="message error">{errorMessage}</p> : null}
+        {statusMessage ? <p role="status" aria-live="polite" className="message success">{statusMessage}</p> : null}
+        {errorMessage ? <p role="alert" aria-live="assertive" className="message error">{errorMessage}</p> : null}
 
         <form action={login} className="stack">
           <label>
