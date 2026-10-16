@@ -34,11 +34,11 @@ export default async function ChangePasswordPage({
         </p>
 
         {otpSent ? (
-          <p className="message success">
+          <p role="status" aria-live="polite" className="message success">
             Đã gửi OTP. Mã gồm 8 số và hết hạn sau 10 phút.
           </p>
         ) : null}
-        {errorMessage ? <p className="message error">{errorMessage}</p> : null}
+        {errorMessage ? <p role="alert" aria-live="assertive" className="message error">{errorMessage}</p> : null}
 
         <form action={requestPasswordChangeOtp}>
           <button type="submit">Gửi OTP đổi mật khẩu</button>
