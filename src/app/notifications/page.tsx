@@ -101,7 +101,7 @@ export default async function NotificationsPage({
                       type="hidden"
                       value={notification.id}
                     />
-                    <PendingSubmitButton pendingLabel="Đang gửi…">Gửi thông báo</PendingSubmitButton>
+                    <PendingSubmitButton pendingLabel="Đang gửi…" confirmMessage="Gửi thông báo này đến toàn bộ người nhận đã chọn?">Gửi thông báo</PendingSubmitButton>
                   </form>
                 ) : null}
                 {ownRecipientRow && !ownRecipientRow.da_doc ? (
