@@ -1,5 +1,8 @@
 import Link from "next/link";
 
+import { ActionFeedback } from "@/components/action-feedback";
+import { PendingSubmitButton } from "@/components/pending-submit-button";
+
 import { deleteActivity } from "@/app/activities/actions";
 import { requireBusinessAccount } from "@/lib/business";
 
@@ -49,10 +52,10 @@ export default async function ActivitiesPage({
           </Link>
         </div>
         {query.status ? (
-          <p className="message success">Đã cập nhật hoạt động.</p>
+          <ActionFeedback status={query.status} />
         ) : null}
         {query.error ? (
-          <p className="message error">Không thể xử lý hoạt động.</p>
+          <ActionFeedback error={query.error} />
         ) : null}
 
         <form className="filter-grid" method="get">
@@ -94,7 +97,7 @@ export default async function ActivitiesPage({
                         type="hidden"
                         value={activity.id}
                       />
-                      <button type="submit">Xóa</button>
+                      <PendingSubmitButton pendingLabel="Đang xóa…" confirmMessage="Bạn có chắc muốn xóa hoạt động này?">Xóa</PendingSubmitButton>
                     </form>
                   </div>
                 ) : (

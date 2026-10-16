@@ -1,5 +1,8 @@
 import Link from "next/link";
 
+import { ActionFeedback } from "@/components/action-feedback";
+import { PendingSubmitButton } from "@/components/pending-submit-button";
+
 import { createCustomer } from "@/app/customers/actions";
 import { requireBusinessAccount } from "@/lib/business";
 
@@ -23,7 +26,7 @@ export default async function NewCustomerPage({
           <Link href="/customers">Quay lại danh sách</Link>
         </p>
         {query.error ? (
-          <p className="message error">Dữ liệu không hợp lệ hoặc bị trùng.</p>
+          <ActionFeedback error={query.error} />
         ) : null}
         <form action={createCustomer} className="stack">
           <label>
@@ -84,7 +87,7 @@ export default async function NewCustomerPage({
               <option value="C">C</option>
             </select>
           </label>
-          <button type="submit">Lưu khách hàng</button>
+          <PendingSubmitButton pendingLabel="Đang lưu khách hàng…">Lưu khách hàng</PendingSubmitButton>
         </form>
       </section>
     </main>

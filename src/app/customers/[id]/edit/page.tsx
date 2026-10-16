@@ -1,4 +1,7 @@
 import Link from "next/link";
+
+import { ActionFeedback } from "@/components/action-feedback";
+import { PendingSubmitButton } from "@/components/pending-submit-button";
 import { notFound } from "next/navigation";
 
 import { updateCustomer } from "@/app/customers/actions";
@@ -38,7 +41,7 @@ export default async function EditCustomerPage({
           <Link href={`/customers/${customer.id}`}>Quay lại chi tiết</Link>
         </p>
         {query.error ? (
-          <p className="message error">Không thể cập nhật dữ liệu.</p>
+          <ActionFeedback error={query.error} />
         ) : null}
         <form action={updateCustomer} className="stack">
           <input name="customer_id" type="hidden" value={customer.id} />
@@ -112,7 +115,7 @@ export default async function EditCustomerPage({
               <option value="C">C</option>
             </select>
           </label>
-          <button type="submit">Lưu thay đổi</button>
+          <PendingSubmitButton pendingLabel="Đang lưu thay đổi…">Lưu thay đổi</PendingSubmitButton>
         </form>
       </section>
     </main>

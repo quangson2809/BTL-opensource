@@ -1,5 +1,8 @@
 import Link from "next/link";
 
+import { ActionFeedback } from "@/components/action-feedback";
+import { PendingSubmitButton } from "@/components/pending-submit-button";
+
 import {
   markNotificationRead,
   sendNotification,
@@ -58,10 +61,10 @@ export default async function NotificationsPage({
         </div>
 
         {query.status ? (
-          <p className="message success">Đã xử lý thông báo.</p>
+          <ActionFeedback status={query.status} />
         ) : null}
         {query.error ? (
-          <p className="message error">Không thể xử lý thông báo.</p>
+          <ActionFeedback error={query.error} />
         ) : null}
 
         <div className="stack">
@@ -98,7 +101,7 @@ export default async function NotificationsPage({
                       type="hidden"
                       value={notification.id}
                     />
-                    <button type="submit">Gửi thông báo</button>
+                    <PendingSubmitButton pendingLabel="Đang gửi…" confirmMessage="Gửi thông báo này đến toàn bộ người nhận đã chọn?">Gửi thông báo</PendingSubmitButton>
                   </form>
                 ) : null}
                 {ownRecipientRow && !ownRecipientRow.da_doc ? (
@@ -108,7 +111,7 @@ export default async function NotificationsPage({
                       type="hidden"
                       value={ownRecipientRow.id}
                     />
-                    <button type="submit">Đánh dấu đã đọc</button>
+                    <PendingSubmitButton pendingLabel="Đang cập nhật…">Đánh dấu đã đọc</PendingSubmitButton>
                   </form>
                 ) : null}
                 {ownRecipientRow?.da_doc ? (
