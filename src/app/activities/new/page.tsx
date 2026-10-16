@@ -1,5 +1,8 @@
 import Link from "next/link";
 
+import { ActionFeedback } from "@/components/action-feedback";
+import { PendingSubmitButton } from "@/components/pending-submit-button";
+
 import { createActivity } from "@/app/activities/actions";
 import { requireBusinessAccount } from "@/lib/business";
 
@@ -23,7 +26,7 @@ export default async function NewActivityPage({
           <Link href="/activities">Quay lại lịch sử</Link>
         </p>
         {query.error ? (
-          <p className="message error">Dữ liệu hoạt động không hợp lệ.</p>
+          <ActionFeedback error={query.error} />
         ) : null}
         <form action={createActivity} className="stack">
           <label>
@@ -51,7 +54,7 @@ export default async function NewActivityPage({
               type="number"
             />
           </label>
-          <button type="submit">Lưu hoạt động</button>
+          <PendingSubmitButton pendingLabel="Đang lưu hoạt động…">Lưu hoạt động</PendingSubmitButton>
         </form>
       </section>
     </main>

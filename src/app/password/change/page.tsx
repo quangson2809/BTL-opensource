@@ -1,5 +1,7 @@
 import Link from "next/link";
 
+import { PendingSubmitButton } from "@/components/pending-submit-button";
+
 import {
   changePassword,
   requestPasswordChangeOtp,
@@ -41,7 +43,7 @@ export default async function ChangePasswordPage({
         {errorMessage ? <p role="alert" aria-live="assertive" className="message error">{errorMessage}</p> : null}
 
         <form action={requestPasswordChangeOtp}>
-          <button type="submit">Gửi OTP đổi mật khẩu</button>
+          <PendingSubmitButton pendingLabel="Đang gửi OTP…">Gửi OTP đổi mật khẩu</PendingSubmitButton>
         </form>
 
         <form action={changePassword} className="stack">
@@ -65,7 +67,7 @@ export default async function ChangePasswordPage({
           <p className="secondary-text">
             Tối thiểu 8 ký tự, có chữ thường, chữ hoa và số.
           </p>
-          <button type="submit">Đổi mật khẩu</button>
+          <PendingSubmitButton pendingLabel="Đang cập nhật mật khẩu…">Đổi mật khẩu</PendingSubmitButton>
         </form>
 
         <p className="secondary-text">

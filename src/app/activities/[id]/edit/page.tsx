@@ -1,4 +1,7 @@
 import Link from "next/link";
+
+import { ActionFeedback } from "@/components/action-feedback";
+import { PendingSubmitButton } from "@/components/pending-submit-button";
 import { notFound } from "next/navigation";
 
 import { updateActivity } from "@/app/activities/actions";
@@ -55,7 +58,7 @@ export default async function EditActivityPage({
           <Link href="/activities">Quay lại lịch sử</Link>
         </p>
         {query.error ? (
-          <p className="message error">Không thể cập nhật hoạt động.</p>
+          <ActionFeedback error={query.error} />
         ) : null}
         <form action={updateActivity} className="stack">
           <input name="activity_id" type="hidden" value={activity.id} />
@@ -93,7 +96,7 @@ export default async function EditActivityPage({
               type="number"
             />
           </label>
-          <button type="submit">Lưu thay đổi</button>
+          <PendingSubmitButton pendingLabel="Đang lưu thay đổi…">Lưu thay đổi</PendingSubmitButton>
         </form>
       </section>
     </main>

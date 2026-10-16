@@ -1,5 +1,8 @@
 import Link from "next/link";
 
+import { ActionFeedback } from "@/components/action-feedback";
+import { PendingSubmitButton } from "@/components/pending-submit-button";
+
 import { createNotification } from "@/app/notifications/actions";
 import { requireDm } from "@/lib/business";
 
@@ -32,7 +35,7 @@ export default async function NewNotificationPage({
           <Link href="/notifications">Quay lại thông báo</Link>
         </p>
         {query.error ? (
-          <p className="message error">Không thể tạo thông báo.</p>
+          <ActionFeedback error={query.error} />
         ) : null}
         <form action={createNotification} className="stack">
           <label>
@@ -70,7 +73,7 @@ export default async function NewNotificationPage({
             Giữ Ctrl/Cmd để chọn nhiều người nhận. Draft chưa hiển thị cho người
             nhận cho đến khi DM bấm gửi.
           </p>
-          <button type="submit">Tạo bản nháp</button>
+          <PendingSubmitButton pendingLabel="Đang tạo bản nháp…">Tạo bản nháp</PendingSubmitButton>
         </form>
       </section>
     </main>

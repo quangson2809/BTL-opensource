@@ -9,6 +9,7 @@ import {
   unlockAccount,
 } from "@/app/admin/actions";
 import { requireAdmin } from "@/lib/admin";
+import { PendingSubmitButton } from "@/components/pending-submit-button";
 
 export const dynamic = "force-dynamic";
 
@@ -82,8 +83,8 @@ export default async function AccountDetailPage({
           <Link href="/admin/roles">Vai trò & quyền</Link>
         </div>
 
-        {statusMessage ? <p className="message success">{statusMessage}</p> : null}
-        {errorMessage ? <p className="message error">{errorMessage}</p> : null}
+        {statusMessage ? <p role="status" aria-live="polite" className="message success">{statusMessage}</p> : null}
+        {errorMessage ? <p role="alert" aria-live="assertive" className="message error">{errorMessage}</p> : null}
 
         <div className="stack">
           <div>
@@ -101,19 +102,19 @@ export default async function AccountDetailPage({
             {account.trang_thai === "CHO_PHE_DUYET" ? (
               <form action={approveAccount}>
                 <input name="account_id" type="hidden" value={account.id} />
-                <button type="submit">Phê duyệt</button>
+                <PendingSubmitButton pendingLabel="Đang phê duyệt…">Phê duyệt</PendingSubmitButton>
               </form>
             ) : null}
             {account.trang_thai === "DANG_HOAT_DONG" ? (
               <form action={lockAccount}>
                 <input name="account_id" type="hidden" value={account.id} />
-                <button type="submit">Khóa tài khoản</button>
+                <PendingSubmitButton pendingLabel="Đang khóa…" confirmMessage="Bạn có chắc muốn khóa tài khoản này?">Khóa tài khoản</PendingSubmitButton>
               </form>
             ) : null}
             {account.trang_thai === "KHOA" ? (
               <form action={unlockAccount}>
                 <input name="account_id" type="hidden" value={account.id} />
-                <button type="submit">Mở khóa tài khoản</button>
+                <PendingSubmitButton pendingLabel="Đang mở khóa…">Mở khóa tài khoản</PendingSubmitButton>
               </form>
             ) : null}
           </div>
@@ -131,9 +132,12 @@ export default async function AccountDetailPage({
                     <form action={assigned ? revokeRole : assignRole}>
                       <input name="account_id" type="hidden" value={account.id} />
                       <input name="role_id" type="hidden" value={role.id} />
-                      <button type="submit">
+                      <PendingSubmitButton
+                        pendingLabel={assigned ? "Đang thu hồi…" : "Đang gán…"}
+                        confirmMessage={assigned ? "Bạn có chắc muốn thu hồi vai trò này?" : undefined}
+                      >
                         {assigned ? "Thu hồi vai trò" : "Gán vai trò"}
-                      </button>
+                      </PendingSubmitButton>
                     </form>
                   </div>
                 );
