@@ -230,9 +230,9 @@ export function AppFrame({ children }: Readonly<{ children: ReactNode }>) {
           </div>
         </header>
 
-        <main className="workspace-content" id="workspace-main">
+        <div className="workspace-content" id="workspace-main">
           {children}
-        </main>
+        </div>
         <footer className="workspace-footer">
           IDAILY <span aria-hidden="true">·</span> Hệ thống quản lý đại lý bảo hiểm
         </footer>
