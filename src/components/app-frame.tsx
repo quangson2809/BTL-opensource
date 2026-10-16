@@ -131,10 +131,6 @@ export function AppFrame({ children }: Readonly<{ children: ReactNode }>) {
     };
   }, [showWorkspace]);
 
-  useEffect(() => {
-    setMobileNavigationOpen(false);
-  }, [pathname]);
-
   if (!showWorkspace) return children;
 
   const visibleNavigation = navigation.filter(
@@ -155,7 +151,7 @@ export function AppFrame({ children }: Readonly<{ children: ReactNode }>) {
         aria-label="Điều hướng ứng dụng"
         className={`workspace-sidebar${mobileNavigationOpen ? " is-open" : ""}`}
       >
-        <Link aria-label="IDAILY - Tổng quan" className="workspace-brand" href="/dashboard">
+        <Link aria-label="IDAILY - Tổng quan" className="workspace-brand" href="/dashboard" onClick={() => setMobileNavigationOpen(false)}>
           <span aria-hidden="true" className="brand-mark">iD</span>
           <span>
             <span className="brand-name">IDAILY</span>
@@ -171,6 +167,7 @@ export function AppFrame({ children }: Readonly<{ children: ReactNode }>) {
               className={`navigation-link${isActivePath(pathname, item.href) ? " is-active" : ""}`}
               href={item.href}
               key={item.href}
+              onClick={() => setMobileNavigationOpen(false)}
             >
               <span>{item.label}</span>
               <span aria-hidden="true" className="navigation-arrow">›</span>
@@ -211,7 +208,7 @@ export function AppFrame({ children }: Readonly<{ children: ReactNode }>) {
           </button>
 
           <div className="workspace-breadcrumbs" aria-label="Vị trí hiện tại">
-            <Link href="/dashboard">IDAILY</Link>
+            <Link href="/dashboard" onClick={() => setMobileNavigationOpen(false)}>IDAILY</Link>
             {breadcrumbs.map((label, index) => (
               <span key={`${label}-${index}`}>
                 <span aria-hidden="true">/</span>
@@ -223,7 +220,7 @@ export function AppFrame({ children }: Readonly<{ children: ReactNode }>) {
           </div>
 
           <div className="workspace-account-actions">
-            <Link href="/password/change">Đổi mật khẩu</Link>
+            <Link href="/password/change" onClick={() => setMobileNavigationOpen(false)}>Đổi mật khẩu</Link>
             <form action={logout}>
               <button type="submit" className="workspace-logout">Đăng xuất</button>
             </form>
