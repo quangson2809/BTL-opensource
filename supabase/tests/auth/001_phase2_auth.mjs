@@ -1,6 +1,11 @@
 import assert from "node:assert/strict";
 
 import { createClient } from "@supabase/supabase-js";
+import {
+  classifyLoginAuthError,
+  LOGIN_FAILURE_CATEGORIES,
+  TEMPORARY_LOCK_HOOK_MESSAGE,
+} from "../../../src/lib/auth-login-errors.mjs";
 
 const url = process.env.API_URL;
 const anonKey = process.env.ANON_KEY;
@@ -229,6 +234,13 @@ for (let attempt = 1; attempt <= 6; attempt += 1) {
 
   assert.ok(error, `bad password attempt ${attempt} must fail`);
   assert.equal(data.session, null, `bad password attempt ${attempt} must not create a session`);
+  if (attempt === 1) {
+    assert.equal(
+      classifyLoginAuthError(error),
+      LOGIN_FAILURE_CATEGORIES.INVALID_CREDENTIALS,
+      "wrong password must be classified using the provider error contract",
+    );
+  }
 }
 
 account = await accountState(userId);
@@ -254,6 +266,16 @@ const {
 assert.ok(
   lockedCorrectError,
   "correct password must still be rejected while temporary lock is active",
+);
+assert.equal(
+  lockedCorrectError.message,
+  TEMPORARY_LOCK_HOOK_MESSAGE,
+  "Auth must preserve the exact message emitted by the password-verification hook",
+);
+assert.equal(
+  classifyLoginAuthError(lockedCorrectError),
+  LOGIN_FAILURE_CATEGORIES.TEMPORARY_LOCK,
+  "the real Auth hook error must map to the temporary-lock category",
 );
 assert.equal(
   lockedCorrectLogin.session,

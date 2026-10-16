@@ -1,6 +1,15 @@
 "use server";
 
+import { headers } from "next/headers";
 import { redirect } from "next/navigation";
+
+import {
+  classifyLoginAuthError,
+  createLoginFailureLog,
+  getLoginErrorQueryCode,
+  LOGIN_FAILURE_CATEGORIES,
+  type LoginFailureCategory,
+} from "@/lib/auth-login-errors.mjs";
 
 import { requireActiveBusinessAccount } from "@/lib/business";
 import { createAdminClient } from "@/lib/supabase/admin";
@@ -14,6 +23,28 @@ function field(formData: FormData, name: string) {
 function rawField(formData: FormData, name: string) {
   const value = formData.get(name);
   return typeof value === "string" ? value : "";
+}
+
+async function logLoginFailure(
+  category: LoginFailureCategory,
+  error?: unknown,
+  source = "supabase-auth",
+) {
+  let requestId: string | null = null;
+
+  try {
+    const requestHeaders = await headers();
+    requestId =
+      requestHeaders.get("x-vercel-id") ??
+      requestHeaders.get("x-request-id") ??
+      null;
+  } catch {
+    // Logging must not break the authentication response if request context is unavailable.
+  }
+
+  console.warn(
+    JSON.stringify(createLoginFailureLog({ category, error, requestId, source })),
+  );
 }
 
 function meetsPasswordPolicy(password: string) {
@@ -72,42 +103,79 @@ export async function login(formData: FormData) {
   }
 
   const supabase = await createClient();
-
-  // An app-only failed-attempt counter is not a security boundary because the
-  // public Auth API can be called directly. The provider hook/rate limit remains
-  // authoritative for password verification throttling.
-  const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+  const { data, error } = await supabase.auth
+    .signInWithPassword({ email, password })
+    .catch(async (caughtError: unknown) => {
+      await logLoginFailure(
+        LOGIN_FAILURE_CATEGORIES.AUTH_SERVICE_ERROR,
+        caughtError,
+      );
+      redirect("/login?error=service");
+    });
 
   if (error || !data.user) {
-    redirect("/login?error=invalid");
+    const category = error
+      ? classifyLoginAuthError(error)
+      : LOGIN_FAILURE_CATEGORIES.AUTH_SERVICE_ERROR;
+    await logLoginFailure(category, error);
+    redirect(`/login?error=${getLoginErrorQueryCode(category)}`);
   }
 
   // This server-only client reads the minimum account state needed to decide
   // whether to keep the application session. Business access uses the user JWT
   // and database RLS rather than the service-role client.
-  const admin = createAdminClient();
-  const { data: account, error: accountError } = await admin
-    .from("tai_khoan")
-    .select("id,trang_thai")
-    .eq("id", data.user.id)
-    .maybeSingle();
+  let account: { id: string; trang_thai: string } | null = null;
+  let accountError: unknown = null;
 
-  if (accountError || !account) {
+  try {
+    const admin = createAdminClient();
+    const result = await admin
+      .from("tai_khoan")
+      .select("id,trang_thai")
+      .eq("id", data.user.id)
+      .maybeSingle();
+    account = result.data;
+    accountError = result.error;
+  } catch (caughtError: unknown) {
+    await logLoginFailure(
+      LOGIN_FAILURE_CATEGORIES.AUTH_SERVICE_ERROR,
+      caughtError,
+      "database",
+    );
+    await supabase.auth.signOut({ scope: "local" });
+    redirect("/login?error=service");
+  }
+
+  if (accountError) {
+    await logLoginFailure(
+      LOGIN_FAILURE_CATEGORIES.AUTH_SERVICE_ERROR,
+      accountError,
+      "database",
+    );
+    await supabase.auth.signOut({ scope: "local" });
+    redirect("/login?error=service");
+  }
+
+  if (!account) {
+    await logLoginFailure(LOGIN_FAILURE_CATEGORIES.ACCOUNT_NOT_FOUND);
     await supabase.auth.signOut({ scope: "local" });
     redirect("/login?error=access");
   }
 
   if (account.trang_thai === "CHO_PHE_DUYET") {
+    await logLoginFailure(LOGIN_FAILURE_CATEGORIES.ACCOUNT_PENDING);
     await supabase.auth.signOut({ scope: "local" });
     redirect("/login?error=pending");
   }
 
   if (account.trang_thai === "KHOA") {
+    await logLoginFailure(LOGIN_FAILURE_CATEGORIES.ACCOUNT_LOCKED);
     await supabase.auth.signOut({ scope: "local" });
     redirect("/login?error=locked");
   }
 
   if (account.trang_thai !== "DANG_HOAT_DONG") {
+    await logLoginFailure(LOGIN_FAILURE_CATEGORIES.ACCOUNT_STATE_REJECTED);
     await supabase.auth.signOut({ scope: "local" });
     redirect("/login?error=access");
   }

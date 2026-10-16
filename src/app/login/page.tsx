@@ -8,6 +8,8 @@ const errorMessages: Record<string, string> = {
   pending: "Tài khoản đang chờ quản trị viên phê duyệt.",
   locked: "Tài khoản đã bị quản trị viên khóa.",
   "temporary-lock": "Tài khoản đang bị khóa tạm thời. Vui lòng thử lại sau.",
+  "rate-limited": "Bạn đã thử đăng nhập quá nhiều lần. Vui lòng chờ rồi thử lại.",
+  service: "Không thể đăng nhập lúc này. Vui lòng thử lại sau.",
   access: "Không thể cấp quyền truy cập cho tài khoản này.",
 };
 
