@@ -1,20 +1,23 @@
 import Link from "next/link";
 
 import { register } from "@/app/auth/actions";
-
-const errorMessages: Record<string, string> = {
-  missing: "Vui lòng điền đầy đủ thông tin bắt buộc.",
-  registration: "Không thể đăng ký tài khoản. Hãy kiểm tra thông tin và thử lại.",
-  "weak-password": "Mật khẩu phải có ít nhất 8 ký tự, gồm chữ thường, chữ hoa và số.",
-};
+import {
+  REGISTRATION_ERROR_MESSAGES,
+  REGISTRATION_STATUS_MESSAGES,
+} from "@/lib/auth-registration.mjs";
 
 type RegisterPageProps = {
-  searchParams: Promise<{ error?: string }>;
+  searchParams: Promise<{ error?: string; status?: string }>;
 };
 
 export default async function RegisterPage({ searchParams }: RegisterPageProps) {
   const params = await searchParams;
-  const errorMessage = params.error ? errorMessages[params.error] : undefined;
+  const errorMessage = params.error
+    ? REGISTRATION_ERROR_MESSAGES[params.error]
+    : undefined;
+  const statusMessage = params.status
+    ? REGISTRATION_STATUS_MESSAGES[params.status]
+    : undefined;
 
   return (
     <main>
@@ -23,6 +26,7 @@ export default async function RegisterPage({ searchParams }: RegisterPageProps) 
         <p className="secondary-text">
           Tài khoản mới sẽ ở trạng thái chờ phê duyệt cho tới khi quản trị viên kích hoạt.
         </p>
+        {statusMessage ? <p role="status" aria-live="polite" className="message success">{statusMessage}</p> : null}
         {errorMessage ? <p role="alert" aria-live="assertive" className="message error">{errorMessage}</p> : null}
 
         <form action={register} className="stack">

@@ -8,6 +8,11 @@ import {
   createLoginFailureLog,
   type LoginFailureCategory,
 } from "@/lib/auth-login-errors.mjs";
+import {
+  createRegistrationFailureLog,
+  executeRegistration,
+  type RegistrationFailureCategory,
+} from "@/lib/auth-registration.mjs";
 
 import { requireActiveBusinessAccount } from "@/lib/business";
 import { createAdminClient } from "@/lib/supabase/admin";
@@ -45,24 +50,80 @@ async function logLoginFailure(
   );
 }
 
-function meetsPasswordPolicy(password: string) {
-  return (
-    password.length >= 8 &&
-    /[a-z]/.test(password) &&
-    /[A-Z]/.test(password) &&
-    /[0-9]/.test(password)
-  );
+
+async function logRegistrationFailure({
+  category,
+  error,
+  source,
+  event,
+}: {
+  category: RegistrationFailureCategory;
+  error?: unknown;
+  source: string;
+  event?: string;
+})export async function register(formData: FormData) {
+  const destination = await executeRegistration({
+    fullName: field(formData, "ho_ten"),
+    email: field(formData, "email").toLowerCase(),
+    phone: field(formData, "so_dien_thoai"),
+    agentCode: field(formData, "ma_dai_ly"),
+    password: rawField(formData, "password"),
+    createAuthClient: async () => {
+      const supabase = await createClient();
+      return {
+        signUp: async ({ email, password, metadata }) => {
+          const { data, error } = await supabase.auth.signUp({
+            email,
+            password,
+            options: { data: metadata },
+          });
+          return {
+            user: data.user
+              ? {
+                  id: data.user.id,
+                  identityCount: Array.isArray(data.user.identities)
+                    ? data.user.identities.length
+                    : null,
+                }
+              : null,
+            hasSession: Boolean(data.session),
+            error,
+          };
+        },
+        signOutLocal: async () => {
+          const { error } = await supabase.auth.signOut({ scope: "local" });
+          return { error };
+        },
+      };
+    },
+    createAdminClient: () => {
+      const admin = createAdminClient();
+      return {
+        findExistingPhone: async (phone) => {
+          const { data, error } = await admin
+            .from("tai_khoan")
+            .select("id")
+            .eq("so_dien_thoai", phone)
+            .maybeSingle();
+          return { exists: Boolean(data), error };
+        },
+        findExistingAgentCode: async (agentCode) => {
+          const { data, error } = await admin
+            .from("tai_khoan")
+            .select("id")
+            .eq("ma_dai_ly", agentCode)
+            .maybeSingle();
+          return { exists: Boolean(data), error };
+        },
+      };
+    },
+    logFailure: logRegistrationFailure,
+  });
+
+  redirect(destination);
 }
 
-
-export async function register(formData: FormData) {
-  const hoTen = field(formData, "ho_ten");
-  const email = field(formData, "email").toLowerCase();
-  const soDienThoai = field(formData, "so_dien_thoai");
-  const maDaiLy = field(formData, "ma_dai_ly");
-  const password = rawField(formData, "password");
-
-  if (!hoTen || !email || !soDienThoai || !maDaiLy || !password) {
+Ly || !password) {
     redirect("/register?error=missing");
   }
 
