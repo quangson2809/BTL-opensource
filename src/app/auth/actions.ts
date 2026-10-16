@@ -102,7 +102,18 @@ export async function login(formData: FormData) {
     redirect("/login?error=missing");
   }
 
-  const supabase = await createClient();
+  let supabase: Awaited<ReturnType<typeof createClient>>;
+  try {
+    supabase = await createClient();
+  } catch (caughtError: unknown) {
+    await logLoginFailure(
+      LOGIN_FAILURE_CATEGORIES.AUTH_SERVICE_ERROR,
+      caughtError,
+      "supabase-config",
+    );
+    redirect("/login?error=service");
+  }
+
   const { data, error } = await supabase.auth
     .signInWithPassword({ email, password })
     .catch(async (caughtError: unknown) => {
