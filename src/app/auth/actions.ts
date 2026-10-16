@@ -103,8 +103,40 @@ export async function login(formData: FormData) {
   const destination = await executeLogin({
     email,
     password,
-    createAuthClient: createClient,
-    createAdminClient,
+    createAuthClient: async () => {
+      const supabase = await createClient();
+      return {
+        signInWithPassword: async (credentials) => {
+          const result = await supabase.auth.signInWithPassword(credentials);
+          return {
+            data: {
+              user: result.data.user ? { id: result.data.user.id } : null,
+            },
+            error: result.error,
+          };
+        },
+        signOutLocal: async () => {
+          const result = await supabase.auth.signOut({ scope: "local" });
+          return { error: result.error };
+        },
+      };
+    },
+    createAdminClient: () => ({
+      getAccount: async (userId) => {
+        const admin = createAdminClient();
+        const result = await admin
+          .from("tai_khoan")
+          .select("id,trang_thai")
+          .eq("id", userId)
+          .maybeSingle();
+        return {
+          data: result.data
+            ? { id: result.data.id, trang_thai: result.data.trang_thai }
+            : null,
+          error: result.error,
+        };
+      },
+    }),
     logFailure: logLoginFailure,
   });
 

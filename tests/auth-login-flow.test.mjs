@@ -18,38 +18,22 @@ function fixture({
   signOutError = null,
 } = {}) {
   const calls = { signIn: [], signOut: [], query: [], logs: [] };
-  const supabase = {
-    auth: {
-      async signInWithPassword(input) {
-        calls.signIn.push(input);
-        if (thrownAuthError) throw thrownAuthError;
-        return authResult;
-      },
-      async signOut(input) {
-        calls.signOut.push(input);
-        return { error: signOutError };
-      },
+  const authClient = {
+    async signInWithPassword(input) {
+      calls.signIn.push(input);
+      if (thrownAuthError) throw thrownAuthError;
+      return authResult;
+    },
+    async signOutLocal() {
+      calls.signOut.push({ scope: "local" });
+      return { error: signOutError };
     },
   };
-  const admin = {
-    from(table) {
-      calls.query.push({ table });
-      return {
-        select(columns) {
-          calls.query.push({ columns });
-          return {
-            eq(column, value) {
-              calls.query.push({ column, value });
-              return {
-                async maybeSingle() {
-                  if (thrownDatabaseError) throw thrownDatabaseError;
-                  return { data: account, error: accountError };
-                },
-              };
-            },
-          };
-        },
-      };
+  const accountClient = {
+    async getAccount(userId) {
+      calls.query.push({ method: "getAccount", userId });
+      if (thrownDatabaseError) throw thrownDatabaseError;
+      return { data: account, error: accountError };
     },
   };
 
@@ -60,9 +44,9 @@ function fixture({
       password: "not-logged-or-returned",
       createAuthClient: async () => {
         if (authClientError) throw authClientError;
-        return supabase;
+        return authClient;
       },
-      createAdminClient: () => admin,
+      createAdminClient: () => accountClient,
       logFailure: async (...args) => calls.logs.push(args),
       ...overrides,
     }),
@@ -164,9 +148,7 @@ test("active account reaches dashboard and the RLS checks remain downstream", as
   const state = fixture();
   assert.equal(await state.run(), "/dashboard");
   assert.deepEqual(state.calls.signOut, []);
-  assert.deepEqual(state.calls.query.slice(0, 3), [
-    { table: "tai_khoan" },
-    { columns: "id,trang_thai" },
-    { column: "id", value: "user-1" },
+  assert.deepEqual(state.calls.query, [
+    { method: "getAccount", userId: "user-1" },
   ]);
 });
