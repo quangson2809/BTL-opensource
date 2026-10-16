@@ -5,7 +5,7 @@
 - [x] Account menu is a native keyboard-operable disclosure and keeps “Đổi mật khẩu” available at mobile widths.
 - [x] Breadcrumbs use a named navigation landmark, ordered-list semantics, and a current-page marker.
 - [x] Skip link targets a focusable main workspace container.
-- [x] Mobile drawer exposes expanded/modal state, is removed from keyboard navigation when closed, traps Tab focus while open, closes on Escape/backdrop/navigation, restores focus to the toggle, and disables background scroll.
+- [x] Mobile drawer exposes expanded/modal state, remains CSS-hidden before hydration when closed, is inert when closed, makes the background content inert while open, traps Tab focus, closes on Escape/backdrop/navigation, restores focus to the toggle, and disables background scroll.
 - [x] Shared page header, empty state, loading state and safe error/retry state are defined and applied to primary customer/activity/notification lists.
 - [ ] Visual browser screenshots at 375 / 768 / 1024 / 1440 CSS pixels.
 - [ ] Manual keyboard and screen-reader smoke on a real browser; do not infer PASS from CSS/CI alone.

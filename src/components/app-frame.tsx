@@ -308,7 +308,7 @@ export function AppFrame({ children }: Readonly<{ children: ReactNode }>) {
         />
       ) : null}
 
-      <div className="workspace-main-column">
+      <div className="workspace-main-column" inert={drawerActive}>
         <header className="workspace-topbar">
           <button
             aria-controls="workspace-sidebar"
