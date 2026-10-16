@@ -23,7 +23,7 @@ export default async function RegisterPage({ searchParams }: RegisterPageProps) 
         <p className="secondary-text">
           Tài khoản mới sẽ ở trạng thái chờ phê duyệt cho tới khi quản trị viên kích hoạt.
         </p>
-        {errorMessage ? <p className="message error">{errorMessage}</p> : null}
+        {errorMessage ? <p role="alert" aria-live="assertive" className="message error">{errorMessage}</p> : null}
 
         <form action={register} className="stack">
           <label>
