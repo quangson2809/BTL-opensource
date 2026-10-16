@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
+import type { ReactNode } from "react";
 
 import { logout } from "@/app/auth/actions";
 import { createClient } from "@/lib/supabase/client";
@@ -70,7 +71,7 @@ function isActivePath(pathname: string, href: string) {
   return pathname === href || pathname.startsWith(`${href}/`);
 }
 
-export function AppFrame({ children }: Readonly<{ children: React.ReactNode }>) {
+export function AppFrame({ children }: Readonly<{ children: ReactNode }>) {
   const pathname = usePathname();
   const [mobileNavigationOpen, setMobileNavigationOpen] = useState(false);
   const [roles, setRoles] = useState<Set<string>>(new Set());
