@@ -1,5 +1,7 @@
 import Link from "next/link";
 
+import { ActionFeedback } from "@/components/action-feedback";
+
 import { requireBusinessAccount } from "@/lib/business";
 
 export const dynamic = "force-dynamic";
@@ -55,10 +57,10 @@ export default async function CustomersPage({ searchParams }: CustomersPageProps
         </div>
 
         {query.status === "deleted" ? (
-          <p className="message success">Đã xóa khách hàng.</p>
+          <ActionFeedback status={query.status} />
         ) : null}
         {query.error ? (
-          <p className="message error">Không thể xử lý yêu cầu.</p>
+          <ActionFeedback error={query.error} />
         ) : null}
 
         <form className="filter-grid" method="get">
