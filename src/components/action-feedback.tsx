@@ -43,10 +43,10 @@ export function ActionFeedback({ error, status }: ActionFeedbackProps) {
     );
   }
 
-  if (status) {
+  if (status && successMessages[status]) {
     return (
       <p aria-live="polite" className="message success" role="status">
-        {successMessages[status] ?? "Thao tác đã hoàn tất."}
+        {successMessages[status]}
       </p>
     );
   }
