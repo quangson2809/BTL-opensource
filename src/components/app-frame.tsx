@@ -84,6 +84,10 @@ export function AppFrame({ children }: Readonly<{ children: ReactNode }>) {
     if (!showWorkspace) return;
 
     let cancelled = false;
+    setRoles(new Set());
+    setAccountName("Tài khoản");
+    setAccountEmail("");
+    setAccountLoaded(false);
 
     async function loadAccountContext() {
       const supabase = createClient();
@@ -143,7 +147,11 @@ export function AppFrame({ children }: Readonly<{ children: ReactNode }>) {
   const breadcrumbs = pathname
     .split("/")
     .filter(Boolean)
-    .map((segment) => routeLabels[segment] ?? segment);
+    .map((segment) =>
+      /^[0-9a-f]{8}-[0-9a-f-]{27,}$/i.test(segment)
+        ? "Chi tiết"
+        : routeLabels[segment] ?? segment,
+    );
 
   return (
     <div className="workspace-shell">
