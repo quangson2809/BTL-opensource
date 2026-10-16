@@ -2,6 +2,7 @@
 
 import { redirect } from "next/navigation";
 
+import { requireActiveBusinessAccount } from "@/lib/business";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 
@@ -24,36 +25,6 @@ function meetsPasswordPolicy(password: string) {
   );
 }
 
-async function requireActiveBusinessAccount() {
-  const supabase = await createClient();
-  const { data: claimsData, error: claimsError } = await supabase.auth.getClaims();
-  const accountId = claimsData?.claims?.sub;
-
-  if (claimsError || typeof accountId !== "string") {
-    redirect("/login");
-  }
-
-  const { data: account, error: accountError } = await supabase
-    .from("tai_khoan")
-    .select("id,trang_thai")
-    .eq("id", accountId)
-    .maybeSingle();
-
-  if (accountError || !account) {
-    redirect("/access-denied");
-  }
-  if (account.trang_thai === "CHO_PHE_DUYET") {
-    redirect("/password/change?error=pending");
-  }
-  if (account.trang_thai === "KHOA") {
-    redirect("/password/change?error=locked");
-  }
-  if (account.trang_thai !== "DANG_HOAT_DONG") {
-    redirect("/access-denied");
-  }
-
-  return supabase;
-}
 
 export async function register(formData: FormData) {
   const hoTen = field(formData, "ho_ten");
@@ -145,7 +116,7 @@ export async function login(formData: FormData) {
 }
 
 export async function requestPasswordChangeOtp() {
-  const supabase = await requireActiveBusinessAccount();
+  const { supabase } = await requireActiveBusinessAccount();
   const { error } = await supabase.auth.reauthenticate();
 
   if (error) {
@@ -172,7 +143,7 @@ export async function changePassword(formData: FormData) {
     redirect("/password/change?error=weak-password");
   }
 
-  const supabase = await requireActiveBusinessAccount();
+  const { supabase } = await requireActiveBusinessAccount();
   const { error } = await supabase.auth.updateUser({
     password,
     nonce: otp,

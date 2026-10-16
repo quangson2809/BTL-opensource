@@ -2,6 +2,7 @@ import Link from "next/link";
 
 import { ActionFeedback } from "@/components/action-feedback";
 import { PendingSubmitButton } from "@/components/pending-submit-button";
+import { requireActiveBusinessAccount } from "@/lib/business";
 
 import {
   changePassword,
@@ -26,6 +27,7 @@ type ChangePasswordPageProps = {
 export default async function ChangePasswordPage({
   searchParams,
 }: ChangePasswordPageProps) {
+  await requireActiveBusinessAccount();
   const params = await searchParams;
   const errorMessage = params.error ? errorMessages[params.error] : undefined;
   const otpSent = params.status === "otp-sent";
