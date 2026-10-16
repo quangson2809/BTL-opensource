@@ -195,7 +195,13 @@
     background: rgb(16 32 24 / 42%);
     box-shadow: none;
   }
-  .workspace-backdrop:hover { transform: none; }
+  .workspace-backdrop:hover {
+    transform: none;
+    border-color: transparent;
+    background: rgb(16 32 24 / 42%);
+    color: transparent;
+    box-shadow: none;
+  }
   .workspace-menu-toggle {
     display: inline-flex;
     min-width: 2.5rem;
