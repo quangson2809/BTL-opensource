@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
+import { ActionFeedback } from "@/components/action-feedback";
+import { PendingSubmitButton } from "@/components/pending-submit-button";
 import { deleteCustomer } from "@/app/customers/actions";
 import { requireBusinessAccount } from "@/lib/business";
 
@@ -36,17 +38,10 @@ export default async function CustomerDetailPage({
         <h1>{customer.ho_ten}</h1>
         <div className="actions">
           <Link href="/customers">Danh sách khách hàng</Link>
-          <Link href={`/customers/${customer.id}/edit`}>Chỉnh sửa</Link>
+          <Link href={"/customers/" + customer.id + "/edit"}>Chỉnh sửa</Link>
         </div>
-        {query.status === "created" ? (
-          <p className="message success">Đã tạo khách hàng.</p>
-        ) : null}
-        {query.status === "updated" ? (
-          <p className="message success">Đã cập nhật khách hàng.</p>
-        ) : null}
-        {query.error ? (
-          <p className="message error">Không thể xử lý yêu cầu.</p>
-        ) : null}
+        {query.status ? <ActionFeedback status={query.status} /> : null}
+        {query.error ? <ActionFeedback error={query.error} /> : null}
 
         <div className="details-grid">
           <p>Mã: {customer.ma_khach_hang}</p>
@@ -63,7 +58,12 @@ export default async function CustomerDetailPage({
 
         <form action={deleteCustomer}>
           <input name="customer_id" type="hidden" value={customer.id} />
-          <button type="submit">Xóa khách hàng</button>
+          <PendingSubmitButton
+            confirmMessage="Bạn có chắc muốn xóa hồ sơ khách hàng này? Thao tác không thể hoàn tác."
+            pendingLabel="Đang xóa khách hàng…"
+          >
+            Xóa khách hàng
+          </PendingSubmitButton>
         </form>
       </section>
     </main>

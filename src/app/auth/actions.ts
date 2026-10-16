@@ -33,13 +33,22 @@ async function requireActiveBusinessAccount() {
     redirect("/login");
   }
 
-  const { data: account } = await supabase
+  const { data: account, error: accountError } = await supabase
     .from("tai_khoan")
-    .select("id")
+    .select("id,trang_thai")
     .eq("id", accountId)
     .maybeSingle();
 
-  if (!account) {
+  if (accountError || !account) {
+    redirect("/access-denied");
+  }
+  if (account.trang_thai === "CHO_PHE_DUYET") {
+    redirect("/password/change?error=pending");
+  }
+  if (account.trang_thai === "KHOA") {
+    redirect("/password/change?error=locked");
+  }
+  if (account.trang_thai !== "DANG_HOAT_DONG") {
     redirect("/access-denied");
   }
 
@@ -93,21 +102,18 @@ export async function login(formData: FormData) {
 
   const supabase = await createClient();
 
-  // Keep failed-attempt bookkeeping out of this server action. Local/CI can
-  // exercise the stronger Password Verification Hook, while hosted Free
-  // production relies on Supabase provider rate limiting. An app-only counter
-  // would not be a security boundary because the public Auth API is callable
-  // directly, so production does not claim an exact 6-attempt/30-minute lock.
+  // An app-only failed-attempt counter is not a security boundary because the
+  // public Auth API can be called directly. The provider hook/rate limit remains
+  // authoritative for password verification throttling.
   const { data, error } = await supabase.auth.signInWithPassword({ email, password });
 
   if (error || !data.user) {
     redirect("/login?error=invalid");
   }
 
-  // Business state remains separate from Supabase Auth identity state.
-  // The server-only client is intentionally narrow: it reads only the account
-  // state needed to choose the post-auth response. Business data access still
-  // uses the user's JWT and database RLS.
+  // This server-only client reads the minimum account state needed to decide
+  // whether to keep the application session. Business access uses the user JWT
+  // and database RLS rather than the service-role client.
   const admin = createAdminClient();
   const { data: account, error: accountError } = await admin
     .from("tai_khoan")
@@ -194,10 +200,10 @@ export async function requestPasswordRecovery(formData: FormData) {
   const supabase = await createClient();
   await supabase.auth.resetPasswordForEmail(email);
 
-  // Use the same response regardless of whether the address exists. Supabase
-  // intentionally avoids account enumeration on this endpoint.
+  // Use the same response regardless of whether the address exists to avoid
+  // turning this endpoint into an account-enumeration mechanism.
   redirect(
-    `/password/recovery/verify?email=${encodeURIComponent(email)}&status=otp-sent`,
+    "/password/recovery/verify?email=" + encodeURIComponent(email) + "&status=otp-sent",
   );
 }
 
@@ -207,18 +213,18 @@ export async function verifyRecoveryOtp(formData: FormData) {
   const password = rawField(formData, "new_password");
   const confirmPassword = rawField(formData, "confirm_password");
 
-  const verifyPath = `/password/recovery/verify?email=${encodeURIComponent(email)}`;
+  const verifyPath = "/password/recovery/verify?email=" + encodeURIComponent(email);
 
   if (!email || !otp || !password || !confirmPassword) {
-    redirect(`${verifyPath}&error=missing`);
+    redirect(verifyPath + "&error=missing");
   }
 
   if (password !== confirmPassword) {
-    redirect(`${verifyPath}&error=mismatch`);
+    redirect(verifyPath + "&error=mismatch");
   }
 
   if (!meetsPasswordPolicy(password)) {
-    redirect(`${verifyPath}&error=weak-password`);
+    redirect(verifyPath + "&error=weak-password");
   }
 
   const supabase = await createClient();
@@ -229,22 +235,21 @@ export async function verifyRecoveryOtp(formData: FormData) {
   });
 
   if (error || !data.session) {
-    redirect(`${verifyPath}&error=otp`);
+    redirect(verifyPath + "&error=otp");
   }
 
-  // Complete recovery immediately inside the same server action. The temporary
-  // OTP-authenticated session is never promoted into an application session;
-  // database RLS independently requires a password-authenticated JWT.
+  // Do not promote the temporary OTP session into an application session.
+  // RLS independently requires a password-authenticated JWT.
   const { error: updateError } = await supabase.auth.updateUser({ password });
 
   if (updateError) {
     await supabase.auth.signOut({ scope: "local" });
 
     if (updateError.code === "same_password") {
-      redirect(`${verifyPath}&error=same-password`);
+      redirect(verifyPath + "&error=same-password");
     }
 
-    redirect(`${verifyPath}&error=update`);
+    redirect(verifyPath + "&error=update");
   }
 
   await supabase.auth.signOut({ scope: "local" });

@@ -1,6 +1,8 @@
 import Link from "next/link";
 
 import { ActionFeedback } from "@/components/action-feedback";
+import { EmptyState } from "@/components/empty-state";
+import { PageHeader } from "@/components/page-header";
 
 import { requireBusinessAccount } from "@/lib/business";
 
@@ -31,8 +33,9 @@ export default async function CustomersPage({ searchParams }: CustomersPageProps
     throw new Error("Không thể tải danh sách khách hàng.");
   }
 
+  const records = data ?? [];
   const search = (query.q ?? "").trim().toLocaleLowerCase("vi");
-  const customers = (data ?? []).filter((customer) => {
+  const customers = records.filter((customer) => {
     const matchesSearch =
       !search ||
       customer.ho_ten.toLocaleLowerCase("vi").includes(search) ||
@@ -48,20 +51,18 @@ export default async function CustomersPage({ searchParams }: CustomersPageProps
   return (
     <main>
       <section className="card wide-card">
-        <h1>Khách hàng của tôi</h1>
-        <div className="actions">
-          <Link href="/dashboard">Dashboard</Link>
-          <Link className="button-link" href="/customers/new">
-            Thêm khách hàng
-          </Link>
-        </div>
+        <PageHeader
+          actions={
+            <Link className="button-link" href="/customers/new">
+              Thêm khách hàng
+            </Link>
+          }
+          description="Tra cứu và cập nhật hồ sơ khách hàng thuộc phạm vi được cấp quyền."
+          title="Khách hàng của tôi"
+        />
 
-        {query.status === "deleted" ? (
-          <ActionFeedback status={query.status} />
-        ) : null}
-        {query.error ? (
-          <ActionFeedback error={query.error} />
-        ) : null}
+        {query.status ? <ActionFeedback status={query.status} /> : null}
+        {query.error ? <ActionFeedback error={query.error} /> : null}
 
         <form className="filter-grid" method="get">
           <label>
@@ -105,7 +106,18 @@ export default async function CustomersPage({ searchParams }: CustomersPageProps
         </form>
 
         <div className="stack">
-          {customers.length === 0 ? <p>Chưa có khách hàng phù hợp.</p> : null}
+          {customers.length === 0 ? (
+            <EmptyState
+              actionHref={records.length === 0 ? "/customers/new" : undefined}
+              actionLabel={records.length === 0 ? "Thêm khách hàng đầu tiên" : undefined}
+              description={
+                records.length === 0
+                  ? "Thêm hồ sơ đầu tiên để bắt đầu quản lý khách hàng."
+                  : "Thử thay đổi từ khóa hoặc bộ lọc để xem kết quả khác."
+              }
+              title={records.length === 0 ? "Chưa có khách hàng" : "Không tìm thấy kết quả"}
+            />
+          ) : null}
           {customers.map((customer) => (
             <article className="card" key={customer.id}>
               <p>
@@ -117,7 +129,7 @@ export default async function CustomersPage({ searchParams }: CustomersPageProps
                 {customer.nhom_tinh_cach}
               </p>
               <p className="secondary-text">
-                <Link href={`/customers/${customer.id}`}>Xem chi tiết</Link>
+                <Link href={"/customers/" + customer.id}>Xem chi tiết</Link>
               </p>
             </article>
           ))}

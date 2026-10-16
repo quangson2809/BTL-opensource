@@ -3,6 +3,7 @@
 import { redirect } from "next/navigation";
 
 import { requireBusinessAccount, requireDm } from "@/lib/business";
+import { isUuid } from "@/lib/input-validation.mjs";
 
 function field(formData: FormData, name: string) {
   const value = formData.get(name);
@@ -17,13 +18,15 @@ export async function createNotification(formData: FormData) {
     .getAll("recipient_ids")
     .filter(
       (value): value is string =>
-        typeof value === "string" && value.length > 0,
-    );
+        typeof value === "string" && value.trim().length > 0,
+    )
+    .map((value) => value.trim());
 
   if (
     !title ||
     !content ||
-    !recipients.length ||
+    recipients.length === 0 ||
+    recipients.some((recipient) => !isUuid(recipient)) ||
     !["TIN_TỨC", "TỰ_ĐỘNG_HỆ_THỐNG"].includes(type)
   ) {
     redirect("/notifications/new?error=invalid");
@@ -37,16 +40,16 @@ export async function createNotification(formData: FormData) {
     recipient_ids: recipients,
   });
 
-  if (error || !data) {
+  if (error || !data || !isUuid(data)) {
     redirect("/notifications/new?error=create");
   }
 
-  redirect(`/notifications?status=created&id=${data}`);
+  redirect("/notifications?status=created&id=" + encodeURIComponent(data));
 }
 
 export async function sendNotification(formData: FormData) {
   const notificationId = field(formData, "notification_id");
-  if (!notificationId) {
+  if (!isUuid(notificationId)) {
     redirect("/notifications?error=send");
   }
 
@@ -64,7 +67,7 @@ export async function sendNotification(formData: FormData) {
 
 export async function markNotificationRead(formData: FormData) {
   const recipientRowId = field(formData, "recipient_row_id");
-  if (!recipientRowId) {
+  if (!isUuid(recipientRowId)) {
     redirect("/notifications?error=read");
   }
 

@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { ReactNode } from "react";
 
 import { logout } from "@/app/auth/actions";
@@ -58,27 +58,59 @@ const routeLabels: Record<string, string> = {
   roles: "Vai trò và quyền",
   new: "Tạo mới",
   edit: "Chỉnh sửa",
+  password: "Bảo mật",
   change: "Đổi mật khẩu",
 };
 
 function isWorkspacePath(pathname: string) {
   return workspacePrefixes.some(
-    (prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`),
+    (prefix) => pathname === prefix || pathname.startsWith(prefix + "/"),
   );
 }
 
 function isActivePath(pathname: string, href: string) {
-  return pathname === href || pathname.startsWith(`${href}/`);
+  return pathname === href || pathname.startsWith(href + "/");
+}
+
+function isIdentifierSegment(segment: string) {
+  return /^[0-9a-f]{8}-[0-9a-f-]{27,}$/i.test(segment);
+}
+
+function breadcrumbHref(segments: string[], index: number) {
+  if (index === segments.length - 1) return undefined;
+
+  const path = "/" + segments.slice(0, index + 1).join("/");
+  if (workspacePrefixes.includes(path)) return path;
+  if (/^\/(customers|activities|personnel)\/[0-9a-f-]{36}$/i.test(path)) return path;
+  if (/^\/admin\/accounts\/[0-9a-f-]{36}$/i.test(path)) return path;
+  return undefined;
 }
 
 export function AppFrame({ children }: Readonly<{ children: ReactNode }>) {
   const pathname = usePathname();
   const [mobileNavigationOpen, setMobileNavigationOpen] = useState(false);
+  const [isMobileViewport, setIsMobileViewport] = useState(false);
   const [roles, setRoles] = useState<Set<string>>(new Set());
   const [accountName, setAccountName] = useState("Tài khoản");
   const [accountEmail, setAccountEmail] = useState("");
   const [accountLoaded, setAccountLoaded] = useState(false);
+  const sidebarRef = useRef<HTMLElement>(null);
+  const menuToggleRef = useRef<HTMLButtonElement>(null);
+  const accountMenuRef = useRef<HTMLDetailsElement>(null);
   const showWorkspace = isWorkspacePath(pathname);
+  const drawerActive = showWorkspace && isMobileViewport && mobileNavigationOpen;
+
+  useEffect(() => {
+    const mediaQuery = window.matchMedia("(max-width: 46rem)");
+    const updateViewport = () => {
+      setIsMobileViewport(mediaQuery.matches);
+      if (!mediaQuery.matches) setMobileNavigationOpen(false);
+    };
+
+    updateViewport();
+    mediaQuery.addEventListener("change", updateViewport);
+    return () => mediaQuery.removeEventListener("change", updateViewport);
+  }, []);
 
   useEffect(() => {
     if (!showWorkspace) return;
@@ -131,31 +163,82 @@ export function AppFrame({ children }: Readonly<{ children: ReactNode }>) {
   }, [showWorkspace]);
 
   useEffect(() => {
-    if (!mobileNavigationOpen) return;
+    if (!drawerActive) return;
 
-    function closeOnEscape(event: KeyboardEvent) {
+    const sidebar = sidebarRef.current;
+    const firstNavigationLink = sidebar?.querySelector<HTMLElement>(
+      ".workspace-navigation a[href]",
+    );
+    firstNavigationLink?.focus();
+
+    const onKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
+        event.preventDefault();
         setMobileNavigationOpen(false);
+        return;
       }
-    }
 
-    window.addEventListener("keydown", closeOnEscape);
-    return () => window.removeEventListener("keydown", closeOnEscape);
-  }, [mobileNavigationOpen]);
+      if (event.key !== "Tab" || !sidebar) return;
+
+      const focusable = Array.from(
+        sidebar.querySelectorAll<HTMLElement>(
+          "a[href], button:not(:disabled), summary, input:not(:disabled), select:not(:disabled), textarea:not(:disabled), [tabindex]:not([tabindex='-1'])",
+        ),
+      );
+      if (focusable.length === 0) {
+        event.preventDefault();
+        return;
+      }
+
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      const focusIsOutside = !sidebar.contains(document.activeElement);
+
+      if (event.shiftKey && (document.activeElement === first || focusIsOutside)) {
+        event.preventDefault();
+        last.focus();
+      } else if (
+        !event.shiftKey &&
+        (document.activeElement === last || focusIsOutside)
+      ) {
+        event.preventDefault();
+        first.focus();
+      }
+    };
+
+    document.addEventListener("keydown", onKeyDown);
+    document.body.style.overflow = "hidden";
+
+    return () => {
+      document.removeEventListener("keydown", onKeyDown);
+      document.body.style.overflow = "";
+      if (window.matchMedia("(max-width: 46rem)").matches) {
+        menuToggleRef.current?.focus();
+      } else {
+        document.getElementById("workspace-main")?.focus();
+      }
+    };
+  }, [drawerActive]);
 
   if (!showWorkspace) return children;
 
   const visibleNavigation = navigation.filter(
     (item) => !item.roles || item.roles.some((role) => roles.has(role)),
   );
-  const breadcrumbs = pathname
-    .split("/")
-    .filter(Boolean)
-    .map((segment) =>
-      /^[0-9a-f]{8}-[0-9a-f-]{27,}$/i.test(segment)
-        ? "Chi tiết"
-        : routeLabels[segment] ?? segment,
-    );
+  const segments = pathname.split("/").filter(Boolean);
+  const breadcrumbs = segments.map((segment, index) => ({
+    href: breadcrumbHref(segments, index),
+    key: "/" + segments.slice(0, index + 1).join("/"),
+    label: isIdentifierSegment(segment)
+      ? "Chi tiết"
+      : routeLabels[segment] ?? segment,
+    current: index === segments.length - 1,
+  }));
+
+  function closeAccountMenu() {
+    if (accountMenuRef.current) accountMenuRef.current.open = false;
+    setMobileNavigationOpen(false);
+  }
 
   return (
     <div className="workspace-shell">
@@ -165,10 +248,20 @@ export function AppFrame({ children }: Readonly<{ children: ReactNode }>) {
 
       <aside
         id="workspace-sidebar"
+        ref={sidebarRef}
+        aria-hidden={isMobileViewport && !mobileNavigationOpen}
         aria-label="Điều hướng ứng dụng"
-        className={`workspace-sidebar${mobileNavigationOpen ? " is-open" : ""}`}
+        aria-modal={drawerActive || undefined}
+        className={"workspace-sidebar" + (mobileNavigationOpen ? " is-open" : "")}
+        inert={isMobileViewport && !mobileNavigationOpen}
+        role={drawerActive ? "dialog" : "complementary"}
       >
-        <Link aria-label="IDAILY - Tổng quan" className="workspace-brand" href="/dashboard" onClick={() => setMobileNavigationOpen(false)}>
+        <Link
+          aria-label="IDAILY - Tổng quan"
+          className="workspace-brand"
+          href="/dashboard"
+          onClick={() => setMobileNavigationOpen(false)}
+        >
           <span aria-hidden="true" className="brand-mark">iD</span>
           <span>
             <span className="brand-name">IDAILY</span>
@@ -181,7 +274,10 @@ export function AppFrame({ children }: Readonly<{ children: ReactNode }>) {
           {visibleNavigation.map((item) => (
             <Link
               aria-current={isActivePath(pathname, item.href) ? "page" : undefined}
-              className={`navigation-link${isActivePath(pathname, item.href) ? " is-active" : ""}`}
+              className={
+                "navigation-link" +
+                (isActivePath(pathname, item.href) ? " is-active" : "")
+              }
               href={item.href}
               key={item.href}
               onClick={() => setMobileNavigationOpen(false)}
@@ -203,7 +299,7 @@ export function AppFrame({ children }: Readonly<{ children: ReactNode }>) {
         </div>
       </aside>
 
-      {mobileNavigationOpen ? (
+      {drawerActive ? (
         <button
           aria-label="Đóng điều hướng"
           className="workspace-backdrop"
@@ -216,36 +312,64 @@ export function AppFrame({ children }: Readonly<{ children: ReactNode }>) {
         <header className="workspace-topbar">
           <button
             aria-controls="workspace-sidebar"
-            aria-expanded={mobileNavigationOpen}
-            aria-label={mobileNavigationOpen ? "Đóng menu" : "Mở menu"}
+            aria-expanded={drawerActive}
+            aria-label={drawerActive ? "Đóng menu" : "Mở menu"}
             className="workspace-menu-toggle"
             onClick={() => setMobileNavigationOpen((open) => !open)}
+            ref={menuToggleRef}
             type="button"
           >
             <span aria-hidden="true">☰</span>
           </button>
 
-          <div className="workspace-breadcrumbs" aria-label="Vị trí hiện tại">
-            <Link href="/dashboard" onClick={() => setMobileNavigationOpen(false)}>IDAILY</Link>
-            {breadcrumbs.map((label, index) => (
-              <span key={`${label}-${index}`}>
-                <span aria-hidden="true">/</span>
-                <span aria-current={index === breadcrumbs.length - 1 ? "page" : undefined}>
-                  {label}
-                </span>
-              </span>
-            ))}
-          </div>
+          <nav aria-label="Breadcrumb" className="workspace-breadcrumbs">
+            <ol className="workspace-breadcrumb-list">
+              <li><Link href="/dashboard" onClick={closeAccountMenu}>IDAILY</Link></li>
+              {breadcrumbs.map((crumb) => (
+                <li key={crumb.key}>
+                  <span aria-hidden="true">/</span>
+                  {crumb.href ? (
+                    <Link href={crumb.href} onClick={closeAccountMenu}>
+                      {crumb.label}
+                    </Link>
+                  ) : (
+                    <span aria-current={crumb.current ? "page" : undefined}>
+                      {crumb.label}
+                    </span>
+                  )}
+                </li>
+              ))}
+            </ol>
+          </nav>
 
           <div className="workspace-account-actions">
-            <Link href="/password/change" onClick={() => setMobileNavigationOpen(false)}>Đổi mật khẩu</Link>
-            <form action={logout}>
-              <button type="submit" className="workspace-logout">Đăng xuất</button>
-            </form>
+            <details className="workspace-account-menu" ref={accountMenuRef}>
+              <summary aria-label={"Tài khoản: " + accountName}>
+                <span className="account-menu-initial" aria-hidden="true">
+                  {accountName.trim().charAt(0).toLocaleUpperCase("vi-VN") || "T"}
+                </span>
+                <span className="account-menu-label">Tài khoản</span>
+                <span aria-hidden="true" className="account-menu-chevron">⌄</span>
+              </summary>
+              <div className="workspace-account-menu-panel">
+                <div className="account-menu-profile">
+                  <strong>{accountName}</strong>
+                  <span>{accountLoaded ? accountEmail : "Đang tải tài khoản…"}</span>
+                </div>
+                <Link href="/password/change" onClick={closeAccountMenu}>
+                  Đổi mật khẩu
+                </Link>
+                <form action={logout}>
+                  <button className="workspace-logout" type="submit">
+                    Đăng xuất
+                  </button>
+                </form>
+              </div>
+            </details>
           </div>
         </header>
 
-        <div className="workspace-content" id="workspace-main">
+        <div className="workspace-content" id="workspace-main" tabIndex={-1}>
           {children}
         </div>
         <footer className="workspace-footer">

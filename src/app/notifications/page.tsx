@@ -1,6 +1,8 @@
 import Link from "next/link";
 
 import { ActionFeedback } from "@/components/action-feedback";
+import { EmptyState } from "@/components/empty-state";
+import { PageHeader } from "@/components/page-header";
 import { PendingSubmitButton } from "@/components/pending-submit-button";
 
 import {
@@ -38,6 +40,7 @@ export default async function NotificationsPage({
   }
 
   const isDm = dmResult.data === true;
+  const notifications = notificationResult.data ?? [];
   const recipientRows = recipientResult.data ?? [];
   const rowsByNotification = new Map<string, typeof recipientRows>();
   for (const row of recipientRows) {
@@ -50,28 +53,35 @@ export default async function NotificationsPage({
   return (
     <main>
       <section className="card wide-card">
-        <h1>Thông báo</h1>
-        <div className="actions">
-          <Link href="/dashboard">Dashboard</Link>
-          {isDm ? (
-            <Link className="button-link" href="/notifications/new">
-              Tạo thông báo
-            </Link>
-          ) : null}
-        </div>
+        <PageHeader
+          actions={
+            isDm ? (
+              <Link className="button-link" href="/notifications/new">
+                Tạo thông báo
+              </Link>
+            ) : undefined
+          }
+          description="Xem thông báo được gửi đến bạn và trạng thái gửi/đọc trong phạm vi của mình."
+          title="Thông báo"
+        />
 
-        {query.status ? (
-          <ActionFeedback status={query.status} />
-        ) : null}
-        {query.error ? (
-          <ActionFeedback error={query.error} />
-        ) : null}
+        {query.status ? <ActionFeedback status={query.status} /> : null}
+        {query.error ? <ActionFeedback error={query.error} /> : null}
 
         <div className="stack">
-          {(notificationResult.data ?? []).length === 0 ? (
-            <p>Chưa có thông báo.</p>
+          {notifications.length === 0 ? (
+            <EmptyState
+              actionHref={isDm ? "/notifications/new" : undefined}
+              actionLabel={isDm ? "Tạo thông báo đầu tiên" : undefined}
+              description={
+                isDm
+                  ? "Tạo bản nháp rồi kiểm tra người nhận trước khi gửi."
+                  : "Thông báo sẽ xuất hiện tại đây khi có thông báo trong phạm vi của bạn."
+              }
+              title="Chưa có thông báo"
+            />
           ) : null}
-          {(notificationResult.data ?? []).map((notification) => {
+          {notifications.map((notification) => {
             const recipientRowsForNotification =
               rowsByNotification.get(notification.id) ?? [];
             const ownRecipientRow = recipientRowsForNotification.find(
@@ -101,7 +111,12 @@ export default async function NotificationsPage({
                       type="hidden"
                       value={notification.id}
                     />
-                    <PendingSubmitButton pendingLabel="Đang gửi…" confirmMessage="Gửi thông báo này đến toàn bộ người nhận đã chọn?">Gửi thông báo</PendingSubmitButton>
+                    <PendingSubmitButton
+                      confirmMessage="Gửi thông báo này đến toàn bộ người nhận đã chọn?"
+                      pendingLabel="Đang gửi…"
+                    >
+                      Gửi thông báo
+                    </PendingSubmitButton>
                   </form>
                 ) : null}
                 {ownRecipientRow && !ownRecipientRow.da_doc ? (
@@ -111,7 +126,9 @@ export default async function NotificationsPage({
                       type="hidden"
                       value={ownRecipientRow.id}
                     />
-                    <PendingSubmitButton pendingLabel="Đang cập nhật…">Đánh dấu đã đọc</PendingSubmitButton>
+                    <PendingSubmitButton pendingLabel="Đang cập nhật…">
+                      Đánh dấu đã đọc
+                    </PendingSubmitButton>
                   </form>
                 ) : null}
                 {ownRecipientRow?.da_doc ? (

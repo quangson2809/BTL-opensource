@@ -10,7 +10,7 @@ permissions:
   contents: read
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  group: \${{ github.workflow }}-\${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
 jobs:
@@ -35,6 +35,9 @@ jobs:
 
       - name: Type check
         run: npm run type-check
+
+      - name: Test interaction and input contracts
+        run: npm run test:contracts
 
       - name: Security boundary check
         run: npm run security-check

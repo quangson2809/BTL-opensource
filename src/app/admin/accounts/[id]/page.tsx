@@ -134,7 +134,11 @@ export default async function AccountDetailPage({
                       <input name="role_id" type="hidden" value={role.id} />
                       <PendingSubmitButton
                         pendingLabel={assigned ? "Đang thu hồi…" : "Đang gán…"}
-                        confirmMessage={assigned ? "Bạn có chắc muốn thu hồi vai trò này?" : undefined}
+                        confirmMessage={
+                          assigned
+                            ? "Bạn có chắc muốn thu hồi vai trò này?"
+                            : "Bạn có chắc muốn gán vai trò này cho tài khoản?"
+                        }
                       >
                         {assigned ? "Thu hồi vai trò" : "Gán vai trò"}
                       </PendingSubmitButton>
