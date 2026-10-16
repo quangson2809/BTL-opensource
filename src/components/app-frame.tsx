@@ -80,7 +80,17 @@ function breadcrumbHref(segments: string[], index: number) {
   if (index === segments.length - 1) return undefined;
 
   const path = "/" + segments.slice(0, index + 1).join("/");
-  if (workspacePrefixes.includes(path)) return path;
+  const navigableRoots = [
+    "/dashboard",
+    "/customers",
+    "/activities",
+    "/personnel",
+    "/notifications",
+    "/reports",
+    "/admin/accounts",
+  ];
+
+  if (navigableRoots.includes(path)) return path;
   if (/^\/(customers|activities|personnel)\/[0-9a-f-]{36}$/i.test(path)) return path;
   if (/^\/admin\/accounts\/[0-9a-f-]{36}$/i.test(path)) return path;
   return undefined;
