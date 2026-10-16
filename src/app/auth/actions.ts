@@ -61,7 +61,37 @@ async function logRegistrationFailure({
   error?: unknown;
   source: string;
   event?: string;
-})export async function register(formData: FormData) {
+}) {
+  let requestId: string | null = null;
+
+  try {
+    const requestHeaders = await headers();
+    requestId =
+      requestHeaders.get("x-vercel-id") ??
+      requestHeaders.get("x-request-id") ??
+      null;
+  } catch {
+    // Missing request context must not prevent registration error handling.
+  }
+
+  console.warn(
+    JSON.stringify(
+      createRegistrationFailureLog({ category, error, source, requestId, event }),
+    ),
+  );
+}
+
+function meetsPasswordPolicy(password: string) {
+  return (
+    password.length >= 8 &&
+    /[a-z]/.test(password) &&
+    /[A-Z]/.test(password) &&
+    /[0-9]/.test(password)
+  );
+}
+
+
+export async function register(formData: FormData) {
   const destination = await executeRegistration({
     fullName: field(formData, "ho_ten"),
     email: field(formData, "email").toLowerCase(),
@@ -121,36 +151,6 @@ async function logRegistrationFailure({
   });
 
   redirect(destination);
-}
-
-Ly || !password) {
-    redirect("/register?error=missing");
-  }
-
-  if (!meetsPasswordPolicy(password)) {
-    redirect("/register?error=weak-password");
-  }
-
-  const supabase = await createClient();
-  const { error } = await supabase.auth.signUp({
-    email,
-    password,
-    options: {
-      data: {
-        registration_type: "SA_SELF_REGISTRATION",
-        ho_ten: hoTen,
-        so_dien_thoai: soDienThoai,
-        ma_dai_ly: maDaiLy,
-      },
-    },
-  });
-
-  if (error) {
-    redirect("/register?error=registration");
-  }
-
-  await supabase.auth.signOut({ scope: "local" });
-  redirect("/login?status=registered");
 }
 
 export async function login(formData: FormData) {
