@@ -97,7 +97,7 @@ export default async function ActivitiesPage({
                         type="hidden"
                         value={activity.id}
                       />
-                      <PendingSubmitButton pendingLabel="Đang xóa…">Xóa</PendingSubmitButton>
+                      <PendingSubmitButton pendingLabel="Đang xóa…" confirmMessage="Bạn có chắc muốn xóa hoạt động này?">Xóa</PendingSubmitButton>
                     </form>
                   </div>
                 ) : (
