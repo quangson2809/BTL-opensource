@@ -10,6 +10,17 @@ export const LOGIN_FAILURE_CATEGORIES = Object.freeze({
   ACCOUNT_STATE_REJECTED: "ACCOUNT_STATE_REJECTED",
 });
 
+export const LOGIN_ERROR_MESSAGES = Object.freeze({
+  missing: "Vui lòng nhập email và mật khẩu.",
+  invalid: "Email hoặc mật khẩu không hợp lệ.",
+  pending: "Tài khoản đang chờ quản trị viên phê duyệt.",
+  locked: "Tài khoản đã bị quản trị viên khóa.",
+  "temporary-lock": "Tài khoản đang bị khóa tạm thời. Vui lòng thử lại sau.",
+  "rate-limited": "Bạn đã thử đăng nhập quá nhiều lần. Vui lòng chờ rồi thử lại.",
+  service: "Không thể đăng nhập lúc này. Vui lòng thử lại sau.",
+  access: "Không thể cấp quyền truy cập cho tài khoản này.",
+});
+
 // Owned by the password-verification hook in
 // supabase/migrations/20261002090000_auth_session_foundation.sql.
 // The integration test verifies this exact signal against the real local Auth stack.

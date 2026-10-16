@@ -23,6 +23,8 @@ export const LOGIN_FAILURE_CATEGORIES: Readonly<{
 
 export const TEMPORARY_LOCK_HOOK_MESSAGE: string;
 
+export const LOGIN_ERROR_MESSAGES: Readonly<Record<string, string>>;
+
 export function classifyLoginAuthError(error: unknown): LoginFailureCategory;
 export function getLoginErrorQueryCode(category: LoginFailureCategory): string;
 

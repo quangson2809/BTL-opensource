@@ -1,17 +1,7 @@
 import Link from "next/link";
 
 import { login } from "@/app/auth/actions";
-
-const errorMessages: Record<string, string> = {
-  missing: "Vui lòng nhập email và mật khẩu.",
-  invalid: "Email hoặc mật khẩu không hợp lệ.",
-  pending: "Tài khoản đang chờ quản trị viên phê duyệt.",
-  locked: "Tài khoản đã bị quản trị viên khóa.",
-  "temporary-lock": "Tài khoản đang bị khóa tạm thời. Vui lòng thử lại sau.",
-  "rate-limited": "Bạn đã thử đăng nhập quá nhiều lần. Vui lòng chờ rồi thử lại.",
-  service: "Không thể đăng nhập lúc này. Vui lòng thử lại sau.",
-  access: "Không thể cấp quyền truy cập cho tài khoản này.",
-};
+import { LOGIN_ERROR_MESSAGES } from "@/lib/auth-login-errors.mjs";
 
 const statusMessages: Record<string, string> = {
   registered: "Đăng ký thành công. Tài khoản đang chờ quản trị viên phê duyệt.",
@@ -25,7 +15,7 @@ type LoginPageProps = {
 
 export default async function LoginPage({ searchParams }: LoginPageProps) {
   const params = await searchParams;
-  const errorMessage = params.error ? errorMessages[params.error] : undefined;
+  const errorMessage = params.error ? LOGIN_ERROR_MESSAGES[params.error] : undefined;
   const statusMessage = params.status ? statusMessages[params.status] : undefined;
 
   return (
