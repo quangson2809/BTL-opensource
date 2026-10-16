@@ -130,6 +130,19 @@ export function AppFrame({ children }: Readonly<{ children: ReactNode }>) {
     };
   }, [showWorkspace]);
 
+  useEffect(() => {
+    if (!mobileNavigationOpen) return;
+
+    function closeOnEscape(event: KeyboardEvent) {
+      if (event.key === "Escape") {
+        setMobileNavigationOpen(false);
+      }
+    }
+
+    window.addEventListener("keydown", closeOnEscape);
+    return () => window.removeEventListener("keydown", closeOnEscape);
+  }, [mobileNavigationOpen]);
+
   if (!showWorkspace) return children;
 
   const visibleNavigation = navigation.filter(
@@ -151,6 +164,7 @@ export function AppFrame({ children }: Readonly<{ children: ReactNode }>) {
       </a>
 
       <aside
+        id="workspace-sidebar"
         aria-label="Điều hướng ứng dụng"
         className={`workspace-sidebar${mobileNavigationOpen ? " is-open" : ""}`}
       >
@@ -201,6 +215,7 @@ export function AppFrame({ children }: Readonly<{ children: ReactNode }>) {
       <div className="workspace-main-column">
         <header className="workspace-topbar">
           <button
+            aria-controls="workspace-sidebar"
             aria-expanded={mobileNavigationOpen}
             aria-label={mobileNavigationOpen ? "Đóng menu" : "Mở menu"}
             className="workspace-menu-toggle"
