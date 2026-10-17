@@ -46,6 +46,7 @@ export default async function ActivitiesPage({
     .from("hoat_dong")
     .select("id,tai_khoan_id,loai_hoat_dong,dia_diem,thoi_gian,so_khach_hang_ket_noi")
     .order("thoi_gian", { ascending: false })
+    .order("id", { ascending: true })
     .range(firstRow, firstRow + pageSize - 1);
   if (type) activityQuery = activityQuery.eq("loai_hoat_dong", type);
 
