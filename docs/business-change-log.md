@@ -67,14 +67,14 @@
 | --- | --- |
 | Loại | **BUSINESS IMPACT: YES — owner-selected feature scope** |
 | Trước thay đổi | `/admin/roles` chỉ đọc role, permission và mapping; schema đã có RLS write policy cho ADMIN nhưng chưa có form CRUD hoặc luồng cập nhật mapping có kiểm tra transaction. |
-| Quyết định người sở hữu | Ngày 2026-10-17: Admin được tạo/sửa vai trò và cấu hình mapping tới permission đã tồn tại. Không thêm chức năng xóa role hoặc CRUD định nghĩa permission trong phạm vi này. |
-| Sau thay đổi trên nhánh feature | Tạo/sửa role qua RPC transaction; role code bất biến; ADMIN/DM/UM/SA không thể xóa; quyền được map atomically; table DML trực tiếp của API role bị thu hồi để tránh bypass validation. |
+| Quyết định người sở hữu | Ngày 2026-10-17: Admin được tạo/sửa custom role và cấu hình mapping tới permission đã tồn tại. Vai trò hệ thống `ADMIN/DM/UM/SA` chỉ đọc (không sửa metadata/mapping và không xóa); mã role bất biến. Không thêm chức năng xóa custom role hoặc CRUD định nghĩa permission trong phạm vi này. |
+| Sau thay đổi trên nhánh feature | Tạo/sửa custom role qua RPC transaction; role code bất biến; system roles read-only and undeletable; custom-role permission mappings được thay thế atomically; table DML trực tiếp của authenticated bị thu hồi để tránh bypass validation. |
 | Bảo vệ quản trị | Chặn Admin tự khóa tài khoản hoặc tự thu hồi vai trò ADMIN; ngăn thu hồi/khóa làm mất Admin đang hoạt động cuối cùng. Các thao tác account-role và account-lock được bảo vệ ở database RPC, không chỉ UI. |
-| Giới hạn ngữ nghĩa permission | Danh mục hiện chỉ có `ACTIVITY_VIEW_SUBTREE`; policy/RPC chỉ áp dụng permission nơi có kiểm tra tương ứng. Custom role không tự động nhận quyền vào route đang gate theo mã vai trò cố định. Mở rộng permission-based guard được ghi vào backlog. |
+| Giới hạn ngữ nghĩa permission | Danh mục hiện chỉ có `ACTIVITY_VIEW_SUBTREE`; permission này được áp dụng cho truy cập activity trong cây cấp dưới, còn các route nghiệp vụ khác vẫn dùng guard hiện hữu và không tự động nhận quyền từ custom role. |
 | Schema/runtime | Thêm RPC, trigger bảo vệ role identity và thu hồi DML trực tiếp từ authenticated cho các bảng catalog/mapping được quản lý qua RPC. Migration trên branch chưa được áp dụng lên production. |
 | Canonical PDF mapping | Yêu cầu vai trò/quyền — trang/section PDF **UNVERIFIED**. Đây là phạm vi được project owner chọn trong hội thoại; không tuyên bố là trích dẫn PDF. |
 | Tài liệu liên quan | `PROJECT_PLAN.md` Phase 3; `docs/action-contracts.md`; migrations `20261017090000_admin_role_catalog_management.sql`, `20261017100000_rbac_lockout_protection.sql`; tests `010_admin_role_catalog_management_test.sql`, `011_rbac_lockout_protection_test.sql`. |
-| Acceptance | Chờ exact-head CI/Database Tests cho RPCs, ACL, invalid inputs và self-lockout protection; visual/browser role-matrix checks còn là gate riêng. |
+| Acceptance | pgTAP tests 010–012 bao phủ role CRUD/mapping, system-role protection, self-lockout và activity subtree scope. CI/database/Auth/route smoke pass gần nhất trên `8fcdedf95eae8494e5ccaf2ff4c062ab3152559d`; rerun cho nhánh sau các cập nhật route-smoke/documentation vẫn là gate cuối. Browser role-matrix and production Auth remain unverified. |
 
 ## Hướng dẫn cập nhật tài liệu gốc
 
