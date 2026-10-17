@@ -7,6 +7,7 @@ import { StatusBadge } from "@/components/status-badge";
 import { ListPagination, ResultSummary } from "@/components/list-controls";
 
 import { requireBusinessAccount } from "@/lib/business";
+import { parsePositivePage, sanitizePostgrestOrSearch } from "@/lib/list-query.mjs";
 
 export const dynamic = "force-dynamic";
 
@@ -26,22 +27,11 @@ const customerTypes = new Set(["MUC_TIEU", "NUOI_DUONG", "DOI_TAC"]);
 const customerStatuses = new Set(["BẠN", "BÀN", "BÁN", "BÁM"]);
 const personalityGroups = new Set(["D", "I", "S", "C"]);
 
-function sanitizeSearch(value: string | undefined) {
-  // Keep user text out of PostgREST's .or() filter grammar.
-  return (value ?? "").trim().replace(/[(),.\\%_]/g, " ").trim();
-}
-
-function parseRequestedPage(value: string | undefined) {
-  if (!value || !/^\\d+$/.test(value)) return 1;
-  const parsed = Number(value);
-  return Number.isSafeInteger(parsed) && parsed > 0 ? parsed : 1;
-}
-
 export default async function CustomersPage({ searchParams }: CustomersPageProps) {
   const query = await searchParams;
   const { supabase } = await requireBusinessAccount();
 
-  const search = sanitizeSearch(query.q);
+  const search = sanitizePostgrestOrSearch(query.q);
   const type = customerTypes.has(query.loai ?? "") ? query.loai : "";
   const status = customerStatuses.has(query.tinh_trang ?? "") ? query.tinh_trang : "";
   const group = personalityGroups.has(query.nhom ?? "") ? query.nhom : "";
@@ -66,7 +56,7 @@ export default async function CustomersPage({ searchParams }: CustomersPageProps
   const total = count ?? 0;
   const pageSize = 8;
   const pageCount = Math.max(1, Math.ceil(total / pageSize));
-  const currentPage = Math.min(parseRequestedPage(query.page), pageCount);
+  const currentPage = Math.min(parsePositivePage(query.page), pageCount);
   const firstRow = (currentPage - 1) * pageSize;
 
   let customersQuery = supabase
