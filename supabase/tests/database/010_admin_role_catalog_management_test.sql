@@ -5,13 +5,13 @@ set local search_path = public, extensions;
 select * from no_plan();
 
 select throws_ok(
-  $ update public.vai_tro set ma_vai_tro = 'ADMIN_RENAMED' where ma_vai_tro = 'ADMIN' $,
+  $$ update public.vai_tro set ma_vai_tro = 'ADMIN_RENAMED' where ma_vai_tro = 'ADMIN' $$,
   '42501',
   null,
   'system role code cannot be renamed, even by a direct database mutation'
 );
 select throws_ok(
-  $ delete from public.vai_tro where ma_vai_tro = 'ADMIN' $,
+  $$ delete from public.vai_tro where ma_vai_tro = 'ADMIN' $$,
   '42501',
   null,
   'system role cannot be deleted, even by a direct database mutation'
@@ -89,14 +89,14 @@ select set_config(
   true
 );
 select throws_ok(
-  $
+  $$
     select public.admin_update_role(
       (select id from public.vai_tro where ma_vai_tro = 'ADMIN'),
       'Modified system role',
       'Must remain protected',
       array[]::uuid[]
     )
-  $,
+  $$,
   '42501',
   null,
   'Admin cannot edit system-role metadata or permission assignments'
@@ -183,12 +183,12 @@ select is(
 );
 
 select throws_ok(
-  $ select public.admin_update_role(
+  $$ select public.admin_update_role(
     (select id from public.vai_tro where ma_vai_tro = 'REPORT_REVIEWER_TEST'),
     'Should not persist',
     null,
     array['ffffffff-ffff-4fff-8fff-ffffffffffff'::uuid]
-  ) $,
+  ) $$,
   '22023',
   null,
   'role update rejects permission IDs outside the catalog'
@@ -211,7 +211,7 @@ select is(
 );
 
 select throws_ok(
-  $ select public.admin_update_role((select id from public.vai_tro where ma_vai_tro = 'REPORT_REVIEWER_TEST'), '   ', null, array[]::uuid[]) $,
+  $$ select public.admin_update_role((select id from public.vai_tro where ma_vai_tro = 'REPORT_REVIEWER_TEST'), '   ', null, array[]::uuid[]) $$,
   '22023',
   null,
   'role update rejects an empty display name'
@@ -277,13 +277,13 @@ select throws_ok(
 reset role;
 
 select throws_ok(
-  $ update public.vai_tro set ma_vai_tro = 'SUPER_ADMIN' where ma_vai_tro = 'ADMIN' $,
+  $$ update public.vai_tro set ma_vai_tro = 'SUPER_ADMIN' where ma_vai_tro = 'ADMIN' $$,
   '42501',
   null,
   'system role codes cannot be changed by privileged maintenance paths'
 );
 select throws_ok(
-  $ delete from public.vai_tro where ma_vai_tro = 'ADMIN' $,
+  $$ delete from public.vai_tro where ma_vai_tro = 'ADMIN' $$,
   '42501',
   null,
   'system role records cannot be deleted'
