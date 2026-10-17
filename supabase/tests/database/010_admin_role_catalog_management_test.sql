@@ -183,7 +183,35 @@ select is(
 );
 
 select throws_ok(
-  $$ select public.admin_update_role((select id from public.vai_tro where ma_vai_tro = 'REPORT_REVIEWER_TEST'), '   ', null, array[]::uuid[]) $$,
+  $ select public.admin_update_role(
+    (select id from public.vai_tro where ma_vai_tro = 'REPORT_REVIEWER_TEST'),
+    'Should not persist',
+    null,
+    array['ffffffff-ffff-4fff-8fff-ffffffffffff'::uuid]
+  ) $,
+  '22023',
+  null,
+  'role update rejects permission IDs outside the catalog'
+);
+select is(
+  (select ten_vai_tro from public.vai_tro where ma_vai_tro = 'REPORT_REVIEWER_TEST'),
+  'Người duyệt báo cáo thử nghiệm'::text,
+  'invalid permission update does not partially mutate role metadata'
+);
+select is(
+  (
+    select count(*)::bigint
+    from public.phan_quyen_vai_tro pq
+    join public.vai_tro vt on vt.id = pq.vai_tro_id
+    where vt.ma_vai_tro = 'REPORT_REVIEWER_TEST'
+      and pq.quyen_id = '20000000-0000-0000-0000-000000000001'::uuid
+  ),
+  1::bigint,
+  'invalid permission update leaves existing mappings unchanged'
+);
+
+select throws_ok(
+  $ select public.admin_update_role((select id from public.vai_tro where ma_vai_tro = 'REPORT_REVIEWER_TEST'), '   ', null, array[]::uuid[]) $,
   '22023',
   null,
   'role update rejects an empty display name'
@@ -247,5 +275,24 @@ select throws_ok(
 );
 
 reset role;
+
+select throws_ok(
+  $ update public.vai_tro set ma_vai_tro = 'SUPER_ADMIN' where ma_vai_tro = 'ADMIN' $,
+  '42501',
+  null,
+  'system role codes cannot be changed by privileged maintenance paths'
+);
+select throws_ok(
+  $ delete from public.vai_tro where ma_vai_tro = 'ADMIN' $,
+  '42501',
+  null,
+  'system role records cannot be deleted'
+);
+select is(
+  (select count(*)::bigint from public.vai_tro where ma_vai_tro = 'ADMIN'),
+  1::bigint,
+  'the core ADMIN role remains present after rejected identity mutations'
+);
+
 select * from finish();
 rollback;
