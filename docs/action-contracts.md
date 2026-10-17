@@ -1,8 +1,8 @@
 # IDAILY — Server Action, Route Handler, RPC and UI Contract Inventory
 
-**Scope:** acceptance hardening for Phase 1 (Shell/Design System) and Phase 2 (interaction/input contracts).  
+**Scope:** current MVP contract inventory plus verified list-query and draft-notification work on `feature/idaily-system-completion-20261017`.  
 **Security boundary:** the UI and navigation are not authorization controls. Server guards, user-scoped Supabase clients, RPC checks and RLS remain authoritative.  
-**Schema changes:** none in this phase.
+**Database changes:** one additive migration introduces two authenticated, role-guarded notification draft RPCs; no business tables or columns are added, and no production database has been changed by this branch.
 
 ## 1. Server Action inventory
 
@@ -21,7 +21,7 @@
 | createActivity | Allowed activity type; non-empty location; strict local date-time; non-negative 32-bit integer connected count | requireBusinessAccount; account ID is server-derived; caller JWT and RLS | Safe redirect after mutation |
 | updateActivity | UUID activity ID and same activity payload validation | requireBusinessAccount; explicit tai_khoan_id = accountId predicate plus RLS | Selected row required before success |
 | deleteActivity | UUID activity ID | requireBusinessAccount; explicit owner predicate plus RLS | Selected row required before success |
-| createNotification | Non-empty title/content, finite notification type, at least one UUID recipient | requireDm plus dm_create_notification, which checks DM role and each recipient's subtree scope | Safe failure code; no provider/database text shown |
+| createNotification | Non-empty title/content, finite notification type, UUID recipient list (deduplicated) | requireDm plus dm_create_notification; database checks DM role and each recipient's subtree scope | Safe failure code; no provider/database text shown |\n| updateNotificationDraft | UUID notification ID, non-empty title/content, finite type and UUID recipient list | requireDm plus dm_update_notification_draft; database locks and checks owned `CHƯA_GỬI` draft, validates recipient subtree, updates content/recipients atomically | Safe failure code; redirects to notifications on success |\n| deleteNotificationDraft | UUID notification ID | requireDm plus dm_delete_notification_draft; database locks and checks owned `CHƯA_GỬI` draft; sent/non-owned messages are rejected | Safe failure code; redirects to notifications on success |
 | sendNotification | UUID draft ID | requireDm plus dm_send_notification, which checks creator, draft state and recipient scope | Success only when RPC returns without error |
 | markNotificationRead | UUID recipient-row ID | requireBusinessAccount; account ID is server-derived, explicit row-owner predicate and recipient RLS | Selected row required before success |
 | approveAccount | UUID account ID | requireAdmin plus admin_approve_account role/state checks | Revalidates Admin account/role paths |
@@ -60,7 +60,7 @@ No other Route Handler was found in the inspected source tree for this baseline.
 | admin_assign_role(target_account_id, target_role_id) | Admin account actions | Database independently checks ADMIN, account and role existence; unique assignment constraint handles repeated assignment |
 | admin_revoke_role(target_account_id, target_role_id) | Admin account actions | Database independently checks ADMIN |
 | dm_create_notification(...) | Notification creation | Database independently checks DM and each recipient's subtree membership |
-| dm_send_notification(target_notification_id) | Notification send | Database independently checks DM, creator ownership, draft state, and recipient scope |
+| dm_send_notification(target_notification_id) | Notification send | Database independently checks DM, creator ownership, draft state, and recipient scope |\n| dm_update_notification_draft(target_notification_id, notification_title, notification_content, notification_type, recipient_ids) | Draft edit form | Authenticated-only RPC; checks active DM via `has_role`, locks an owned draft, validates all recipient scope, de-duplicates selected recipient IDs and updates atomically |\n| dm_delete_notification_draft(target_notification_id) | Draft delete form | Authenticated-only RPC; checks active DM via `has_role`, locks and deletes only an owned `CHƯA_GỬI` draft; recipient rows follow the existing FK cascade; sent notifications are immutable |
 
 Security-definer helpers such as current_account_has_application_access, is_in_subtree, and notification RLS helpers are database implementation details invoked by policies/RPCs, not client-callable workflow endpoints.
 
