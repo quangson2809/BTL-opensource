@@ -28,6 +28,29 @@ function rawField(formData: FormData, name: string) {
   return typeof value === "string" ? value : "";
 }
 
+function getAuthCallbackUrl() {
+  const configuredSiteUrl = process.env.NEXT_PUBLIC_SITE_URL?.trim();
+  const deploymentHost =
+    process.env.VERCEL_PROJECT_PRODUCTION_URL?.trim() ||
+    process.env.VERCEL_URL?.trim();
+  const siteUrl =
+    configuredSiteUrl ||
+    (deploymentHost
+      ? `https://${deploymentHost.replace(/^https?:\\/\\//, "")}`
+      : "http://localhost:3000");
+  const parsedUrl = new URL(siteUrl);
+
+  if (
+    !["http:", "https:"].includes(parsedUrl.protocol) ||
+    parsedUrl.username ||
+    parsedUrl.password
+  ) {
+    throw new Error("Invalid site URL configuration.");
+  }
+
+  return new URL("/auth/callback", parsedUrl.origin).toString();
+}
+
 async function logLoginFailure(
   category: LoginFailureCategory,
   error?: unknown,
@@ -106,7 +129,7 @@ export async function register(formData: FormData) {
           const { data, error } = await supabase.auth.signUp({
             email,
             password,
-            options: { data: metadata },
+            options: { data: metadata, emailRedirectTo: getAuthCallbackUrl() },
           });
           return {
             user: data.user
