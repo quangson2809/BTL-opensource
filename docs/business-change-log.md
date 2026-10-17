@@ -75,4 +75,5 @@ Người sở hữu tài liệu sau khi mở `docs/source/Bao-cao-mon-opensource
 | Thời điểm | Sự kiện | Business impact | Tài liệu nguồn |
 | --- | --- | --- | --- |
 | 2026-10-09 | PR #14 ACL production security hotfix | **NO** — thay đổi quyền thực thi DB, không đổi use case/requirement | Không cần sửa business PDF; ghi security implementation review |
-| 2026-10-09 | PR #15 hosted Free Auth demo contract | **YES** — BC-001 khác biệt 6/30; BC-002 giới hạn người nhận email demo; BC-003 yêu cầu OTP hiện hữu cần verify, **chưa đổi** | **PENDING PDF ALIGNMENT** |\n| 2026-10-17 | Owner decision for notification drafts | **YES** — only own drafts are editable/deletable; sent notifications stay immutable (BC-004) | PDF page/section **UNVERIFIED**; decision recorded in repo docs |
+| 2026-10-09 | PR #15 hosted Free Auth demo contract | **YES** — BC-001 khác biệt 6/30; BC-002 giới hạn người nhận email demo; BC-003 yêu cầu OTP hiện hữu cần verify, **chưa đổi** | **PENDING PDF ALIGNMENT** |
+| 2026-10-17 | Owner decision for notification drafts | **YES** — only own drafts are editable/deletable; sent notifications stay immutable (BC-004) | PDF page/section **UNVERIFIED**; decision recorded in repo docs |
