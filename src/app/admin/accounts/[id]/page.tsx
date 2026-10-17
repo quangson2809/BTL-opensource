@@ -9,6 +9,9 @@ import {
   unlockAccount,
 } from "@/app/admin/actions";
 import { requireAdmin } from "@/lib/admin";
+import { PendingSubmitButton } from "@/components/pending-submit-button";
+import { PageHeader } from "@/components/page-header";
+import { StatusBadge } from "@/components/status-badge";
 
 export const dynamic = "force-dynamic";
 
@@ -38,7 +41,7 @@ export default async function AccountDetailPage({
   searchParams,
 }: AccountDetailPageProps) {
   const [{ id }, query] = await Promise.all([params, searchParams]);
-  const { supabase } = await requireAdmin();
+  const { supabase, accountId: currentAccountId } = await requireAdmin();
 
   const [accountResult, assignmentResult, roleResult] = await Promise.all([
     supabase
@@ -75,71 +78,93 @@ export default async function AccountDetailPage({
 
   return (
     <main>
-      <section className="card">
-        <h1>{account.ho_ten}</h1>
-        <div className="actions">
-          <Link href="/admin/accounts">Danh sách tài khoản</Link>
-          <Link href="/admin/roles">Vai trò & quyền</Link>
+      <section className="page-content account-detail-page">
+        <PageHeader
+          title={account.ho_ten}
+          description={"Hồ sơ tài khoản · " + account.ma_dai_ly}
+          actions={
+            <>
+              <Link className="button-link button-secondary" href="/admin/accounts">Danh sách tài khoản</Link>
+              <Link className="button-link button-secondary" href="/admin/roles">Vai trò & quyền</Link>
+            </>
+          }
+        />
+
+        {statusMessage ? <p role="status" aria-live="polite" className="message success">{statusMessage}</p> : null}
+        {errorMessage ? <p role="alert" aria-live="assertive" className="message error">{errorMessage}</p> : null}
+
+        <div className="detail-section">
+          <h2>Thông tin tài khoản</h2>
+          <dl className="details-grid account-details-grid">
+            <div><dt>Email</dt><dd>{account.email}</dd></div>
+            <div><dt>Số điện thoại</dt><dd>{account.so_dien_thoai || "—"}</dd></div>
+            <div><dt>Mã đại lý</dt><dd>{account.ma_dai_ly}</dd></div>
+            <div><dt>Trạng thái</dt><dd><StatusBadge value={account.trang_thai} /></dd></div>
+            <div><dt>Manager ID</dt><dd className="breakable-value">{account.manager_id ?? "—"}</dd></div>
+            <div><dt>Số lần đăng nhập sai liên tiếp</dt><dd>{account.dang_nhap_sai_lien_tiep}</dd></div>
+            <div><dt>Khóa tạm đến</dt><dd>{account.khoa_tam_den ?? "—"}</dd></div>
+          </dl>
         </div>
 
-        {statusMessage ? <p className="message success">{statusMessage}</p> : null}
-        {errorMessage ? <p className="message error">{errorMessage}</p> : null}
-
-        <div className="stack">
-          <div>
-            <p>Email: {account.email}</p>
-            <p>Số điện thoại: {account.so_dien_thoai}</p>
-            <p>Mã đại lý: {account.ma_dai_ly}</p>
-            <p>Trạng thái: {account.trang_thai}</p>
-            <p>Manager ID: {account.manager_id ?? "—"}</p>
-            <p>Số lần đăng nhập sai liên tiếp: {account.dang_nhap_sai_lien_tiep}</p>
-            <p>Khóa tạm đến: {account.khoa_tam_den ?? "—"}</p>
-          </div>
-
-          <div>
+        <div className="detail-section">
             <h2>Trạng thái tài khoản</h2>
             {account.trang_thai === "CHO_PHE_DUYET" ? (
               <form action={approveAccount}>
                 <input name="account_id" type="hidden" value={account.id} />
-                <button type="submit">Phê duyệt</button>
+                <PendingSubmitButton pendingLabel="Đang phê duyệt…">Phê duyệt</PendingSubmitButton>
               </form>
             ) : null}
-            {account.trang_thai === "DANG_HOAT_DONG" ? (
+            {account.trang_thai === "DANG_HOAT_DONG" && account.id !== currentAccountId ? (
               <form action={lockAccount}>
                 <input name="account_id" type="hidden" value={account.id} />
-                <button type="submit">Khóa tài khoản</button>
+                <PendingSubmitButton pendingLabel="Đang khóa…" confirmMessage="Bạn có chắc muốn khóa tài khoản này?">Khóa tài khoản</PendingSubmitButton>
               </form>
+            ) : null}
+            {account.trang_thai === "DANG_HOAT_DONG" && account.id === currentAccountId ? (
+              <p className="field-help">Không thể tự khóa tài khoản quản trị đang sử dụng.</p>
             ) : null}
             {account.trang_thai === "KHOA" ? (
               <form action={unlockAccount}>
                 <input name="account_id" type="hidden" value={account.id} />
-                <button type="submit">Mở khóa tài khoản</button>
+                <PendingSubmitButton pendingLabel="Đang mở khóa…">Mở khóa tài khoản</PendingSubmitButton>
               </form>
             ) : null}
-          </div>
+        </div>
 
-          <div>
+        <div className="detail-section">
             <h2>Vai trò</h2>
             <div className="stack">
               {(roleResult.data ?? []).map((role) => {
                 const assigned = assignedRoleIds.has(role.id);
+                const protectedSelfAdmin =
+                  assigned && role.ma_vai_tro === "ADMIN" && account.id === currentAccountId;
                 return (
-                  <div key={role.id}>
+                  <article className="role-assignment" key={role.id}>
                     <p>
                       <strong>{role.ma_vai_tro}</strong> — {role.ten_vai_tro}
                     </p>
-                    <form action={assigned ? revokeRole : assignRole}>
-                      <input name="account_id" type="hidden" value={account.id} />
-                      <input name="role_id" type="hidden" value={role.id} />
-                      <button type="submit">
-                        {assigned ? "Thu hồi vai trò" : "Gán vai trò"}
-                      </button>
-                    </form>
-                  </div>
+                    {protectedSelfAdmin ? (
+                      <p className="field-help">Không thể tự thu hồi vai trò ADMIN đang sử dụng.</p>
+                    ) : (
+                      <form action={assigned ? revokeRole : assignRole}>
+                        <input name="account_id" type="hidden" value={account.id} />
+                        <input name="role_id" type="hidden" value={role.id} />
+                        <PendingSubmitButton
+                          pendingLabel={assigned ? "Đang thu hồi…" : "Đang gán…"}
+                          confirmMessage={
+                            assigned
+                              ? "Bạn có chắc muốn thu hồi vai trò này?"
+                              : "Bạn có chắc muốn gán vai trò này cho tài khoản?"
+                          }
+                        >
+                          {assigned ? "Thu hồi vai trò" : "Gán vai trò"}
+                        </PendingSubmitButton>
+                      </form>
+                    )}
+                  </article>
                 );
               })}
             </div>
-          </div>
         </div>
       </section>
     </main>

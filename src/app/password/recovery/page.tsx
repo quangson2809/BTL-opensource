@@ -22,7 +22,7 @@ export default async function RecoveryPage({ searchParams }: RecoveryPageProps) 
         <p className="secondary-text">
           Nhập email tài khoản. Nếu tài khoản tồn tại, hệ thống sẽ gửi OTP đặt lại mật khẩu.
         </p>
-        {errorMessage ? <p className="message error">{errorMessage}</p> : null}
+        {errorMessage ? <p role="alert" aria-live="assertive" className="message error">{errorMessage}</p> : null}
 
         <form action={requestPasswordRecovery} className="stack">
           <label>
