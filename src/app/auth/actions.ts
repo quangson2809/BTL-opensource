@@ -36,7 +36,7 @@ function getAuthCallbackUrl() {
   const siteUrl =
     configuredSiteUrl ||
     (deploymentHost
-      ? `https://${deploymentHost.replace(/^https?:\\/\\//, "")}`
+      ? `${deploymentHost.startsWith("http://") || deploymentHost.startsWith("https://") ? deploymentHost : `https://${deploymentHost}`}`
       : "http://localhost:3000");
   const parsedUrl = new URL(siteUrl);
 
