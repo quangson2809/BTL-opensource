@@ -8,6 +8,7 @@ import { ListPagination, ResultSummary } from "@/components/list-controls";
 import { PendingSubmitButton } from "@/components/pending-submit-button";
 
 import {
+  deleteNotificationDraft,
   markNotificationRead,
   sendNotification,
 } from "@/app/notifications/actions";
@@ -149,7 +150,24 @@ export default async function NotificationsPage({
                   </p>
                 ) : null}
                 {owned && notification.trang_thai === "CHƯA_GỬI" ? (
-                  <form action={sendNotification}>
+                  <div className="actions">
+                    <Link href={"/notifications/" + notification.id + "/edit"}>
+                      Sửa bản nháp
+                    </Link>
+                    <form action={deleteNotificationDraft}>
+                      <input
+                        name="notification_id"
+                        type="hidden"
+                        value={notification.id}
+                      />
+                      <PendingSubmitButton
+                        confirmMessage="Xóa bản nháp này? Người nhận chưa thể xem thông báo."
+                        pendingLabel="Đang xóa…"
+                      >
+                        Xóa bản nháp
+                      </PendingSubmitButton>
+                    </form>
+                    <form action={sendNotification}>
                     <input
                       name="notification_id"
                       type="hidden"
@@ -161,7 +179,8 @@ export default async function NotificationsPage({
                     >
                       Gửi thông báo
                     </PendingSubmitButton>
-                  </form>
+                    </form>
+                  </div>
                 ) : null}
                 {ownRecipientRow && !ownRecipientRow.da_doc ? (
                   <form action={markNotificationRead}>
