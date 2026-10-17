@@ -1,6 +1,11 @@
 import assert from "node:assert/strict";
 
 import { createClient } from "@supabase/supabase-js";
+import {
+  classifyLoginAuthError,
+  LOGIN_FAILURE_CATEGORIES,
+  TEMPORARY_LOCK_HOOK_MESSAGE,
+} from "../../../src/lib/auth-login-errors.mjs";
 
 const url = process.env.API_URL;
 const anonKey = process.env.ANON_KEY;
@@ -200,6 +205,61 @@ assert.equal(
   "duplicate business identifier must roll back Auth user creation",
 );
 
+
+const duplicateAgentEmail = `phase2-duplicate-agent-${suffix}@example.test`;
+const duplicateAgentClient = createAnonClient();
+const {
+  data: duplicateAgentRegistration,
+  error: duplicateAgentError,
+} = await duplicateAgentClient.auth.signUp({
+  email: duplicateAgentEmail,
+  password,
+  options: {
+    data: {
+      registration_type: "SA_SELF_REGISTRATION",
+      ho_ten: "Duplicate Agent Identifier",
+      so_dien_thoai: `07${String(Date.now()).slice(-8)}`,
+      ma_dai_ly: agentCode,
+    },
+  },
+});
+
+assert.ok(duplicateAgentError, "duplicate agent code must reject sign-up");
+assert.equal(
+  duplicateAgentRegistration.user,
+  null,
+  "failed duplicate agent code must not leave an Auth user",
+);
+
+const missingMetadataEmail = `phase2-missing-metadata-${suffix}@example.test`;
+const missingMetadataClient = createAnonClient();
+const {
+  data: missingMetadataRegistration,
+  error: missingMetadataError,
+} = await missingMetadataClient.auth.signUp({
+  email: missingMetadataEmail,
+  password,
+  options: {
+    data: {
+      registration_type: "SA_SELF_REGISTRATION",
+      ho_ten: "Missing Required Metadata",
+      so_dien_thoai: `06${String(Date.now()).slice(-8)}`,
+      ma_dai_ly: "",
+    },
+  },
+});
+
+assert.ok(
+  missingMetadataError,
+  "the provisioning trigger must reject incomplete required business metadata",
+);
+assert.equal(
+  missingMetadataRegistration.user,
+  null,
+  "provisioning failure must not leave a partially created Auth user",
+);
+
+
 await setAccountState(userId, {
   trang_thai: "DANG_HOAT_DONG",
   dang_nhap_sai_lien_tiep: 0,
@@ -229,6 +289,13 @@ for (let attempt = 1; attempt <= 6; attempt += 1) {
 
   assert.ok(error, `bad password attempt ${attempt} must fail`);
   assert.equal(data.session, null, `bad password attempt ${attempt} must not create a session`);
+  if (attempt === 1) {
+    assert.equal(
+      classifyLoginAuthError(error),
+      LOGIN_FAILURE_CATEGORIES.INVALID_CREDENTIALS,
+      "wrong password must be classified using the provider error contract",
+    );
+  }
 }
 
 account = await accountState(userId);
@@ -254,6 +321,16 @@ const {
 assert.ok(
   lockedCorrectError,
   "correct password must still be rejected while temporary lock is active",
+);
+assert.equal(
+  lockedCorrectError.message,
+  TEMPORARY_LOCK_HOOK_MESSAGE,
+  "Auth must preserve the exact message emitted by the password-verification hook",
+);
+assert.equal(
+  classifyLoginAuthError(lockedCorrectError),
+  LOGIN_FAILURE_CATEGORIES.TEMPORARY_LOCK,
+  "the real Auth hook error must map to the temporary-lock category",
 );
 assert.equal(
   lockedCorrectLogin.session,

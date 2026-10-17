@@ -1,6 +1,8 @@
 import Link from "next/link";
 
+import { ActionFeedback } from "@/components/action-feedback";
 import { PendingSubmitButton } from "@/components/pending-submit-button";
+import { requireActiveBusinessAccount } from "@/lib/business";
 
 import {
   changePassword,
@@ -14,6 +16,8 @@ const errorMessages: Record<string, string> = {
   "same-password": "Mật khẩu mới phải khác mật khẩu hiện tại.",
   "otp-request": "Không thể gửi mã OTP. Vui lòng thử lại.",
   otp: "OTP không hợp lệ hoặc đã hết hạn.",
+  pending: "Tài khoản đang chờ phê duyệt và chưa thể đổi mật khẩu trong khu vực làm việc.",
+  locked: "Tài khoản đang bị khóa. Hãy liên hệ quản trị viên.",
 };
 
 type ChangePasswordPageProps = {
@@ -23,6 +27,7 @@ type ChangePasswordPageProps = {
 export default async function ChangePasswordPage({
   searchParams,
 }: ChangePasswordPageProps) {
+  await requireActiveBusinessAccount();
   const params = await searchParams;
   const errorMessage = params.error ? errorMessages[params.error] : undefined;
   const otpSent = params.status === "otp-sent";
@@ -40,10 +45,16 @@ export default async function ChangePasswordPage({
             Đã gửi OTP. Mã gồm 8 số và hết hạn sau 10 phút.
           </p>
         ) : null}
-        {errorMessage ? <p role="alert" aria-live="assertive" className="message error">{errorMessage}</p> : null}
+        {errorMessage ? (
+          <p role="alert" aria-live="assertive" className="message error">
+            {errorMessage}
+          </p>
+        ) : null}
 
         <form action={requestPasswordChangeOtp}>
-          <PendingSubmitButton pendingLabel="Đang gửi OTP…">Gửi OTP đổi mật khẩu</PendingSubmitButton>
+          <PendingSubmitButton pendingLabel="Đang gửi OTP…">
+            Gửi OTP đổi mật khẩu
+          </PendingSubmitButton>
         </form>
 
         <form action={changePassword} className="stack">
@@ -67,11 +78,13 @@ export default async function ChangePasswordPage({
           <p className="secondary-text">
             Tối thiểu 8 ký tự, có chữ thường, chữ hoa và số.
           </p>
-          <PendingSubmitButton pendingLabel="Đang cập nhật mật khẩu…">Đổi mật khẩu</PendingSubmitButton>
+          <PendingSubmitButton pendingLabel="Đang cập nhật mật khẩu…">
+            Đổi mật khẩu
+          </PendingSubmitButton>
         </form>
 
         <p className="secondary-text">
-          <Link href="/dashboard">Quay lại dashboard</Link>
+          <Link href="/dashboard">Quay lại tổng quan</Link>
         </p>
       </section>
     </main>

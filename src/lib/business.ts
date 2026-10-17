@@ -24,6 +24,22 @@ export async function requireBusinessAccount() {
   return { supabase, accountId, account };
 }
 
+export async function requireActiveBusinessAccount() {
+  const context = await requireBusinessAccount();
+
+  if (context.account.trang_thai === "CHO_PHE_DUYET") {
+    redirect("/login?error=pending");
+  }
+  if (context.account.trang_thai === "KHOA") {
+    redirect("/login?error=locked");
+  }
+  if (context.account.trang_thai !== "DANG_HOAT_DONG") {
+    redirect("/access-denied");
+  }
+
+  return context;
+}
+
 export async function requireManager() {
   const context = await requireBusinessAccount();
   const [dmResult, umResult] = await Promise.all([

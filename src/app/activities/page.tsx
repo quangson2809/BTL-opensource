@@ -1,6 +1,10 @@
 import Link from "next/link";
 
 import { ActionFeedback } from "@/components/action-feedback";
+import { EmptyState } from "@/components/empty-state";
+import { PageHeader } from "@/components/page-header";
+import { StatusBadge } from "@/components/status-badge";
+import { ListPagination, ResultSummary } from "@/components/list-controls";
 import { PendingSubmitButton } from "@/components/pending-submit-button";
 
 import { deleteActivity } from "@/app/activities/actions";
@@ -9,7 +13,7 @@ import { requireBusinessAccount } from "@/lib/business";
 export const dynamic = "force-dynamic";
 
 type ActivitiesPageProps = {
-  searchParams: Promise<{ loai?: string; status?: string; error?: string }>;
+  searchParams: Promise<{ loai?: string; status?: string; error?: string; page?: string }>;
 };
 
 export default async function ActivitiesPage({
@@ -34,29 +38,35 @@ export default async function ActivitiesPage({
   const names = new Map(
     (accountResult.data ?? []).map((account) => [
       account.id,
-      `${account.ho_ten} (${account.ma_dai_ly})`,
+      account.ho_ten + " (" + account.ma_dai_ly + ")",
     ]),
   );
-  const activities = (activityResult.data ?? []).filter(
+  const allActivities = activityResult.data ?? [];
+  const activities = allActivities.filter(
     (activity) => !query.loai || activity.loai_hoat_dong === query.loai,
   );
+  const pageSize = 8;
+  const pageCount = Math.max(1, Math.ceil(activities.length / pageSize));
+  const requestedPage = Number.parseInt(query.page ?? "1", 10);
+  const currentPage = Math.min(Math.max(Number.isFinite(requestedPage) ? requestedPage : 1, 1), pageCount);
+  const visibleActivities = activities.slice((currentPage - 1) * pageSize, currentPage * pageSize);
+  const filterParams = { loai: query.loai };
+  const hasFilters = Boolean(query.loai);
 
   return (
     <main>
       <section className="card wide-card">
-        <h1>Hoạt động kinh doanh</h1>
-        <div className="actions">
-          <Link href="/dashboard">Dashboard</Link>
-          <Link className="button-link" href="/activities/new">
-            Tạo hoạt động
-          </Link>
-        </div>
-        {query.status ? (
-          <ActionFeedback status={query.status} />
-        ) : null}
-        {query.error ? (
-          <ActionFeedback error={query.error} />
-        ) : null}
+        <PageHeader
+          actions={
+            <Link className="button-link" href="/activities/new">
+              Tạo hoạt động
+            </Link>
+          }
+          description="Theo dõi lịch sử hoạt động theo phạm vi dữ liệu được cấp quyền."
+          title="Hoạt động kinh doanh"
+        />
+        {query.status ? <ActionFeedback status={query.status} /> : null}
+        {query.error ? <ActionFeedback error={query.error} /> : null}
 
         <form className="filter-grid" method="get">
           <label>
@@ -71,14 +81,27 @@ export default async function ActivitiesPage({
           <button type="submit">Lọc</button>
         </form>
 
+        <ResultSummary label="hoạt động" total={activities.length} currentPage={currentPage} pageSize={pageSize} hasFilters={hasFilters} clearHref="/activities" />
+
         <div className="stack">
-          {activities.length === 0 ? <p>Chưa có hoạt động phù hợp.</p> : null}
-          {activities.map((activity) => {
+          {activities.length === 0 ? (
+            <EmptyState
+              actionHref={allActivities.length === 0 ? "/activities/new" : undefined}
+              actionLabel={allActivities.length === 0 ? "Tạo hoạt động đầu tiên" : undefined}
+              description={
+                allActivities.length === 0
+                  ? "Tạo một bản ghi hoạt động để bắt đầu lưu lịch sử."
+                  : "Thử chọn loại hoạt động khác để mở rộng kết quả."
+              }
+              title={allActivities.length === 0 ? "Chưa có hoạt động" : "Không tìm thấy kết quả"}
+            />
+          ) : null}
+          {visibleActivities.map((activity) => {
             const owned = activity.tai_khoan_id === accountId;
             return (
-              <article className="card" key={activity.id}>
+              <article className="record-row" key={activity.id}>
                 <p>
-                  <strong>{activity.loai_hoat_dong}</strong> —{" "}
+                  <strong>{activity.loai_hoat_dong}</strong> <StatusBadge value={activity.loai_hoat_dong} /> —{" "}
                   {names.get(activity.tai_khoan_id) ?? activity.tai_khoan_id}
                 </p>
                 <p>{activity.dia_diem}</p>
@@ -88,7 +111,7 @@ export default async function ActivitiesPage({
                 </p>
                 {owned ? (
                   <div className="actions">
-                    <Link href={`/activities/${activity.id}/edit`}>
+                    <Link href={"/activities/" + activity.id + "/edit"}>
                       Chỉnh sửa
                     </Link>
                     <form action={deleteActivity}>
@@ -97,7 +120,12 @@ export default async function ActivitiesPage({
                         type="hidden"
                         value={activity.id}
                       />
-                      <PendingSubmitButton pendingLabel="Đang xóa…" confirmMessage="Bạn có chắc muốn xóa hoạt động này?">Xóa</PendingSubmitButton>
+                      <PendingSubmitButton
+                        confirmMessage="Bạn có chắc muốn xóa hoạt động này?"
+                        pendingLabel="Đang xóa…"
+                      >
+                        Xóa
+                      </PendingSubmitButton>
                     </form>
                   </div>
                 ) : (
@@ -107,6 +135,7 @@ export default async function ActivitiesPage({
             );
           })}
         </div>
+        <ListPagination basePath="/activities" currentPage={currentPage} pageCount={pageCount} params={filterParams} />
       </section>
     </main>
   );

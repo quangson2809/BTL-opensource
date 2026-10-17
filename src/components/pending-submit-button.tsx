@@ -3,6 +3,11 @@
 import { useFormStatus } from "react-dom";
 import type { ReactNode } from "react";
 
+import {
+  getSubmitPresentation,
+  shouldCancelSubmission,
+} from "@/lib/interaction-contracts.mjs";
+
 type PendingSubmitButtonProps = {
   children: ReactNode;
   pendingLabel?: string;
@@ -15,19 +20,22 @@ export function PendingSubmitButton({
   confirmMessage,
 }: PendingSubmitButtonProps) {
   const { pending } = useFormStatus();
+  const presentation = getSubmitPresentation(pending, pendingLabel, children);
 
   return (
     <button
-      aria-disabled={pending}
-      disabled={pending}
+      aria-disabled={presentation.disabled}
+      disabled={presentation.disabled}
       onClick={(event) => {
-        if (confirmMessage && !window.confirm(confirmMessage)) {
-          event.preventDefault();
-        }
+        const cancelled = shouldCancelSubmission(
+          confirmMessage,
+          (message) => window.confirm(message),
+        );
+        if (cancelled) event.preventDefault();
       }}
       type="submit"
     >
-      {pending ? pendingLabel : children}
+      {presentation.label}
     </button>
   );
 }
