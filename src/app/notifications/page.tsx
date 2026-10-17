@@ -38,8 +38,8 @@ export default async function NotificationsPage({
   const { supabase, accountId } = await requireBusinessAccount();
 
   const search = sanitizePostgrestOrSearch(query.q);
-  const type = notificationTypes.has(query.loai ?? "") ? query.loai : "";
-  const status = notificationStatuses.has(query.trang_thai ?? "") ? query.trang_thai : "";
+  const type = query.loai && notificationTypes.has(query.loai) ? query.loai : "";
+  const status = query.trang_thai && notificationStatuses.has(query.trang_thai) ? query.trang_thai : "";
   const [dmResult, countResult] = await Promise.all([
     supabase.rpc("has_role", { role_code: "DM" }),
     (async () => {
