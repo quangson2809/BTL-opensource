@@ -13,6 +13,7 @@ import {
   sendNotification,
 } from "@/app/notifications/actions";
 import { requireBusinessAccount } from "@/lib/business";
+import { parsePositivePage, sanitizePostgrestOrSearch } from "@/lib/list-query.mjs";
 
 export const dynamic = "force-dynamic";
 
@@ -30,24 +31,13 @@ type NotificationsPageProps = {
 const notificationTypes = new Set(["TIN_TỨC", "TỰ_ĐỘNG_HỆ_THỐNG"]);
 const notificationStatuses = new Set(["CHƯA_GỬI", "ĐÃ_GỬI"]);
 
-function sanitizeSearch(value: string | undefined) {
-  // Keep user text out of PostgREST's .or() filter grammar.
-  return (value ?? "").trim().replace(/[(),.\\%_]/g, " ").trim();
-}
-
-function parseRequestedPage(value: string | undefined) {
-  if (!value || !/^\\d+$/.test(value)) return 1;
-  const parsed = Number(value);
-  return Number.isSafeInteger(parsed) && parsed > 0 ? parsed : 1;
-}
-
 export default async function NotificationsPage({
   searchParams,
 }: NotificationsPageProps) {
   const query = await searchParams;
   const { supabase, accountId } = await requireBusinessAccount();
 
-  const search = sanitizeSearch(query.q);
+  const search = sanitizePostgrestOrSearch(query.q);
   const type = notificationTypes.has(query.loai ?? "") ? query.loai : "";
   const status = notificationStatuses.has(query.trang_thai ?? "") ? query.trang_thai : "";
   const [dmResult, countResult] = await Promise.all([
@@ -72,7 +62,7 @@ export default async function NotificationsPage({
   const total = countResult.count ?? 0;
   const pageSize = 8;
   const pageCount = Math.max(1, Math.ceil(total / pageSize));
-  const currentPage = Math.min(parseRequestedPage(query.page), pageCount);
+  const currentPage = Math.min(parsePositivePage(query.page), pageCount);
   const firstRow = (currentPage - 1) * pageSize;
 
   let notificationQuery = supabase
