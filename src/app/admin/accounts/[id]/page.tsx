@@ -41,7 +41,7 @@ export default async function AccountDetailPage({
   searchParams,
 }: AccountDetailPageProps) {
   const [{ id }, query] = await Promise.all([params, searchParams]);
-  const { supabase } = await requireAdmin();
+  const { supabase, accountId: currentAccountId } = await requireAdmin();
 
   const [accountResult, assignmentResult, roleResult] = await Promise.all([
     supabase
@@ -114,11 +114,14 @@ export default async function AccountDetailPage({
                 <PendingSubmitButton pendingLabel="Đang phê duyệt…">Phê duyệt</PendingSubmitButton>
               </form>
             ) : null}
-            {account.trang_thai === "DANG_HOAT_DONG" ? (
+            {account.trang_thai === "DANG_HOAT_DONG" && account.id !== currentAccountId ? (
               <form action={lockAccount}>
                 <input name="account_id" type="hidden" value={account.id} />
                 <PendingSubmitButton pendingLabel="Đang khóa…" confirmMessage="Bạn có chắc muốn khóa tài khoản này?">Khóa tài khoản</PendingSubmitButton>
               </form>
+            ) : null}
+            {account.trang_thai === "DANG_HOAT_DONG" && account.id === currentAccountId ? (
+              <p className="field-help">Không thể tự khóa tài khoản quản trị đang sử dụng.</p>
             ) : null}
             {account.trang_thai === "KHOA" ? (
               <form action={unlockAccount}>
@@ -133,25 +136,31 @@ export default async function AccountDetailPage({
             <div className="stack">
               {(roleResult.data ?? []).map((role) => {
                 const assigned = assignedRoleIds.has(role.id);
+                const protectedSelfAdmin =
+                  assigned && role.ma_vai_tro === "ADMIN" && account.id === currentAccountId;
                 return (
                   <article className="role-assignment" key={role.id}>
                     <p>
                       <strong>{role.ma_vai_tro}</strong> — {role.ten_vai_tro}
                     </p>
-                    <form action={assigned ? revokeRole : assignRole}>
-                      <input name="account_id" type="hidden" value={account.id} />
-                      <input name="role_id" type="hidden" value={role.id} />
-                      <PendingSubmitButton
-                        pendingLabel={assigned ? "Đang thu hồi…" : "Đang gán…"}
-                        confirmMessage={
-                          assigned
-                            ? "Bạn có chắc muốn thu hồi vai trò này?"
-                            : "Bạn có chắc muốn gán vai trò này cho tài khoản?"
-                        }
-                      >
-                        {assigned ? "Thu hồi vai trò" : "Gán vai trò"}
-                      </PendingSubmitButton>
-                    </form>
+                    {protectedSelfAdmin ? (
+                      <p className="field-help">Không thể tự thu hồi vai trò ADMIN đang sử dụng.</p>
+                    ) : (
+                      <form action={assigned ? revokeRole : assignRole}>
+                        <input name="account_id" type="hidden" value={account.id} />
+                        <input name="role_id" type="hidden" value={role.id} />
+                        <PendingSubmitButton
+                          pendingLabel={assigned ? "Đang thu hồi…" : "Đang gán…"}
+                          confirmMessage={
+                            assigned
+                              ? "Bạn có chắc muốn thu hồi vai trò này?"
+                              : "Bạn có chắc muốn gán vai trò này cho tài khoản?"
+                          }
+                        >
+                          {assigned ? "Thu hồi vai trò" : "Gán vai trò"}
+                        </PendingSubmitButton>
+                      </form>
+                    )}
                   </article>
                 );
               })}
