@@ -12,6 +12,10 @@ import {
   parseNonNegativeInt32,
   parseVietnamLocalDateTime,
 } from "../src/lib/input-validation.mjs";
+import {
+  parsePositivePage,
+  sanitizePostgrestOrSearch,
+} from "../src/lib/list-query.mjs";
 
 test("feedback maps known error codes to safe messages", () => {
   const result = resolveActionFeedback({ error: "delete" });
@@ -84,4 +88,16 @@ test("Vietnam-local date time requires a valid date and exact minute format", ()
   assert.equal(parseVietnamLocalDateTime("2026-10-16T24:00"), null);
   assert.equal(parseVietnamLocalDateTime("2026-10-16T12:60"), null);
   assert.equal(parseVietnamLocalDateTime("2026-10-16T12:00:30"), null);
+});
+
+test("list query parsing fails closed for unsafe search syntax and malformed pages", () => {
+  const sanitized = sanitizePostgrestOrSearch("Tên,(mã).%_\\\\ OR true");
+  assert.doesNotMatch(sanitized, /[(),.%_\\\\]/);
+  assert.match(sanitized, /Tên/);
+  assert.equal(parsePositivePage(undefined), 1);
+  assert.equal(parsePositivePage("3"), 3);
+  assert.equal(parsePositivePage("0"), 1);
+  assert.equal(parsePositivePage("-3"), 1);
+  assert.equal(parsePositivePage("2abc"), 1);
+  assert.equal(parsePositivePage("9007199254740992"), 1);
 });
