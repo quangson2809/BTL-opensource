@@ -31,6 +31,8 @@
 | unlockAccount | UUID account ID | requireAdmin plus admin_unlock_account role/state checks | Revalidates Admin account/role paths |
 | assignRole | UUID account ID and role ID | requireAdmin plus admin_assign_role Admin check and database constraints | Revalidates account detail and role list |
 | revokeRole | UUID account ID and role ID | requireAdmin plus admin_revoke_role Admin check and function ACL boundary | Revalidates account detail and role list |
+| createRole | Uppercase role-code format, non-empty name, existing permission UUIDs | requireAdmin plus admin_create_role; database validates reserved identifiers/permission IDs and commits role+mapping atomically | Safe duplicate/validation errors; revalidates role catalog |
+| updateRole | UUID role ID, non-empty name, existing permission UUIDs | requireAdmin plus admin_update_role; database locks role and atomically replaces mapping; role code cannot be changed | Safe duplicate/validation errors; revalidates role catalog |
 
 ### Shared rules confirmed in code
 
@@ -39,7 +41,7 @@
 - Account IDs and role IDs for Admin RPCs are never accepted as proof of role or ownership.
 - User-visible errors are stable codes mapped to Vietnamese text. Unknown error codes use a generic message; unknown success codes do not render a success message.
 - Pending buttons and confirmation prompts reduce accidental interaction only. They do not guarantee idempotency or replace database authorization/state checks.
-- Role assignments and notification creation/sending retain database-side authorization in the RPC. No new RPC, role or permission was added here.
+- Role assignments, role catalog mutations and notification create/send/edit/delete retain database-side authorization in RPCs. Role metadata/mapping writes cannot be made directly through the authenticated Data API; permission definitions remain migration-owned.
 
 ## 2. Route Handler inventory
 
@@ -61,6 +63,10 @@ No other Route Handler was found in the inspected source tree for this baseline.
 | admin_unlock_account(target_account_id) | Admin account actions | Database independently checks ADMIN and locked state |
 | admin_assign_role(target_account_id, target_role_id) | Admin account actions | Database independently checks ADMIN, account and role existence; unique assignment constraint handles repeated assignment |
 | admin_revoke_role(target_account_id, target_role_id) | Admin account actions | Database independently checks ADMIN |
+| admin_create_role(role_code, role_name, role_description, permission_ids) | `/admin/roles/new` | Checks active ADMIN; rejects reserved role codes and invalid permission IDs; role and mappings are created atomically |
+| admin_update_role(target_role_id, role_name, role_description, permission_ids) | `/admin/roles/[id]/edit` | Checks active ADMIN; locks role, validates permissions and replaces metadata/mappings in one transaction; role identity is immutable |
+| admin_lock_account(target_account_id) | Admin account detail | Checks ADMIN; prevents self-lock and serializes active-Admin protection |
+| admin_revoke_role(target_account_id, target_role_id) | Admin account detail | Checks ADMIN; prevents self-revoking ADMIN, protects last active Admin and rejects direct table-DML bypass |
 | dm_create_notification(...) | Notification creation | Database independently checks DM and each recipient's subtree membership |
 | dm_send_notification(target_notification_id) | Notification send | Database independently checks DM, creator ownership, draft state, and recipient scope |
 | dm_update_notification_draft(target_notification_id, notification_title, notification_content, notification_type, recipient_ids) | Draft edit form | Authenticated-only RPC; checks active DM via `has_role`, locks an owned draft, validates all recipient scope, de-duplicates selected recipient IDs and updates atomically |
