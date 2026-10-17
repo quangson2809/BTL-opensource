@@ -69,6 +69,7 @@ export default async function NotificationsPage({
     .from("thong_bao")
     .select("id,nguoi_tao_id,tieu_de,noi_dung,loai,trang_thai,created_at")
     .order("created_at", { ascending: false })
+    .order("id", { ascending: true })
     .range(firstRow, firstRow + pageSize - 1);
   if (search) {
     notificationQuery = notificationQuery.or(
