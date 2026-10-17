@@ -4,6 +4,19 @@ create extension if not exists pgtap with schema extensions;
 set local search_path = public, extensions;
 select * from no_plan();
 
+select throws_ok(
+  $ update public.vai_tro set ma_vai_tro = 'ADMIN_RENAMED' where ma_vai_tro = 'ADMIN' $,
+  '42501',
+  null,
+  'system role code cannot be renamed, even by a direct database mutation'
+);
+select throws_ok(
+  $ delete from public.vai_tro where ma_vai_tro = 'ADMIN' $,
+  '42501',
+  null,
+  'system role cannot be deleted, even by a direct database mutation'
+);
+
 select ok(
   not has_function_privilege('anon', 'public.admin_create_role(text,text,text,uuid[])', 'EXECUTE'),
   'anon cannot execute role-create RPC'
@@ -60,6 +73,50 @@ from public.vai_tro
 where ma_vai_tro = 'SA';
 
 set local role authenticated;
+select set_config(
+  'test.admin_role_name_before',
+  (select ten_vai_tro from public.vai_tro where ma_vai_tro = 'ADMIN'),
+  true
+);
+select set_config(
+  'test.admin_role_permission_count_before',
+  (
+    select count(*)::text
+    from public.phan_quyen_vai_tro pq
+    join public.vai_tro vt on vt.id = pq.vai_tro_id
+    where vt.ma_vai_tro = 'ADMIN'
+  ),
+  true
+);
+select throws_ok(
+  $
+    select public.admin_update_role(
+      (select id from public.vai_tro where ma_vai_tro = 'ADMIN'),
+      'Modified system role',
+      'Must remain protected',
+      array[]::uuid[]
+    )
+  $,
+  '42501',
+  null,
+  'Admin cannot edit system-role metadata or permission assignments'
+);
+select is(
+  (select ten_vai_tro from public.vai_tro where ma_vai_tro = 'ADMIN'),
+  current_setting('test.admin_role_name_before'),
+  'rejected system-role update leaves its display name unchanged'
+);
+select is(
+  (
+    select count(*)::text
+    from public.phan_quyen_vai_tro pq
+    join public.vai_tro vt on vt.id = pq.vai_tro_id
+    where vt.ma_vai_tro = 'ADMIN'
+  ),
+  current_setting('test.admin_role_permission_count_before'),
+  'rejected system-role update leaves its permission mappings unchanged'
+);
+
 select set_config('request.jwt.claim.role', 'authenticated', true);
 select set_config('request.jwt.claim.sub', 'c6000000-0000-4000-8000-000000000001', true);
 select set_config(
