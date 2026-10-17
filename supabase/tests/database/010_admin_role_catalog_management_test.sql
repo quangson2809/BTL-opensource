@@ -73,6 +73,17 @@ from public.vai_tro
 where ma_vai_tro = 'SA';
 
 set local role authenticated;
+select set_config('request.jwt.claim.role', 'authenticated', true);
+select set_config('request.jwt.claim.sub', 'c6000000-0000-4000-8000-000000000001', true);
+select set_config(
+  'request.jwt.claims',
+  jsonb_build_object(
+    'role', 'authenticated',
+    'sub', 'c6000000-0000-4000-8000-000000000001',
+    'amr', jsonb_build_array(jsonb_build_object('method', 'password', 'timestamp', 0))
+  )::text,
+  true
+);
 select set_config(
   'test.admin_role_name_before',
   (select ten_vai_tro from public.vai_tro where ma_vai_tro = 'ADMIN'),
@@ -117,17 +128,6 @@ select is(
   'rejected system-role update leaves its permission mappings unchanged'
 );
 
-select set_config('request.jwt.claim.role', 'authenticated', true);
-select set_config('request.jwt.claim.sub', 'c6000000-0000-4000-8000-000000000001', true);
-select set_config(
-  'request.jwt.claims',
-  jsonb_build_object(
-    'role', 'authenticated',
-    'sub', 'c6000000-0000-4000-8000-000000000001',
-    'amr', jsonb_build_array(jsonb_build_object('method', 'password', 'timestamp', 0))
-  )::text,
-  true
-);
 
 select throws_ok(
   $$ select public.admin_create_role('invalid-code', 'Invalid code', null, array[]::uuid[]) $$,
