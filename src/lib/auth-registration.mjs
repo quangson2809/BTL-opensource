@@ -4,6 +4,7 @@ export const REGISTRATION_FAILURE_CATEGORIES = Object.freeze({
   EMAIL_UNAVAILABLE: "EMAIL_UNAVAILABLE",
   PHONE_IN_USE: "PHONE_IN_USE",
   AGENT_CODE_IN_USE: "AGENT_CODE_IN_USE",
+  INVALID_MANAGER: "INVALID_MANAGER",
   RATE_LIMITED: "RATE_LIMITED",
   DATABASE_ERROR: "DATABASE_ERROR",
   PROVISIONING_ERROR: "PROVISIONING_ERROR",
@@ -17,6 +18,7 @@ export const REGISTRATION_ERROR_MESSAGES = Object.freeze({
   "email-unavailable": "Email này chưa thể sử dụng để đăng ký. Nếu bạn đã có tài khoản, vui lòng đăng nhập hoặc dùng Quên mật khẩu.",
   "phone-in-use": "Số điện thoại này đã được sử dụng. Vui lòng kiểm tra lại.",
   "agent-code-in-use": "Mã đại lý này đã được sử dụng. Vui lòng kiểm tra lại.",
+  "invalid-manager": "Mã người quản lý không hợp lệ hoặc người quản lý chưa được kích hoạt.",
   "rate-limited": "Bạn đã gửi quá nhiều yêu cầu đăng ký. Vui lòng chờ rồi thử lại.",
   service: "Hiện không thể kiểm tra hoặc tạo tài khoản do sự cố dịch vụ. Vui lòng thử lại sau.",
   provisioning: "Không thể tạo hồ sơ đại lý do lỗi liên kết dữ liệu. Vui lòng thử lại sau; nếu lỗi tiếp diễn, hãy liên hệ quản trị viên.",
@@ -72,6 +74,7 @@ export function validateRegistrationInput({
   email,
   phone,
   agentCode,
+  managerCode,
   password,
 }) {
   if (
@@ -79,6 +82,7 @@ export function validateRegistrationInput({
     !email?.trim() ||
     !phone?.trim() ||
     !agentCode?.trim() ||
+    !managerCode?.trim() ||
     !password
   ) {
     return "/register?error=missing";
@@ -148,6 +152,8 @@ export function getRegistrationErrorQueryCode(category) {
       return "phone-in-use";
     case REGISTRATION_FAILURE_CATEGORIES.AGENT_CODE_IN_USE:
       return "agent-code-in-use";
+    case REGISTRATION_FAILURE_CATEGORIES.INVALID_MANAGER:
+      return "invalid-manager";
     case REGISTRATION_FAILURE_CATEGORIES.RATE_LIMITED:
       return "rate-limited";
     case REGISTRATION_FAILURE_CATEGORIES.PROVISIONING_ERROR:
@@ -205,6 +211,7 @@ export async function executeRegistration({
   email,
   phone,
   agentCode,
+  managerCode,
   password,
   createAuthClient,
   createAdminClient,
@@ -215,6 +222,7 @@ export async function executeRegistration({
     email,
     phone,
     agentCode,
+    managerCode,
     password,
   });
   if (validationPath) return validationPath;
@@ -222,6 +230,7 @@ export async function executeRegistration({
   const normalizedEmail = email.trim().toLowerCase();
   const normalizedPhone = phone.trim();
   const normalizedAgentCode = agentCode.trim();
+  const normalizedManagerCode = managerCode.trim();
 
   let admin;
   try {
@@ -235,6 +244,18 @@ export async function executeRegistration({
     );
   }
 
+  let managerCheck;
+  try {
+    managerCheck = await admin.findEligibleManagerByAgentCode(normalizedManagerCode);
+  } catch (error) {
+    return fail(logFailure, REGISTRATION_FAILURE_CATEGORIES.DATABASE_ERROR, error, "manager-code-precheck");
+  }
+  if (managerCheck?.error) {
+    return fail(logFailure, REGISTRATION_FAILURE_CATEGORIES.DATABASE_ERROR, managerCheck.error, "manager-code-precheck");
+  }
+  if (!managerCheck?.eligible) {
+    return fail(logFailure, REGISTRATION_FAILURE_CATEGORIES.INVALID_MANAGER, undefined, "manager-code-precheck");
+  }
   const identifierChecks = [
     {
       check: () => admin.findExistingPhone(normalizedPhone),
@@ -297,6 +318,7 @@ export async function executeRegistration({
         ho_ten: fullName.trim(),
         so_dien_thoai: normalizedPhone,
         ma_dai_ly: normalizedAgentCode,
+        manager_code: normalizedManagerCode,
       },
     });
   } catch (error) {

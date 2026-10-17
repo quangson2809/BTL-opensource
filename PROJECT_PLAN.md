@@ -111,7 +111,7 @@ Công việc:
 
 ### Phase 2 — Authentication & Session
 
-- [x] Đăng ký SA.
+- [x] Đăng ký SA với mã người quản lý trực tiếp; server precheck và provisioning trigger xác minh DM/UM, lưu `manager_id`, giữ trạng thái chờ phê duyệt và role SA do database gán.
 - [x] Trạng thái chờ phê duyệt.
 - [x] Đăng nhập.
 - [x] Đăng xuất.

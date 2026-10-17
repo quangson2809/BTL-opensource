@@ -2,13 +2,13 @@
 
 **Scope:** current MVP contract inventory plus verified list-query and draft-notification work on `feature/idaily-system-completion-20261017`.  
 **Security boundary:** the UI and navigation are not authorization controls. Server guards, user-scoped Supabase clients, RPC checks and RLS remain authoritative.  
-**Database changes:** one additive migration introduces two authenticated, role-guarded notification draft RPCs; no business tables or columns are added, and no production database has been changed by this branch.
+**Database changes:** the branch includes role-guarded notification draft RPCs and a follow-up migration that validates the direct manager during SA provisioning; no business tables or columns are added. Hosted production has not been migrated.
 
 ## 1. Server Action inventory
 
 | Server Action | Input / validation | Server authorization and data boundary | Outcome / refresh |
 |---|---|---|---|
-| register | Required name, email, phone, agency code; password policy (8+ chars, lower/upper/digit) | Public Supabase Auth sign-up; registration metadata remains SA_SELF_REGISTRATION; Auth trigger and database constraints are authoritative | Safe redirect to login; provider error is not exposed |
+| register | Required name, email, phone, own agency code, direct manager agency code; password policy (8+ chars, lower/upper/digit) | Server precheck requires an active DM/UM; provisioning trigger independently resolves the code and persists manager_id; role remains database-assigned SA | Safe redirect to login; manager/service errors use safe codes |
 | login | Required email/password | Supabase Auth verifies credentials; narrow server-only client reads account state; only DANG_HOAT_DONG proceeds | Inactive/pending/locked states sign out and use safe codes |
 | requestPasswordChangeOtp | No client-supplied account ID | Requires signed-in claim and an account row with DANG_HOAT_DONG; calls Supabase reauthentication | otp-sent or safe failure code |
 | changePassword | OTP, new password and confirmation; exact match and existing password policy | Rechecks active account; Supabase Auth validates nonce/OTP and password mutation | Sign out after success; redirect to login |

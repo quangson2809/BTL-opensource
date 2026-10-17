@@ -31,7 +31,16 @@ const email = `phase2-password-${suffix}@example.test`;
 const password = "InitialPass1";
 const changedPassword = "ChangedPass2";
 const recoveredPassword = "RecoveredPass3";
+const managerCode = `DM-PW-${suffix}`;
 
+const managerEmail = `manager-pw-${suffix}@example.test`;
+const { data: managerIdentity, error: managerIdentityError } = await admin.auth.admin.createUser({ email: managerEmail, password: "ManagerPassword1", email_confirm: true });
+assertNoError(managerIdentityError, "create password-test manager Auth fixture");
+const managerId = managerIdentity.user.id;
+const { error: managerAccountError } = await admin.from("tai_khoan").insert({ id: managerId, ho_ten: "Password Test DM", email: managerEmail, so_dien_thoai: `06${String(Date.now()).slice(-8)}`, ma_dai_ly: managerCode, manager_id: null, trang_thai: "DANG_HOAT_DONG" });
+assertNoError(managerAccountError, "create password-test manager account");
+const { error: managerRoleError } = await admin.from("phan_cong_vai_tro").insert({ tai_khoan_id: managerId, vai_tro_id: "10000000-0000-0000-0000-000000000002" });
+assertNoError(managerRoleError, "assign password-test DM role");
 function assertNoError(error, context) {
   assert.equal(error, null, `${context}: ${error?.message ?? "unexpected error"}`);
 }
@@ -343,6 +352,7 @@ const { data: weakSignup, error: weakSignupError } = await weakClient.auth.signU
       ho_ten: "Weak Password",
       so_dien_thoai: `07${String(Date.now()).slice(-8)}`,
       ma_dai_ly: `SA-WEAK-${suffix}`,
+      manager_code: managerCode,
     },
   },
 });
@@ -360,6 +370,7 @@ const { data: signup, error: signupError } = await registrationClient.auth.signU
       ho_ten: "Password OTP Integration",
       so_dien_thoai: `06${String(Date.now()).slice(-8)}`,
       ma_dai_ly: `SA-PW-${suffix}`,
+      manager_code: managerCode,
     },
   },
 });

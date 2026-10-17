@@ -102,3 +102,21 @@ The binary `docs/source/Bao-cao-mon-opensource.pdf` remains the named source of 
 
 ### Not added
 Manager reassignment/transfer; role deletion; permission-definition CRUD/new permission codes; customer-to-activity linkage; Excel import; sent-notification edit/delete; insurance contracts/claims/premiums; sales orders/carts/revenue KPIs; CRM integration or other requirements not established in the current scope.
+
+## Registration direct-manager audit update — 2026-10-17
+
+Before this change, `/register` did not collect a direct-manager code and
+`provision_self_registered_sa()` always wrote `manager_id = null` for a
+self-registered SA. That left registration disconnected from the existing personnel tree.
+
+The follow-up implementation adds a required manager agent-code field, performs
+a server-side eligibility precheck, and makes the Auth provisioning trigger
+authoritatively resolve the code to an active DM/UM account before writing
+`manager_id`. The client cannot choose a role or submit a manager UUID. Database
+regression coverage verifies DM and UM success plus missing, unknown, inactive,
+and non-manager rejection cases.
+
+The migration has not been applied to hosted production. CI/database-test status
+for this follow-up must be read from the new PR head; baseline results above are
+not evidence for this change. Hosted email/OTP acceptance and production smoke
+remain separate, unverified gates.

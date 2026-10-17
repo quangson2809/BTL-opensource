@@ -33,7 +33,8 @@ select throws_ok(
         'registration_type', 'SA_SELF_REGISTRATION',
         'ho_ten', 'Missing SA role fixture',
         'so_dien_thoai', '0999000009',
-        'ma_dai_ly', 'MISSING-SA-ROLE'
+        'ma_dai_ly', 'MISSING-SA-ROLE',
+        'manager_code', 'MANAGER-IGNORED-WHEN-SA-ROLE-MISSING'
       )
     )
   $$,

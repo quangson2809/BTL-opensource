@@ -135,7 +135,12 @@ Production branch:
 
 `main`
 
-Configure the three application variables above for both Preview and Production with environment-appropriate values.
+Configure the three application variables above for both Preview and Production with environment-appropriate values. Also configure:
+
+- `NEXT_PUBLIC_SITE_URL`: the canonical app origin for that environment (for example, the deployed Vercel URL or the production custom domain). Local development uses `http://localhost:3000`; Vercel deployment-host fallback is only a convenience, not a substitute for an explicit production value.
+- In Supabase **Authentication → URL Configuration**, set **Site URL** to the deployed app origin rather than `http://localhost:3000` for the hosted project.
+- Add the exact callback URL `https://<app-origin>/auth/callback` to **Redirect URLs** for every intended environment. Add Preview origins only if Preview email-confirmation flows are needed; use an appropriately constrained Vercel preview pattern supported by Supabase rather than allowing arbitrary external URLs.
+- The signup action sends `emailRedirectTo` to `/auth/callback`. The callback exchanges the confirmation code and clears the temporary session, then directs the user to login. Email confirmation does **not** approve the account; the existing Admin approval remains required.
 
 Do not put production secrets in GitHub source, build logs, or client-visible environment names.
 

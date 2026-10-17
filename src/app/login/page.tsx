@@ -6,6 +6,7 @@ import { LOGIN_ERROR_MESSAGES } from "@/lib/auth-login-errors.mjs";
 
 const statusMessages: Record<string, string> = {
   registered: "Đăng ký thành công. Tài khoản đang chờ quản trị viên phê duyệt.",
+  "email-confirmed": "Email đã được xác minh. Tài khoản vẫn cần quản trị viên phê duyệt trước khi truy cập hệ thống.",
   "password-changed": "Đổi mật khẩu thành công. Vui lòng đăng nhập lại bằng mật khẩu mới.",
   "password-reset": "Đặt lại mật khẩu thành công. Vui lòng đăng nhập bằng mật khẩu mới.",
 };

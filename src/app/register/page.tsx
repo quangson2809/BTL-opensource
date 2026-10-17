@@ -48,7 +48,11 @@ export default async function RegisterPage({ searchParams }: RegisterPageProps) 
           </label>
           <label>
             Mã đại lý
-            <input name="ma_dai_ly" required />
+            <input name="ma_dai_ly" autoComplete="off" required />
+          </label>
+          <label>
+            Mã người quản lý trực tiếp (DM/UM)
+            <input name="ma_nguoi_quan_ly" autoComplete="off" required />
           </label>
           <label>
             Mật khẩu
