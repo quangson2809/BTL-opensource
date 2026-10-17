@@ -24,7 +24,7 @@ export default async function ActivitiesPage({
 }: ActivitiesPageProps) {
   const query = await searchParams;
   const { supabase, accountId } = await requireBusinessAccount();
-  const type = activityTypes.has(query.loai ?? "") ? query.loai : "";
+  const type = query.loai && activityTypes.has(query.loai) ? query.loai : "";
 
   let countQuery = supabase
     .from("hoat_dong")
