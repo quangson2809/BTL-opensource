@@ -65,6 +65,7 @@ export default async function CustomersPage({ searchParams }: CustomersPageProps
       "id,ma_khach_hang,ho_ten,so_dien_thoai,loai_khach_hang,tinh_trang,nhom_tinh_cach,updated_at",
     )
     .order("updated_at", { ascending: false })
+    .order("id", { ascending: true })
     .range(firstRow, firstRow + pageSize - 1);
   if (search) {
     customersQuery = customersQuery.or(
