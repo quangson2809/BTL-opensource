@@ -4,6 +4,7 @@ export type RegistrationFailureCategory =
   | "EMAIL_UNAVAILABLE"
   | "PHONE_IN_USE"
   | "AGENT_CODE_IN_USE"
+  | "INVALID_MANAGER"
   | "RATE_LIMITED"
   | "DATABASE_ERROR"
   | "PROVISIONING_ERROR"
@@ -15,6 +16,7 @@ export const REGISTRATION_FAILURE_CATEGORIES: Readonly<{
   EMAIL_UNAVAILABLE: "EMAIL_UNAVAILABLE";
   PHONE_IN_USE: "PHONE_IN_USE";
   AGENT_CODE_IN_USE: "AGENT_CODE_IN_USE";
+  INVALID_MANAGER: "INVALID_MANAGER";
   RATE_LIMITED: "RATE_LIMITED";
   DATABASE_ERROR: "DATABASE_ERROR";
   PROVISIONING_ERROR: "PROVISIONING_ERROR";
@@ -29,6 +31,7 @@ export function validateRegistrationInput(input: {
   email: string;
   phone: string;
   agentCode: string;
+  managerCode: string;
   password: string;
 }): string | null;
 
@@ -64,6 +67,7 @@ type RegistrationAuthClient = {
       ho_ten: string;
       so_dien_thoai: string;
       ma_dai_ly: string;
+      manager_code: string;
     };
   }): Promise<{
     user: { id: string; identityCount: number | null } | null;
@@ -76,6 +80,7 @@ type RegistrationAuthClient = {
 type RegistrationAdminClient = {
   findExistingPhone(phone: string): Promise<{ exists: boolean; error: unknown | null }>;
   findExistingAgentCode(code: string): Promise<{ exists: boolean; error: unknown | null }>;
+  findEligibleManagerByAgentCode(code: string): Promise<{ eligible: boolean; error: unknown | null }>;
 };
 
 export function executeRegistration(input: {
@@ -83,6 +88,7 @@ export function executeRegistration(input: {
   email: string;
   phone: string;
   agentCode: string;
+  managerCode: string;
   password: string;
   createAuthClient: () => RegistrationAuthClient | Promise<RegistrationAuthClient>;
   createAdminClient: () => RegistrationAdminClient;
