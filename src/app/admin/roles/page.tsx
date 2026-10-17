@@ -1,7 +1,6 @@
 import Link from "next/link";
 
 import { PageHeader } from "@/components/page-header";
-import { StatusBadge } from "@/components/status-badge";
 
 import { requireAdmin } from "@/lib/admin";
 
@@ -89,7 +88,7 @@ export default async function RolesPage({ searchParams }: RolesPageProps) {
                     <p>
                       <strong>{role.ma_vai_tro}</strong> — {role.ten_vai_tro}
                       {["ADMIN", "DM", "UM", "SA"].includes(role.ma_vai_tro) ? (
-                        <> <StatusBadge value="Vai trò hệ thống" /></>
+                        <span className="secondary-text"> · Vai trò hệ thống</span>
                       ) : null}
                     </p>
                     <p className="secondary-text">{role.mo_ta ?? "Không có mô tả."}</p>
