@@ -229,12 +229,12 @@ select throws_ok(
 );
 
 select throws_ok(
-  $
+  $$
     update public.quyen
     set ten_quyen = 'Unauthorized change'
     where ma_quyen = 'ACTIVITY_VIEW_SUBTREE'
     returning id
-  $,
+  $$,
   '42501',
   null,
   'normal user cannot modify the migration-owned permission catalog'
@@ -259,10 +259,10 @@ select is(
 );
 
 select throws_ok(
-  $
+  $$
     insert into public.quyen (ma_quyen, ten_quyen, mo_ta)
     values ('TEST_ADMIN_PERMISSION', 'Test admin permission', 'Only created inside rollback-only RLS test')
-  $,
+  $$,
   '42501',
   null,
   'even ADMIN cannot mutate migration-owned permission definitions directly'
