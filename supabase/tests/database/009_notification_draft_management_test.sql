@@ -26,7 +26,8 @@ values
   ('c5000000-0000-4000-8000-000000000001', 'draft-dm@example.test'),
   ('c5000000-0000-4000-8000-000000000002', 'draft-sa-one@example.test'),
   ('c5000000-0000-4000-8000-000000000003', 'draft-sa-two@example.test'),
-  ('c5000000-0000-4000-8000-000000000004', 'draft-outsider@example.test');
+  ('c5000000-0000-4000-8000-000000000004', 'draft-outsider@example.test'),
+  ('c5000000-0000-4000-8000-000000000005', 'draft-other-dm@example.test');
 
 insert into public.tai_khoan (
   id, ho_ten, email, so_dien_thoai, ma_dai_ly, manager_id, trang_thai
@@ -35,7 +36,8 @@ values
   ('c5000000-0000-4000-8000-000000000001', 'Draft DM', 'draft-dm@example.test', '0985000001', 'DRAFT-DM', null, 'DANG_HOAT_DONG'),
   ('c5000000-0000-4000-8000-000000000002', 'Draft SA One', 'draft-sa-one@example.test', '0985000002', 'DRAFT-SA-1', 'c5000000-0000-4000-8000-000000000001', 'DANG_HOAT_DONG'),
   ('c5000000-0000-4000-8000-000000000003', 'Draft SA Two', 'draft-sa-two@example.test', '0985000003', 'DRAFT-SA-2', 'c5000000-0000-4000-8000-000000000001', 'DANG_HOAT_DONG'),
-  ('c5000000-0000-4000-8000-000000000004', 'Draft Outsider', 'draft-outsider@example.test', '0985000004', 'DRAFT-OUT', null, 'DANG_HOAT_DONG');
+  ('c5000000-0000-4000-8000-000000000004', 'Draft Outsider', 'draft-outsider@example.test', '0985000004', 'DRAFT-OUT', null, 'DANG_HOAT_DONG'),
+  ('c5000000-0000-4000-8000-000000000005', 'Draft Other DM', 'draft-other-dm@example.test', '0985000005', 'DRAFT-DM-2', null, 'DANG_HOAT_DONG');
 
 insert into public.phan_cong_vai_tro (tai_khoan_id, vai_tro_id)
 select 'c5000000-0000-4000-8000-000000000001', id from public.vai_tro where ma_vai_tro = 'DM';
@@ -45,6 +47,8 @@ insert into public.phan_cong_vai_tro (tai_khoan_id, vai_tro_id)
 select 'c5000000-0000-4000-8000-000000000003', id from public.vai_tro where ma_vai_tro = 'SA';
 insert into public.phan_cong_vai_tro (tai_khoan_id, vai_tro_id)
 select 'c5000000-0000-4000-8000-000000000004', id from public.vai_tro where ma_vai_tro = 'SA';
+insert into public.phan_cong_vai_tro (tai_khoan_id, vai_tro_id)
+select 'c5000000-0000-4000-8000-000000000005', id from public.vai_tro where ma_vai_tro = 'DM';
 
 set local role authenticated;
 select set_config('request.jwt.claim.role', 'authenticated', true);
@@ -69,6 +73,26 @@ select lives_ok(
     )
   $$,
   'DM can create a draft for an in-scope recipient'
+);
+select set_config(
+  'test.edited_notification_id',
+  (select id::text from public.thong_bao where tieu_de = 'Editable draft'),
+  true
+);
+
+select throws_ok(
+  $
+    select public.dm_update_notification_draft(
+      current_setting('test.edited_notification_id')::uuid,
+      '   ',
+      'Invalid title should be rejected',
+      'TIN_TỨC',
+      array['c5000000-0000-4000-8000-000000000002'::uuid]
+    )
+  $,
+  '22023',
+  null,
+  'DM cannot replace a draft with an empty title'
 );
 
 select throws_ok(
@@ -141,6 +165,50 @@ select is(
   'draft update replaces the old recipient with the selected in-scope recipient'
 );
 
+-- Another DM cannot operate on a draft owned by the first DM, even if it knows the UUID.
+select set_config('request.jwt.claim.sub', 'c5000000-0000-4000-8000-000000000005', true);
+select set_config(
+  'request.jwt.claims',
+  jsonb_build_object(
+    'role', 'authenticated',
+    'sub', 'c5000000-0000-4000-8000-000000000005',
+    'amr', jsonb_build_array(jsonb_build_object('method', 'password', 'timestamp', 0))
+  )::text,
+  true
+);
+select throws_ok(
+  $
+    select public.dm_update_notification_draft(
+      current_setting('test.edited_notification_id')::uuid,
+      'Cross-owner edit',
+      'Not permitted',
+      'TIN_TỨC',
+      array['c5000000-0000-4000-8000-000000000002'::uuid]
+    )
+  $,
+  '22023',
+  null,
+  'another DM cannot update a draft it did not create'
+);
+select throws_ok(
+  $ select public.dm_delete_notification_draft(current_setting('test.edited_notification_id')::uuid) $,
+  '22023',
+  null,
+  'another DM cannot delete a draft it did not create'
+);
+
+-- Return to the creator before testing delete and send.
+select set_config('request.jwt.claim.sub', 'c5000000-0000-4000-8000-000000000001', true);
+select set_config(
+  'request.jwt.claims',
+  jsonb_build_object(
+    'role', 'authenticated',
+    'sub', 'c5000000-0000-4000-8000-000000000001',
+    'amr', jsonb_build_array(jsonb_build_object('method', 'password', 'timestamp', 0))
+  )::text,
+  true
+);
+
 select lives_ok(
   $$
     select public.dm_create_notification(
@@ -168,7 +236,7 @@ select is(
 );
 select is(
   (select count(*)::bigint from public.thong_bao_nguoi_nhan tbn
-   where tbn.thong_bao_id = (select id from public.thong_bao where tieu_de = 'Delete draft')),
+   where tbn.tai_khoan_id = 'c5000000-0000-4000-8000-000000000002'::uuid),
   0::bigint,
   'deleting a draft cascades to its recipient rows'
 );
