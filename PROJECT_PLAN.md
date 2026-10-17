@@ -140,7 +140,8 @@ Password/OTP contract:
 - [x] Gán/thu hồi vai trò.
 - [x] Xem danh sách vai trò/quyền và mapping cần thiết.
 - [x] Không gán quyền trực tiếp cho tài khoản.
-- [ ] CRUD nâng cao cho role/permission catalog chỉ làm nếu source-derived use case bắt buộc cho MVP.
+- [x] Tạo/sửa custom role và cấu hình mapping tới permission đã tồn tại theo owner decision BC-005 (2026-10-17); `ADMIN/DM/UM/SA` là vai trò hệ thống chỉ đọc, mã role bất biến và không thể xóa; danh mục permission tiếp tục do migration quản lý.
+- [x] `ACTIVITY_VIEW_SUBTREE` là permission có hiệu lực với role được map quyền, cho phép đọc activity trong phạm vi cây cấp dưới mà không hard-code DM/UM. Test 012 xác minh scope của custom role.
 
 ### Phase 4 — Customer + Personnel — MVP
 
@@ -169,7 +170,7 @@ Nhân sự:
 - [x] DM tạo thông báo.
 - [x] Chưa gửi/đã gửi.
 - [x] Chọn người nhận trong scope.
-- [ ] Cập nhật/xóa theo business rule — **defer** cho đến khi notification delete/update rule được canonical source/Decision Log khóa; không tự suy diễn.
+- [x] Cập nhật/xóa bản nháp của chính DM tạo theo owner decision BC-004 (2026-10-17); thông báo đã gửi giữ nguyên, không sửa/xóa. Đây là quyết định triển khai được ghi nhận trong `docs/business-change-log.md`; trang/section PDF gốc vẫn `UNVERIFIED`.
 - [x] Đã đọc/chưa đọc theo người nhận.
 
 ### Phase 7 — Reports & Statistics — MVP
@@ -260,7 +261,7 @@ Không merge PR khi lint/type-check/build/test liên quan chưa pass.
 - [x] Password policy: minimum 8, lowercase + uppercase + digit, symbol optional.
 - [x] MVP production Auth exception (2026-10-09, **BC-001** ở `docs/business-change-log.md`): dùng hosted Supabase Free. Password Verification Attempt Hook chỉ có Teams/Enterprise, nên exact per-account 6 failures -> 30-minute lock được defer khỏi production MVP acceptance. Không thay bằng Next.js-only counter vì public Auth endpoint có thể bypass. Production dùng provider rate limits/abuse protection + existing password policy; local/CI vẫn test hook state machine. Nếu canonical PDF bắt buộc exact 6/30, ghi nhận đây là known MVP deviation.
 - [ ] Session duration — **defer sau MVP**. Không bật time-boxed lifetime khi unconditional-reauth compatibility shim còn backdate `auth.sessions.created_at`; đồng thời không bật MFA/low-AAL lifetime dựa trên cùng timestamp. Trên hosted Supabase, acceptance phải verify reauthentication end-to-end trên project thật thay vì claim immutable GoTrue pin.
-- [ ] Notification delete rule.
+- [x] Notification draft edit/delete rule (BC-004, 2026-10-17): chỉ chủ sở hữu DM được sửa/xóa bản nháp `CHƯA_GỬI`; thông báo `ĐÃ_GỬI` bất biến. Canonical PDF page/section `UNVERIFIED`, không coi owner decision là trích dẫn PDF.
 - [x] Statistics: dùng narrow `SECURITY DEFINER` RPC dưới caller JWT để trả aggregate theo scope; không mở raw customer rows. Export dùng cùng RPC để giữ authorization contract thống nhất.
 
 Không tự suy diễn các quyết định trên nếu ảnh hưởng kiến trúc hoặc business behavior.

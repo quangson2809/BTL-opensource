@@ -10,9 +10,12 @@ select is(
   'SA role exists before provisioning failure test'
 );
 
--- This test is isolated in a transaction. Removing SA cascades only inside the
--- test transaction, and rollback restores the catalog and all role assignments.
+-- This test emulates a catalog damaged by privileged maintenance or a bad
+-- migration. Normal application/API operations cannot delete system role rows;
+-- disable only this protection trigger inside the rollback-only test fixture.
+alter table public.vai_tro disable trigger trg_protect_role_identity;
 delete from public.vai_tro where ma_vai_tro = 'SA';
+alter table public.vai_tro enable trigger trg_protect_role_identity;
 
 select is(
   (select count(*)::bigint from public.vai_tro where ma_vai_tro = 'SA'),

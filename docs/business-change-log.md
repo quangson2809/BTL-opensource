@@ -47,6 +47,35 @@
 | Acceptance hiện tại | **PENDING**: verify settings 8/600 trên project `kulaguukpngkzpwforok`, evidence ngày kiểm tra, test reauthentication và recovery OTP thật |
 | Nơi ghi evidence | Issue #13, theo `docs/mvp-deployment.md`; tuyệt đối không lưu mã OTP/password/JWT |
 
+## BC-004 — Quản lý thông báo chỉ khi còn bản nháp
+
+| Thuộc tính | Nội dung |
+| --- | --- |
+| Loại | **BUSINESS IMPACT: YES — owner-selected workflow policy** |
+| Trước thay đổi | Giao diện cho phép DM tạo/gửi thông báo nhưng chưa có luồng sửa/xóa; kế hoạch ghi thao tác này đang deferred cho đến khi quy tắc nghiệp vụ được khóa. |
+| Quyết định người sở hữu | Ngày 2026-10-17: DM được sửa/xóa thông báo do chính mình tạo khi trạng thái còn `CHƯA_GỬI`; khi đã `ĐÃ_GỬI`, nội dung và người nhận được giữ nguyên, không hỗ trợ sửa/xóa. |
+| Sau thay đổi trên nhánh feature | Bổ sung RPC có kiểm tra role/creator/state và khóa hàng bản nháp; update kiểm tra người nhận trong subtree, thay danh sách người nhận atomically; delete xóa draft và recipient rows theo FK cascade. UI chỉ hiển thị thao tác draft cho chủ sở hữu. |
+| Phạm vi vai trò/luồng | DM tạo/sửa/xóa/gửi; người nhận chỉ đọc thông báo đã gửi và tự cập nhật trạng thái đã đọc. Không đổi quyền người nhận hoặc mở rộng scope dữ liệu. |
+| Schema/runtime | Thêm hai PostgreSQL functions trong migration; không thêm bảng/cột. Migration trên branch chưa được áp dụng lên production. |
+| Canonical PDF mapping | Yêu cầu thông báo — trang/section PDF **UNVERIFIED**. Đây là quyết định workflow do project owner chọn trong hội thoại; không khẳng định đã được PDF gốc yêu cầu. |
+| Tài liệu liên quan | `PROJECT_PLAN.md` Phase 6 và Decision Log; `docs/action-contracts.md`; migration `20261017060000_notification_draft_management.sql`; pgTAP test `009_notification_draft_management_test.sql`. |
+| Acceptance | Chờ exact-branch CI/database test; đặc biệt kiểm tra DM/non-DM, ngoài subtree, draft edit/delete, gửi thành công, và không thể sửa/xóa thông báo đã gửi. |
+
+## BC-005 — Quản trị danh mục vai trò và cấu hình permission
+
+| Thuộc tính | Nội dung |
+| --- | --- |
+| Loại | **BUSINESS IMPACT: YES — owner-selected feature scope** |
+| Trước thay đổi | `/admin/roles` chỉ đọc role, permission và mapping; schema đã có RLS write policy cho ADMIN nhưng chưa có form CRUD hoặc luồng cập nhật mapping có kiểm tra transaction. |
+| Quyết định người sở hữu | Ngày 2026-10-17: Admin được tạo/sửa custom role và cấu hình mapping tới permission đã tồn tại. Vai trò hệ thống `ADMIN/DM/UM/SA` chỉ đọc (không sửa metadata/mapping và không xóa); mã role bất biến. Không thêm chức năng xóa custom role hoặc CRUD định nghĩa permission trong phạm vi này. |
+| Sau thay đổi trên nhánh feature | Tạo/sửa custom role qua RPC transaction; role code bất biến; system roles read-only and undeletable; custom-role permission mappings được thay thế atomically; table DML trực tiếp của authenticated bị thu hồi để tránh bypass validation. |
+| Bảo vệ quản trị | Chặn Admin tự khóa tài khoản hoặc tự thu hồi vai trò ADMIN; ngăn thu hồi/khóa làm mất Admin đang hoạt động cuối cùng. Các thao tác account-role và account-lock được bảo vệ ở database RPC, không chỉ UI. |
+| Giới hạn ngữ nghĩa permission | Danh mục hiện chỉ có `ACTIVITY_VIEW_SUBTREE`; permission này được áp dụng cho truy cập activity trong cây cấp dưới, còn các route nghiệp vụ khác vẫn dùng guard hiện hữu và không tự động nhận quyền từ custom role. |
+| Schema/runtime | Thêm RPC, trigger bảo vệ role identity và thu hồi DML trực tiếp từ authenticated cho các bảng catalog/mapping được quản lý qua RPC. Migration trên branch chưa được áp dụng lên production. |
+| Canonical PDF mapping | Yêu cầu vai trò/quyền — trang/section PDF **UNVERIFIED**. Đây là phạm vi được project owner chọn trong hội thoại; không tuyên bố là trích dẫn PDF. |
+| Tài liệu liên quan | `PROJECT_PLAN.md` Phase 3; `docs/action-contracts.md`; migrations `20261017090000_admin_role_catalog_management.sql`, `20261017100000_rbac_lockout_protection.sql`; tests `010_admin_role_catalog_management_test.sql`, `011_rbac_lockout_protection_test.sql`. |
+| Acceptance | pgTAP tests 010–012 bao phủ role CRUD/mapping, system-role protection, self-lockout và activity subtree scope. CI/database/Auth/route smoke pass gần nhất trên `8fcdedf95eae8494e5ccaf2ff4c062ab3152559d`; rerun cho nhánh sau các cập nhật route-smoke/documentation vẫn là gate cuối. Browser role-matrix and production Auth remain unverified. |
+
 ## Hướng dẫn cập nhật tài liệu gốc
 
 Người sở hữu tài liệu sau khi mở `docs/source/Bao-cao-mon-opensource.pdf` cần:
@@ -62,3 +91,5 @@ Người sở hữu tài liệu sau khi mở `docs/source/Bao-cao-mon-opensource
 | --- | --- | --- | --- |
 | 2026-10-09 | PR #14 ACL production security hotfix | **NO** — thay đổi quyền thực thi DB, không đổi use case/requirement | Không cần sửa business PDF; ghi security implementation review |
 | 2026-10-09 | PR #15 hosted Free Auth demo contract | **YES** — BC-001 khác biệt 6/30; BC-002 giới hạn người nhận email demo; BC-003 yêu cầu OTP hiện hữu cần verify, **chưa đổi** | **PENDING PDF ALIGNMENT** |
+| 2026-10-17 | Owner decision for notification drafts | **YES** — only own drafts are editable/deletable; sent notifications stay immutable (BC-004) | PDF page/section **UNVERIFIED**; decision recorded in repo docs |
+| 2026-10-17 | Owner decision for role catalog and permission mapping | **YES** — create/edit roles and configure existing permissions (BC-005) | PDF page/section **UNVERIFIED**; decision recorded in repo docs |

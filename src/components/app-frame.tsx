@@ -176,6 +176,7 @@ export function AppFrame({ children }: Readonly<{ children: ReactNode }>) {
     if (!drawerActive) return;
 
     const sidebar = sidebarRef.current;
+    const menuToggle = menuToggleRef.current;
     const firstNavigationLink = sidebar?.querySelector<HTMLElement>(
       ".workspace-navigation a[href]",
     );
@@ -223,7 +224,7 @@ export function AppFrame({ children }: Readonly<{ children: ReactNode }>) {
       document.removeEventListener("keydown", onKeyDown);
       document.body.style.overflow = "";
       if (window.matchMedia("(max-width: 46rem)").matches) {
-        menuToggleRef.current?.focus();
+        menuToggle?.focus();
       } else {
         document.getElementById("workspace-main")?.focus();
       }

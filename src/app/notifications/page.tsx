@@ -8,59 +8,96 @@ import { ListPagination, ResultSummary } from "@/components/list-controls";
 import { PendingSubmitButton } from "@/components/pending-submit-button";
 
 import {
+  deleteNotificationDraft,
   markNotificationRead,
   sendNotification,
 } from "@/app/notifications/actions";
 import { requireBusinessAccount } from "@/lib/business";
+import { parsePositivePage, sanitizePostgrestOrSearch } from "@/lib/list-query.mjs";
 
 export const dynamic = "force-dynamic";
 
 type NotificationsPageProps = {
-  searchParams: Promise<{ status?: string; error?: string; q?: string; loai?: string; trang_thai?: string; page?: string }>;
+  searchParams: Promise<{
+    status?: string;
+    error?: string;
+    q?: string;
+    loai?: string;
+    trang_thai?: string;
+    page?: string;
+  }>;
 };
+
+const notificationTypes = new Set(["TIN_TỨC", "TỰ_ĐỘNG_HỆ_THỐNG"]);
+const notificationStatuses = new Set(["CHƯA_GỬI", "ĐÃ_GỬI"]);
 
 export default async function NotificationsPage({
   searchParams,
 }: NotificationsPageProps) {
   const query = await searchParams;
   const { supabase, accountId } = await requireBusinessAccount();
-  const [dmResult, notificationResult, recipientResult] = await Promise.all([
+
+  const search = sanitizePostgrestOrSearch(query.q);
+  const type = query.loai && notificationTypes.has(query.loai) ? query.loai : "";
+  const status = query.trang_thai && notificationStatuses.has(query.trang_thai) ? query.trang_thai : "";
+  const [dmResult, countResult] = await Promise.all([
     supabase.rpc("has_role", { role_code: "DM" }),
-    supabase
-      .from("thong_bao")
-      .select(
-        "id,nguoi_tao_id,tieu_de,noi_dung,loai,trang_thai,created_at",
-      )
-      .order("created_at", { ascending: false }),
-    supabase
-      .from("thong_bao_nguoi_nhan")
-      .select("id,thong_bao_id,tai_khoan_id,da_doc"),
+    (async () => {
+      let countQuery = supabase
+        .from("thong_bao")
+        .select("id", { count: "exact", head: true });
+      if (search) {
+        countQuery = countQuery.or(`tieu_de.ilike.%${search}%,noi_dung.ilike.%${search}%`);
+      }
+      if (type) countQuery = countQuery.eq("loai", type);
+      if (status) countQuery = countQuery.eq("trang_thai", status);
+      return countQuery;
+    })(),
   ]);
 
-  if (dmResult.error || notificationResult.error || recipientResult.error) {
-    throw new Error("Không thể tải thông báo.");
+  if (dmResult.error || countResult.error) {
+    throw new Error("Không thể tải thông báo trong phạm vi được cấp quyền.");
+  }
+
+  const total = countResult.count ?? 0;
+  const pageSize = 8;
+  const pageCount = Math.max(1, Math.ceil(total / pageSize));
+  const currentPage = Math.min(parsePositivePage(query.page), pageCount);
+  const firstRow = (currentPage - 1) * pageSize;
+
+  let notificationQuery = supabase
+    .from("thong_bao")
+    .select("id,nguoi_tao_id,tieu_de,noi_dung,loai,trang_thai,created_at")
+    .order("created_at", { ascending: false })
+    .order("id", { ascending: true })
+    .range(firstRow, firstRow + pageSize - 1);
+  if (search) {
+    notificationQuery = notificationQuery.or(
+      `tieu_de.ilike.%${search}%,noi_dung.ilike.%${search}%`,
+    );
+  }
+  if (type) notificationQuery = notificationQuery.eq("loai", type);
+  if (status) notificationQuery = notificationQuery.eq("trang_thai", status);
+
+  const { data, error } = await notificationQuery;
+  if (error) {
+    throw new Error("Không thể tải thông báo trong phạm vi được cấp quyền.");
+  }
+
+  const visibleNotifications = data ?? [];
+  const notificationIds = visibleNotifications.map((notification) => notification.id);
+  const recipientResult = notificationIds.length > 0
+    ? await supabase
+        .from("thong_bao_nguoi_nhan")
+        .select("id,thong_bao_id,tai_khoan_id,da_doc")
+        .in("thong_bao_id", notificationIds)
+    : { data: [], error: null };
+
+  if (recipientResult.error) {
+    throw new Error("Không thể tải trạng thái người nhận.");
   }
 
   const isDm = dmResult.data === true;
-  const allNotifications = notificationResult.data ?? [];
-  const search = (query.q ?? "").trim().toLocaleLowerCase("vi");
-  const notifications = allNotifications.filter((notification) => {
-    const matchesSearch = !search ||
-      notification.tieu_de.toLocaleLowerCase("vi").includes(search) ||
-      notification.noi_dung.toLocaleLowerCase("vi").includes(search);
-    const matchesType = !query.loai || notification.loai === query.loai;
-    const matchesStatus = !query.trang_thai || notification.trang_thai === query.trang_thai;
-    return matchesSearch && matchesType && matchesStatus;
-  });
-  const pageSize = 8;
-  const pageCount = Math.max(1, Math.ceil(notifications.length / pageSize));
-  const requestedPage = Number.parseInt(query.page ?? "1", 10);
-  const currentPage = Math.min(Math.max(Number.isFinite(requestedPage) ? requestedPage : 1, 1), pageCount);
-  const visibleNotifications = notifications.slice((currentPage - 1) * pageSize, currentPage * pageSize);
-  const filterParams = { q: query.q, loai: query.loai, trang_thai: query.trang_thai };
-  const hasFilters = Object.values(filterParams).some((value) => Boolean(value?.trim()));
-  const notificationTypes = Array.from(new Set(allNotifications.map((item) => item.loai)));
-  const notificationStatuses = Array.from(new Set(allNotifications.map((item) => item.trang_thai)));
   const recipientRows = recipientResult.data ?? [];
   const rowsByNotification = new Map<string, typeof recipientRows>();
   for (const row of recipientRows) {
@@ -69,6 +106,9 @@ export default async function NotificationsPage({
       row,
     ]);
   }
+
+  const filterParams = { q: query.q, loai: type, trang_thai: status };
+  const hasFilters = Boolean(search || type || status);
 
   return (
     <main>
@@ -95,34 +135,36 @@ export default async function NotificationsPage({
           </label>
           <label>
             Loại thông báo
-            <select defaultValue={query.loai ?? ""} name="loai">
+            <select defaultValue={type} name="loai">
               <option value="">Tất cả loại</option>
-              {notificationTypes.map((type) => <option key={type} value={type}>{type.replaceAll("_", " ")}</option>)}
+              <option value="TIN_TỨC">Tin tức</option>
+              <option value="TỰ_ĐỘNG_HỆ_THỐNG">Tự động hệ thống</option>
             </select>
           </label>
           <label>
             Trạng thái
-            <select defaultValue={query.trang_thai ?? ""} name="trang_thai">
+            <select defaultValue={status} name="trang_thai">
               <option value="">Tất cả trạng thái</option>
-              {notificationStatuses.map((status) => <option key={status} value={status}>{status.replaceAll("_", " ")}</option>)}
+              <option value="CHƯA_GỬI">Chưa gửi</option>
+              <option value="ĐÃ_GỬI">Đã gửi</option>
             </select>
           </label>
           <button type="submit">Lọc</button>
         </form>
 
-        <ResultSummary label="thông báo" total={notifications.length} currentPage={currentPage} pageSize={pageSize} hasFilters={hasFilters} clearHref="/notifications" />
+        <ResultSummary label="thông báo" total={total} currentPage={currentPage} pageSize={pageSize} hasFilters={hasFilters} clearHref="/notifications" />
 
         <div className="stack">
-          {notifications.length === 0 ? (
+          {total === 0 ? (
             <EmptyState
-              actionHref={isDm ? "/notifications/new" : undefined}
-              actionLabel={isDm ? "Tạo thông báo đầu tiên" : undefined}
+              actionHref={isDm && !hasFilters ? "/notifications/new" : undefined}
+              actionLabel={isDm && !hasFilters ? "Tạo thông báo đầu tiên" : undefined}
               description={
-                isDm
+                isDm && !hasFilters
                   ? "Tạo bản nháp rồi kiểm tra người nhận trước khi gửi."
-                  : "Thông báo sẽ xuất hiện tại đây khi có thông báo trong phạm vi của bạn."
+                  : "Thông báo sẽ xuất hiện tại đây khi có thông báo trong phạm vi của bạn. Thử thay đổi bộ lọc nếu đang tìm kiếm."
               }
-              title="Chưa có thông báo"
+              title={hasFilters ? "Không tìm thấy kết quả" : "Chưa có thông báo"}
             />
           ) : null}
           {visibleNotifications.map((notification) => {
@@ -132,12 +174,11 @@ export default async function NotificationsPage({
               (row) => row.tai_khoan_id === accountId,
             );
             const owned = notification.nguoi_tao_id === accountId;
+            const isDraft = notification.trang_thai === "CHƯA_GỬI";
 
             return (
               <article className="record-row" key={notification.id}>
-                <p>
-                  <strong>{notification.tieu_de}</strong>
-                </p>
+                <p><strong>{notification.tieu_de}</strong></p>
                 <p>{notification.noi_dung}</p>
                 <p className="secondary-text">
                   {notification.loai} · <StatusBadge value={notification.trang_thai} /> ·{" "}
@@ -148,28 +189,34 @@ export default async function NotificationsPage({
                     Người nhận: {recipientRowsForNotification.length}
                   </p>
                 ) : null}
-                {owned && notification.trang_thai === "CHƯA_GỬI" ? (
-                  <form action={sendNotification}>
-                    <input
-                      name="notification_id"
-                      type="hidden"
-                      value={notification.id}
-                    />
-                    <PendingSubmitButton
-                      confirmMessage="Gửi thông báo này đến toàn bộ người nhận đã chọn?"
-                      pendingLabel="Đang gửi…"
-                    >
-                      Gửi thông báo
-                    </PendingSubmitButton>
-                  </form>
+                {owned && isDraft ? (
+                  <div className="actions">
+                    <Link href={"/notifications/" + notification.id + "/edit"}>
+                      Sửa bản nháp
+                    </Link>
+                    <form action={deleteNotificationDraft}>
+                      <input name="notification_id" type="hidden" value={notification.id} />
+                      <PendingSubmitButton
+                        confirmMessage="Xóa bản nháp này? Người nhận chưa thể xem thông báo."
+                        pendingLabel="Đang xóa…"
+                      >
+                        Xóa bản nháp
+                      </PendingSubmitButton>
+                    </form>
+                    <form action={sendNotification}>
+                      <input name="notification_id" type="hidden" value={notification.id} />
+                      <PendingSubmitButton
+                        confirmMessage="Gửi thông báo này đến toàn bộ người nhận đã chọn?"
+                        pendingLabel="Đang gửi…"
+                      >
+                        Gửi thông báo
+                      </PendingSubmitButton>
+                    </form>
+                  </div>
                 ) : null}
                 {ownRecipientRow && !ownRecipientRow.da_doc ? (
                   <form action={markNotificationRead}>
-                    <input
-                      name="recipient_row_id"
-                      type="hidden"
-                      value={ownRecipientRow.id}
-                    />
+                    <input name="recipient_row_id" type="hidden" value={ownRecipientRow.id} />
                     <PendingSubmitButton pendingLabel="Đang cập nhật…">
                       Đánh dấu đã đọc
                     </PendingSubmitButton>

@@ -161,8 +161,8 @@ select lives_ok(
 
 select is(
   (select count(*)::bigint from public.hoat_dong),
-  1::bigint,
-  'SA reads only own activity even when SA role has subtree permission'
+  2::bigint,
+  'SA with ACTIVITY_VIEW_SUBTREE reads own and descendant activity in scope'
 );
 
 select ok(
@@ -171,8 +171,8 @@ select ok(
 );
 
 select ok(
-  not exists (select 1 from public.hoat_dong where id = '50000000-0000-4000-8000-000000000003'),
-  'SA with subtree permission cannot read descendant activity without DM/UM role'
+  exists (select 1 from public.hoat_dong where id = '50000000-0000-4000-8000-000000000003'),
+  'SA with ACTIVITY_VIEW_SUBTREE can read descendant activity without DM/UM role'
 );
 
 select ok(
@@ -228,15 +228,16 @@ select throws_ok(
   'normal user cannot self-grant ADMIN role'
 );
 
-select results_eq(
+select throws_ok(
   $$
     update public.quyen
     set ten_quyen = 'Unauthorized change'
     where ma_quyen = 'ACTIVITY_VIEW_SUBTREE'
     returning id
   $$,
-  $$ select null::uuid where false $$,
-  'normal user cannot modify permission catalog'
+  '42501',
+  null,
+  'normal user cannot modify the migration-owned permission catalog'
 );
 
 -- ADMIN must not bypass customer ownership.
@@ -257,12 +258,14 @@ select is(
   'ADMIN does not bypass customer ownership'
 );
 
-select lives_ok(
+select throws_ok(
   $$
     insert into public.quyen (ma_quyen, ten_quyen, mo_ta)
     values ('TEST_ADMIN_PERMISSION', 'Test admin permission', 'Only created inside rollback-only RLS test')
   $$,
-  'authorized ADMIN can write the permission catalog'
+  '42501',
+  null,
+  'even ADMIN cannot mutate migration-owned permission definitions directly'
 );
 
 -- Recursive hierarchy: DM -> UM -> SA. DM/UM seed roles carry ACTIVITY_VIEW_SUBTREE.

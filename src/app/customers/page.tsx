@@ -7,6 +7,7 @@ import { StatusBadge } from "@/components/status-badge";
 import { ListPagination, ResultSummary } from "@/components/list-controls";
 
 import { requireBusinessAccount } from "@/lib/business";
+import { parsePositivePage, sanitizePostgrestOrSearch } from "@/lib/list-query.mjs";
 
 export const dynamic = "force-dynamic";
 
@@ -22,41 +23,66 @@ type CustomersPageProps = {
   }>;
 };
 
+const customerTypes = new Set(["MUC_TIEU", "NUOI_DUONG", "DOI_TAC"]);
+const customerStatuses = new Set(["BẠN", "BÀN", "BÁN", "BÁM"]);
+const personalityGroups = new Set(["D", "I", "S", "C"]);
+
 export default async function CustomersPage({ searchParams }: CustomersPageProps) {
   const query = await searchParams;
   const { supabase } = await requireBusinessAccount();
-  const { data, error } = await supabase
+
+  const search = sanitizePostgrestOrSearch(query.q);
+  const type = query.loai && customerTypes.has(query.loai) ? query.loai : "";
+  const status = query.tinh_trang && customerStatuses.has(query.tinh_trang) ? query.tinh_trang : "";
+  const group = query.nhom && personalityGroups.has(query.nhom) ? query.nhom : "";
+
+  let countQuery = supabase
+    .from("khach_hang")
+    .select("id", { count: "exact", head: true });
+  if (search) {
+    countQuery = countQuery.or(
+      `ho_ten.ilike.%${search}%,ma_khach_hang.ilike.%${search}%,so_dien_thoai.ilike.%${search}%`,
+    );
+  }
+  if (type) countQuery = countQuery.eq("loai_khach_hang", type);
+  if (status) countQuery = countQuery.eq("tinh_trang", status);
+  if (group) countQuery = countQuery.eq("nhom_tinh_cach", group);
+
+  const { count, error: countError } = await countQuery;
+  if (countError) {
+    throw new Error("Không thể đếm khách hàng trong phạm vi được cấp quyền.");
+  }
+
+  const total = count ?? 0;
+  const pageSize = 8;
+  const pageCount = Math.max(1, Math.ceil(total / pageSize));
+  const currentPage = Math.min(parsePositivePage(query.page), pageCount);
+  const firstRow = (currentPage - 1) * pageSize;
+
+  let customersQuery = supabase
     .from("khach_hang")
     .select(
       "id,ma_khach_hang,ho_ten,so_dien_thoai,loai_khach_hang,tinh_trang,nhom_tinh_cach,updated_at",
     )
-    .order("updated_at", { ascending: false });
+    .order("updated_at", { ascending: false })
+    .order("id", { ascending: true })
+    .range(firstRow, firstRow + pageSize - 1);
+  if (search) {
+    customersQuery = customersQuery.or(
+      `ho_ten.ilike.%${search}%,ma_khach_hang.ilike.%${search}%,so_dien_thoai.ilike.%${search}%`,
+    );
+  }
+  if (type) customersQuery = customersQuery.eq("loai_khach_hang", type);
+  if (status) customersQuery = customersQuery.eq("tinh_trang", status);
+  if (group) customersQuery = customersQuery.eq("nhom_tinh_cach", group);
 
+  const { data: customers, error } = await customersQuery;
   if (error) {
     throw new Error("Không thể tải danh sách khách hàng.");
   }
 
-  const records = data ?? [];
-  const search = (query.q ?? "").trim().toLocaleLowerCase("vi");
-  const customers = records.filter((customer) => {
-    const matchesSearch =
-      !search ||
-      customer.ho_ten.toLocaleLowerCase("vi").includes(search) ||
-      customer.ma_khach_hang.toLocaleLowerCase("vi").includes(search) ||
-      customer.so_dien_thoai.includes(search);
-    const matchesType = !query.loai || customer.loai_khach_hang === query.loai;
-    const matchesStatus =
-      !query.tinh_trang || customer.tinh_trang === query.tinh_trang;
-    const matchesGroup = !query.nhom || customer.nhom_tinh_cach === query.nhom;
-    return matchesSearch && matchesType && matchesStatus && matchesGroup;
-  });
-  const pageSize = 8;
-  const pageCount = Math.max(1, Math.ceil(customers.length / pageSize));
-  const requestedPage = Number.parseInt(query.page ?? "1", 10);
-  const currentPage = Math.min(Math.max(Number.isFinite(requestedPage) ? requestedPage : 1, 1), pageCount);
-  const visibleCustomers = customers.slice((currentPage - 1) * pageSize, currentPage * pageSize);
-  const filterParams = { q: query.q, loai: query.loai, tinh_trang: query.tinh_trang, nhom: query.nhom };
-  const hasFilters = Object.values(filterParams).some((value) => Boolean(value?.trim()));
+  const filterParams = { q: query.q, loai: type, tinh_trang: status, nhom: group };
+  const hasFilters = Boolean(search || type || status || group);
 
   return (
     <main>
@@ -85,7 +111,7 @@ export default async function CustomersPage({ searchParams }: CustomersPageProps
           </label>
           <label>
             Loại
-            <select defaultValue={query.loai ?? ""} name="loai">
+            <select defaultValue={type} name="loai">
               <option value="">Tất cả</option>
               <option value="MUC_TIEU">Mục tiêu</option>
               <option value="NUOI_DUONG">Nuôi dưỡng</option>
@@ -94,7 +120,7 @@ export default async function CustomersPage({ searchParams }: CustomersPageProps
           </label>
           <label>
             Tình trạng
-            <select defaultValue={query.tinh_trang ?? ""} name="tinh_trang">
+            <select defaultValue={status} name="tinh_trang">
               <option value="">Tất cả</option>
               <option value="BẠN">BẠN</option>
               <option value="BÀN">BÀN</option>
@@ -104,7 +130,7 @@ export default async function CustomersPage({ searchParams }: CustomersPageProps
           </label>
           <label>
             Nhóm tính cách
-            <select defaultValue={query.nhom ?? ""} name="nhom">
+            <select defaultValue={group} name="nhom">
               <option value="">Tất cả</option>
               <option value="D">D</option>
               <option value="I">I</option>
@@ -115,22 +141,22 @@ export default async function CustomersPage({ searchParams }: CustomersPageProps
           <button type="submit">Lọc</button>
         </form>
 
-        <ResultSummary label="khách hàng" total={customers.length} currentPage={currentPage} pageSize={pageSize} hasFilters={hasFilters} clearHref="/customers" />
+        <ResultSummary label="khách hàng" total={total} currentPage={currentPage} pageSize={pageSize} hasFilters={hasFilters} clearHref="/customers" />
 
         <div className="stack">
-          {customers.length === 0 ? (
+          {total === 0 ? (
             <EmptyState
-              actionHref={records.length === 0 ? "/customers/new" : undefined}
-              actionLabel={records.length === 0 ? "Thêm khách hàng đầu tiên" : undefined}
+              actionHref={!hasFilters ? "/customers/new" : undefined}
+              actionLabel={!hasFilters ? "Thêm khách hàng đầu tiên" : undefined}
               description={
-                records.length === 0
+                !hasFilters
                   ? "Thêm hồ sơ đầu tiên để bắt đầu quản lý khách hàng."
                   : "Thử thay đổi từ khóa hoặc bộ lọc để xem kết quả khác."
               }
-              title={records.length === 0 ? "Chưa có khách hàng" : "Không tìm thấy kết quả"}
+              title={!hasFilters ? "Chưa có khách hàng" : "Không tìm thấy kết quả"}
             />
           ) : null}
-          {visibleCustomers.map((customer) => (
+          {(customers ?? []).map((customer) => (
             <article className="record-row" key={customer.id}>
               <p>
                 <strong>{customer.ho_ten}</strong> — {customer.ma_khach_hang}

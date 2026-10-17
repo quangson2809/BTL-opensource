@@ -1,8 +1,8 @@
 # IDAILY — Server Action, Route Handler, RPC and UI Contract Inventory
 
-**Scope:** acceptance hardening for Phase 1 (Shell/Design System) and Phase 2 (interaction/input contracts).  
+**Scope:** current MVP contract inventory plus verified list-query and draft-notification work on `feature/idaily-system-completion-20261017`.  
 **Security boundary:** the UI and navigation are not authorization controls. Server guards, user-scoped Supabase clients, RPC checks and RLS remain authoritative.  
-**Schema changes:** none in this phase.
+**Database changes:** one additive migration introduces two authenticated, role-guarded notification draft RPCs; no business tables or columns are added, and no production database has been changed by this branch.
 
 ## 1. Server Action inventory
 
@@ -21,7 +21,9 @@
 | createActivity | Allowed activity type; non-empty location; strict local date-time; non-negative 32-bit integer connected count | requireBusinessAccount; account ID is server-derived; caller JWT and RLS | Safe redirect after mutation |
 | updateActivity | UUID activity ID and same activity payload validation | requireBusinessAccount; explicit tai_khoan_id = accountId predicate plus RLS | Selected row required before success |
 | deleteActivity | UUID activity ID | requireBusinessAccount; explicit owner predicate plus RLS | Selected row required before success |
-| createNotification | Non-empty title/content, finite notification type, at least one UUID recipient | requireDm plus dm_create_notification, which checks DM role and each recipient's subtree scope | Safe failure code; no provider/database text shown |
+| createNotification | Non-empty title/content, finite notification type, UUID recipient list (deduplicated) | requireDm plus dm_create_notification; database checks DM role and each recipient's subtree scope | Safe failure code; no provider/database text shown |
+| updateNotificationDraft | UUID notification ID, non-empty title/content, finite type and UUID recipient list | requireDm plus dm_update_notification_draft; database locks and checks owned `CHƯA_GỬI` draft, validates recipient subtree, updates content/recipients atomically | Safe failure code; redirects to notifications on success |
+| deleteNotificationDraft | UUID notification ID | requireDm plus dm_delete_notification_draft; database locks and checks owned `CHƯA_GỬI` draft; sent/non-owned messages are rejected | Safe failure code; redirects to notifications on success |
 | sendNotification | UUID draft ID | requireDm plus dm_send_notification, which checks creator, draft state and recipient scope | Success only when RPC returns without error |
 | markNotificationRead | UUID recipient-row ID | requireBusinessAccount; account ID is server-derived, explicit row-owner predicate and recipient RLS | Selected row required before success |
 | approveAccount | UUID account ID | requireAdmin plus admin_approve_account role/state checks | Revalidates Admin account/role paths |
@@ -29,6 +31,8 @@
 | unlockAccount | UUID account ID | requireAdmin plus admin_unlock_account role/state checks | Revalidates Admin account/role paths |
 | assignRole | UUID account ID and role ID | requireAdmin plus admin_assign_role Admin check and database constraints | Revalidates account detail and role list |
 | revokeRole | UUID account ID and role ID | requireAdmin plus admin_revoke_role Admin check and function ACL boundary | Revalidates account detail and role list |
+| createRole | Custom role code in uppercase identifier format, non-empty name, existing permission UUIDs | requireAdmin plus admin_create_role; database rejects reserved system codes and invalid permission IDs; role and mapping are created atomically | Safe duplicate/validation errors; revalidates role catalog |
+| updateRole | UUID custom-role ID, non-empty name, existing permission UUIDs | requireAdmin plus admin_update_role; database locks role and atomically replaces mapping; system roles are rejected and role codes remain immutable | Safe duplicate/validation errors; revalidates role catalog |
 
 ### Shared rules confirmed in code
 
@@ -37,7 +41,7 @@
 - Account IDs and role IDs for Admin RPCs are never accepted as proof of role or ownership.
 - User-visible errors are stable codes mapped to Vietnamese text. Unknown error codes use a generic message; unknown success codes do not render a success message.
 - Pending buttons and confirmation prompts reduce accidental interaction only. They do not guarantee idempotency or replace database authorization/state checks.
-- Role assignments and notification creation/sending retain database-side authorization in the RPC. No new RPC, role or permission was added here.
+- Role assignments, role catalog mutations and notification create/send/edit/delete retain database-side authorization in RPCs. Role metadata/mapping writes cannot be made directly through the authenticated Data API; permission definitions remain migration-owned.
 
 ## 2. Route Handler inventory
 
@@ -59,8 +63,14 @@ No other Route Handler was found in the inspected source tree for this baseline.
 | admin_unlock_account(target_account_id) | Admin account actions | Database independently checks ADMIN and locked state |
 | admin_assign_role(target_account_id, target_role_id) | Admin account actions | Database independently checks ADMIN, account and role existence; unique assignment constraint handles repeated assignment |
 | admin_revoke_role(target_account_id, target_role_id) | Admin account actions | Database independently checks ADMIN |
+| admin_create_role(role_code, role_name, role_description, permission_ids) | `/admin/roles/new` | Checks active ADMIN; rejects reserved role codes and invalid permission IDs; role and mappings are created atomically |
+| admin_update_role(target_role_id, role_name, role_description, permission_ids) | `/admin/roles/[id]/edit` | Checks active ADMIN; locks role, validates permissions and replaces metadata/mappings in one transaction; role identity is immutable |
+| admin_lock_account(target_account_id) | Admin account detail | Checks ADMIN; prevents self-lock and serializes active-Admin protection |
+| admin_revoke_role(target_account_id, target_role_id) | Admin account detail | Checks ADMIN; prevents self-revoking ADMIN, protects last active Admin and rejects direct table-DML bypass |
 | dm_create_notification(...) | Notification creation | Database independently checks DM and each recipient's subtree membership |
 | dm_send_notification(target_notification_id) | Notification send | Database independently checks DM, creator ownership, draft state, and recipient scope |
+| dm_update_notification_draft(target_notification_id, notification_title, notification_content, notification_type, recipient_ids) | Draft edit form | Authenticated-only RPC; checks active DM via `has_role`, locks an owned draft, validates all recipient scope, de-duplicates selected recipient IDs and updates atomically |
+| dm_delete_notification_draft(target_notification_id) | Draft delete form | Authenticated-only RPC; checks active DM via `has_role`, locks and deletes only an owned `CHƯA_GỬI` draft; recipient rows follow the existing FK cascade; sent notifications are immutable |
 
 Security-definer helpers such as current_account_has_application_access, is_in_subtree, and notification RLS helpers are database implementation details invoked by policies/RPCs, not client-callable workflow endpoints.
 
@@ -79,9 +89,9 @@ Security-definer helpers such as current_account_has_application_access, is_in_s
 ## 5. RLS and mutation safety map
 
 - **Customers:** CRUD executes with the authenticated user; row ownership is enforced by RLS. New records derive chu_so_huu_id from the server-authenticated account.
-- **Activities:** create derives tai_khoan_id from the authenticated account; update/delete additionally filter by that account. Manager read access remains constrained by the existing policy/scope logic.
-- **Notifications:** drafts are creator-scoped; recipients only read sent notifications addressed to them; da_doc writes are restricted to the caller's recipient row. DM create/send RPCs repeat their role and subtree checks.
-- **Admin/RBAC:** the route guard and RPC both check ADMIN; the existing database function ACL migration limits execution to authenticated callers and functions verify role in SQL. UI visibility is not trusted.
+- **Activities:** create derives tai_khoan_id from the authenticated account; update/delete additionally filter by that account. Read access uses `can_view_activity`: own activity or `ACTIVITY_VIEW_SUBTREE` plus `is_in_subtree`; custom-role mappings cannot expand reads outside the caller's tree.
+- **Notifications:** drafts are creator-scoped; recipients only read sent notifications addressed to them; da_doc writes are restricted to the caller's recipient row. DM create/send/update/delete RPCs enforce role, owner/state, and subtree checks. Only owned drafts are editable/deletable; sent notifications remain immutable.
+- **Admin/RBAC:** custom-role create/update uses guarded RPCs, replacing permission mappings atomically. `ADMIN/DM/UM/SA` are read-only and undeletable; role codes are immutable, permission definitions remain migration-owned, and authenticated direct DML on role catalog/mapping tables is revoked. Admin lock/revoke RPCs protect self-lockout and the last active Admin.
 - **Reporting/personnel:** RPCs return scope-limited aggregates and enforce the authenticated caller's allowed scope. Export is not a service-role data bypass.
 - **Authentication:** changing/recovering a password does not turn an OTP-only recovery session into a workspace session; successful password update signs out the temporary/local session.
 
@@ -92,4 +102,4 @@ Security-definer helpers such as current_account_has_application_access, is_in_s
 3. The browser QA matrix is 375, 768, 1024 and 1440 CSS pixels, including keyboard-only drawer use, account-menu use, confirmation cancellation/acceptance, pending feedback, unauthorized route denial, and mutation success/failure/empty states.
 4. Mutation duplication is prevented only where the database operation's existing constraints/state checks guarantee it. A disabled button/confirmation dialog is not an exactly-once guarantee.
 
-**No schema, RLS policy, business role, or RPC implementation is changed by this acceptance-hardening phase.**
+**Database change note:** this feature branch adds notification-draft RPCs, role-catalog RPCs, a role-identity trigger, Admin lockout protection, and permission-based activity subtree checks. These migrations have not been applied to hosted production by this branch.
