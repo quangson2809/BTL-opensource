@@ -921,3 +921,44 @@ tbody tr:hover {
   .role-assignment { align-items: stretch; flex-direction: column; }
   .role-assignment button { width: 100%; }
 }
+
+
+/* Final responsive refinements */
+.record-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0.35rem;
+}
+.recent-activity-list .record-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+.field-label { display: block; }
+.form-layout { margin-top: 0; }
+.loading-state {
+  display: grid;
+  justify-items: center;
+  gap: 0.8rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: 2rem;
+  background: #fff;
+  color: var(--color-ink-soft);
+}
+.loading-indicator {
+  width: 1.8rem;
+  height: 1.8rem;
+  border: 3px solid var(--color-border);
+  border-top-color: var(--color-brand);
+  border-radius: 50%;
+  animation: idaily-loading-spin 750ms linear infinite;
+}
+@keyframes idaily-loading-spin { to { transform: rotate(360deg); } }
+@media (max-width: 46rem) {
+  .recent-activity-list .record-row { align-items: flex-start; flex-direction: column; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .loading-indicator { animation-duration: 2s; }
+}

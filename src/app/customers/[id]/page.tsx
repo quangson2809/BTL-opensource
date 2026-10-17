@@ -2,7 +2,9 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { ActionFeedback } from "@/components/action-feedback";
+import { PageHeader } from "@/components/page-header";
 import { PendingSubmitButton } from "@/components/pending-submit-button";
+import { StatusBadge } from "@/components/status-badge";
 import { deleteCustomer } from "@/app/customers/actions";
 import { requireBusinessAccount } from "@/lib/business";
 
@@ -13,50 +15,50 @@ type CustomerDetailPageProps = {
   searchParams: Promise<{ status?: string; error?: string }>;
 };
 
-export default async function CustomerDetailPage({
-  params,
-  searchParams,
-}: CustomerDetailPageProps) {
+export default async function CustomerDetailPage({ params, searchParams }: CustomerDetailPageProps) {
   const [{ id }, query] = await Promise.all([params, searchParams]);
   const { supabase } = await requireBusinessAccount();
-  const { data: customer, error } = await supabase
-    .from("khach_hang")
-    .select("*")
-    .eq("id", id)
-    .maybeSingle();
+  const { data: customer, error } = await supabase.from("khach_hang").select("*").eq("id", id).maybeSingle();
 
-  if (error) {
-    throw new Error("Không thể tải khách hàng.");
-  }
-  if (!customer) {
-    notFound();
-  }
+  if (error) throw new Error("Không thể tải khách hàng.");
+  if (!customer) notFound();
 
   return (
     <main>
-      <section className="card wide-card">
-        <h1>{customer.ho_ten}</h1>
-        <div className="actions">
-          <Link href="/customers">Danh sách khách hàng</Link>
-          <Link href={"/customers/" + customer.id + "/edit"}>Chỉnh sửa</Link>
-        </div>
+      <section className="page-content customer-detail-page">
+        <PageHeader
+          title={customer.ho_ten}
+          description={"Hồ sơ khách hàng · " + customer.ma_khach_hang}
+          actions={
+            <>
+              <Link className="button-link button-secondary" href="/customers">Danh sách khách hàng</Link>
+              <Link className="button-link" href={"/customers/" + customer.id + "/edit"}>Chỉnh sửa</Link>
+            </>
+          }
+        />
         {query.status ? <ActionFeedback status={query.status} /> : null}
         {query.error ? <ActionFeedback error={query.error} /> : null}
-
-        <div className="details-grid">
-          <p>Mã: {customer.ma_khach_hang}</p>
-          <p>Số điện thoại: {customer.so_dien_thoai}</p>
-          <p>Giới tính: {customer.gioi_tinh}</p>
-          <p>Ngày sinh: {customer.ngay_sinh}</p>
-          <p>Địa chỉ: {customer.dia_chi}</p>
-          <p>Loại: {customer.loai_khach_hang}</p>
-          <p>Tình trạng: {customer.tinh_trang}</p>
-          <p>Nhóm tính cách: {customer.nhom_tinh_cach}</p>
-          <p>Sở thích: {customer.so_thich}</p>
-          <p>Ghi chú: {customer.ghi_chu}</p>
-        </div>
-
-        <form action={deleteCustomer}>
+        <section className="detail-section" aria-labelledby="customer-primary-title">
+          <h2 id="customer-primary-title">Thông tin cơ bản</h2>
+          <dl className="details-grid account-details-grid">
+            <div><dt>Mã khách hàng</dt><dd>{customer.ma_khach_hang}</dd></div>
+            <div><dt>Số điện thoại</dt><dd>{customer.so_dien_thoai}</dd></div>
+            <div><dt>Giới tính</dt><dd>{customer.gioi_tinh}</dd></div>
+            <div><dt>Ngày sinh</dt><dd>{customer.ngay_sinh}</dd></div>
+            <div><dt>Địa chỉ</dt><dd>{customer.dia_chi}</dd></div>
+            <div><dt>Loại khách hàng</dt><dd>{customer.loai_khach_hang}</dd></div>
+            <div><dt>Tình trạng</dt><dd><StatusBadge value={customer.tinh_trang} /></dd></div>
+            <div><dt>Nhóm tính cách</dt><dd>{customer.nhom_tinh_cach}</dd></div>
+          </dl>
+        </section>
+        <section className="detail-section" aria-labelledby="customer-notes-title">
+          <h2 id="customer-notes-title">Sở thích và ghi chú</h2>
+          <dl className="details-grid account-details-grid">
+            <div><dt>Sở thích</dt><dd>{customer.so_thich}</dd></div>
+            <div><dt>Ghi chú</dt><dd>{customer.ghi_chu}</dd></div>
+          </dl>
+        </section>
+        <form action={deleteCustomer} className="form-actions">
           <input name="customer_id" type="hidden" value={customer.id} />
           <PendingSubmitButton
             confirmMessage="Bạn có chắc muốn xóa hồ sơ khách hàng này? Thao tác không thể hoàn tác."

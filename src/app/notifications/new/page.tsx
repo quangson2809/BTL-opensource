@@ -3,7 +3,7 @@ import Link from "next/link";
 import { ActionFeedback } from "@/components/action-feedback";
 import { PendingSubmitButton } from "@/components/pending-submit-button";
 import { PageHeader } from "@/components/page-header";
-import { NotificationDraftPersistence } from "@/components/notification-draft-persistence";
+import { FormDraftPersistence } from "@/components/form-draft-persistence";
 
 import { createNotification } from "@/app/notifications/actions";
 import { requireDm } from "@/lib/business";
@@ -36,7 +36,7 @@ export default async function NewNotificationPage({
         {query.error ? (
           <ActionFeedback error={query.error} />
         ) : null}
-        <NotificationDraftPersistence hasError={Boolean(query.error)} />
+        <FormDraftPersistence persistKey="notification-draft" hasError={Boolean(query.error)} />
         <p className="form-required-note"><span aria-hidden="true">*</span> Trường bắt buộc</p>
         <form action={createNotification} className="stack notification-composer" data-persist-key="notification-draft">
           <fieldset className="form-section">
