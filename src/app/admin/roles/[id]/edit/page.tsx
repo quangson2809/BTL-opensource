@@ -15,8 +15,6 @@ type EditRolePageProps = {
   searchParams: Promise<{ error?: string }>;
 };
 
-const SYSTEM_ROLE_CODES = new Set(["ADMIN", "DM", "UM", "SA"]);
-
 const errorMessages: Record<string, string> = {
   invalid: "Tên vai trò hoặc danh sách quyền không hợp lệ.",
   duplicate: "Tên vai trò đã tồn tại.",
@@ -47,13 +45,10 @@ export default async function EditRolePage({
       .eq("vai_tro_id", id),
   ]);
 
-  if (
-    roleResult.error ||
-    !roleResult.data ||
-    SYSTEM_ROLE_CODES.has(roleResult.data.ma_vai_tro)
-  ) {
-    notFound();
+  if (roleResult.error) {
+    throw new Error("Không thể tải vai trò cần chỉnh sửa.");
   }
+  if (!roleResult.data) notFound();
   if (permissionsResult.error || mappingResult.error) {
     throw new Error("Không thể tải thông tin vai trò và quyền hiện có.");
   }
