@@ -1,6 +1,6 @@
--- Admin-managed role catalog, with permission mappings replaced atomically.
+-- Admin-managed custom role catalog, with permission mappings replaced atomically.
 -- Role codes are identity keys used by application guards and cannot be renamed.
--- System role records cannot be deleted; permission definitions remain migration-owned.
+-- System roles and permission definitions remain immutable; custom roles can be edited.
 
 create or replace function public.prevent_role_identity_mutation()
 returns trigger
@@ -105,18 +105,26 @@ set search_path = pg_catalog, public
 as $$
 declare
   normalized_permission_ids uuid[] := coalesce(permission_ids, array[]::uuid[]);
+  target_role_code text;
 begin
   if not public.has_role('ADMIN') then
     raise exception using errcode = '42501', message = 'Admin role required';
   end if;
 
-  perform 1
+  select ma_vai_tro
+  into target_role_code
   from public.vai_tro
   where id = target_role_id
   for update;
 
   if not found then
     raise exception using errcode = '22023', message = 'Role does not exist';
+  end if;
+
+  if target_role_code in ('ADMIN', 'DM', 'UM', 'SA') then
+    raise exception using
+      errcode = '42501',
+      message = 'System roles cannot be edited';
   end if;
 
   if nullif(btrim(role_name), '') is null then
