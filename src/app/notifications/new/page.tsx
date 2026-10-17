@@ -2,6 +2,8 @@ import Link from "next/link";
 
 import { ActionFeedback } from "@/components/action-feedback";
 import { PendingSubmitButton } from "@/components/pending-submit-button";
+import { PageHeader } from "@/components/page-header";
+import { NotificationDraftPersistence } from "@/components/notification-draft-persistence";
 
 import { createNotification } from "@/app/notifications/actions";
 import { requireDm } from "@/lib/business";
@@ -29,51 +31,52 @@ export default async function NewNotificationPage({
 
   return (
     <main>
-      <section className="card wide-card">
-        <h1>Tạo thông báo</h1>
-        <p>
-          <Link href="/notifications">Quay lại thông báo</Link>
-        </p>
+      <section className="page-content">
+        <PageHeader title="Tạo thông báo" description="Soạn nội dung, chọn người nhận trong scope và tạo bản nháp trước khi gửi." actions={<Link className="button-link button-secondary" href="/notifications">Quay lại thông báo</Link>} />
         {query.error ? (
           <ActionFeedback error={query.error} />
         ) : null}
-        <form action={createNotification} className="stack">
-          <label>
-            Tiêu đề
-            <input name="tieu_de" required />
-          </label>
-          <label>
-            Nội dung
-            <textarea name="noi_dung" required />
-          </label>
-          <label>
-            Loại
-            <select defaultValue="TIN_TỨC" name="loai" required>
-              <option value="TIN_TỨC">Tin tức</option>
-              <option value="TỰ_ĐỘNG_HỆ_THỐNG">Tự động hệ thống</option>
-            </select>
-          </label>
-          <label>
-            Người nhận trong scope
-            <select
-              multiple
-              name="recipient_ids"
-              required
-              size={Math.min(Math.max((recipients ?? []).length, 3), 10)}
-            >
-              {(recipients ?? []).map((recipient) => (
-                <option key={recipient.id} value={recipient.id}>
-                  {recipient.ho_ten} — {recipient.ma_dai_ly} —{" "}
-                  {recipient.trang_thai}
-                </option>
-              ))}
-            </select>
-          </label>
-          <p className="secondary-text">
-            Giữ Ctrl/Cmd để chọn nhiều người nhận. Draft chưa hiển thị cho người
-            nhận cho đến khi DM bấm gửi.
-          </p>
-          <PendingSubmitButton pendingLabel="Đang tạo bản nháp…">Tạo bản nháp</PendingSubmitButton>
+        <NotificationDraftPersistence hasError={Boolean(query.error)} />
+        <p className="form-required-note"><span aria-hidden="true">*</span> Trường bắt buộc</p>
+        <form action={createNotification} className="stack notification-composer" data-persist-key="notification-draft">
+          <fieldset className="form-section">
+            <legend>Nội dung thông báo</legend>
+            <div className="form-grid">
+              <label>
+                Tiêu đề <span aria-hidden="true" className="required-indicator">*</span>
+                <input autoComplete="off" name="tieu_de" required />
+              </label>
+              <label>
+                Loại thông báo <span aria-hidden="true" className="required-indicator">*</span>
+                <select defaultValue="TIN_TỨC" name="loai" required>
+                  <option value="TIN_TỨC">Tin tức</option>
+                  <option value="TỰ_ĐỘNG_HỆ_THỐNG">Tự động hệ thống</option>
+                </select>
+              </label>
+              <label className="field-full">
+                Nội dung <span aria-hidden="true" className="required-indicator">*</span>
+                <textarea name="noi_dung" required />
+              </label>
+            </div>
+          </fieldset>
+          <fieldset className="form-section">
+            <legend>Phạm vi nhận</legend>
+            <label>
+              Người nhận trong scope <span aria-hidden="true" className="required-indicator">*</span>
+              <select multiple name="recipient_ids" required size={Math.min(Math.max((recipients ?? []).length, 4), 10)}>
+                {(recipients ?? []).map((recipient) => (
+                  <option key={recipient.id} value={recipient.id}>
+                    {recipient.ho_ten} — {recipient.ma_dai_ly} — {recipient.trang_thai}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <p className="field-help">Giữ Ctrl/Cmd để chọn nhiều người nhận. Bản nháp chưa hiển thị cho người nhận cho đến khi DM bấm gửi.</p>
+          </fieldset>
+          <div className="form-actions">
+            <PendingSubmitButton pendingLabel="Đang tạo bản nháp…">Tạo bản nháp</PendingSubmitButton>
+            <Link className="button-link button-secondary" href="/notifications">Hủy</Link>
+          </div>
         </form>
       </section>
     </main>

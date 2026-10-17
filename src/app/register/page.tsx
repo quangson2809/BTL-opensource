@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { PublicHeader } from "@/components/public-header";
 
 import { register } from "@/app/auth/actions";
 import {
@@ -20,8 +21,10 @@ export default async function RegisterPage({ searchParams }: RegisterPageProps) 
     : undefined;
 
   return (
-    <main>
-      <section className="card auth-card">
+    <main className="auth-main">
+      <div className="auth-shell">
+        <PublicHeader mode="register" />
+      <section className="card auth-card auth-panel">
         <h1>Đăng ký đại lý SA</h1>
         <p className="secondary-text">
           Tài khoản mới sẽ ở trạng thái chờ phê duyệt cho tới khi quản trị viên kích hoạt.
@@ -29,6 +32,7 @@ export default async function RegisterPage({ searchParams }: RegisterPageProps) 
         {statusMessage ? <p role="status" aria-live="polite" className="message success">{statusMessage}</p> : null}
         {errorMessage ? <p role="alert" aria-live="assertive" className="message error">{errorMessage}</p> : null}
 
+        <p className="form-required-note"><span aria-hidden="true">*</span> Trường bắt buộc</p>
         <form action={register} className="stack">
           <label>
             Họ tên
@@ -60,6 +64,7 @@ export default async function RegisterPage({ searchParams }: RegisterPageProps) 
           Đã có tài khoản? <Link href="/login">Đăng nhập</Link>
         </p>
       </section>
+      </div>
     </main>
   );
 }

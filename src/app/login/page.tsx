@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { PublicHeader } from "@/components/public-header";
 
 import { login } from "@/app/auth/actions";
 import { LOGIN_ERROR_MESSAGES } from "@/lib/auth-login-errors.mjs";
@@ -19,12 +20,15 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
   const statusMessage = params.status ? statusMessages[params.status] : undefined;
 
   return (
-    <main>
-      <section className="card auth-card">
+    <main className="auth-main">
+      <div className="auth-shell">
+        <PublicHeader mode="login" />
+      <section className="card auth-card auth-panel">
         <h1>Đăng nhập IDAILY</h1>
         {statusMessage ? <p role="status" aria-live="polite" className="message success">{statusMessage}</p> : null}
         {errorMessage ? <p role="alert" aria-live="assertive" className="message error">{errorMessage}</p> : null}
 
+        <p className="form-required-note"><span aria-hidden="true">*</span> Trường bắt buộc</p>
         <form action={login} className="stack">
           <label>
             Email
@@ -44,6 +48,7 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
           Chưa có tài khoản? <Link href="/register">Đăng ký SA</Link>
         </p>
       </section>
+      </div>
     </main>
   );
 }

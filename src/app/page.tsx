@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { PublicHeader } from "@/components/public-header";
 
 const features = [
   {
@@ -25,22 +26,7 @@ export default function Home() {
   return (
     <main className="home-main">
       <div className="home-shell">
-        <header className="site-header">
-          <Link aria-label="IDAILY - Trang chủ" className="brand-lockup" href="/">
-            <span aria-hidden="true" className="brand-mark">
-              iD
-            </span>
-            <span>
-              <span className="brand-name">IDAILY</span>
-              <span className="brand-caption">Hệ thống quản lý đại lý bảo hiểm</span>
-            </span>
-          </Link>
-
-          <nav aria-label="Điều hướng chính" className="header-actions">
-            <Link href="/login">Đăng nhập</Link>
-            <Link href="/register">Đăng ký đại lý</Link>
-          </nav>
-        </header>
+        <PublicHeader mode="landing" />
 
         <section aria-labelledby="hero-title" className="hero">
           <div>
