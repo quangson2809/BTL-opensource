@@ -74,16 +74,16 @@ No hosted production migration or production business-data mutation was executed
 
 | Check | Result | Evidence / limitation |
 |---|---|---|
-| GitHub CI | **PASS** on implementation head `8fcdedf95eae8494e5ccaf2ff4c062ab3152559d` | Run `39020344956`; lint, TypeScript check, interaction/input tests, security-boundary check and build all completed successfully |
-| Database migration reset | **PASS** on the same head | Run `39020344917`; Supabase local recreated database and applied migrations through `20261017110000_permission_based_activity_scope.sql` |
-| pgTAP database/RLS tests | **PASS — 13 files, 278 assertions** | `supabase test db`; exact log summary `Files=13, Tests=278, Result: PASS`, including tests 009–012 |
-| Auth integration tests | **PASS** | Step `Run Auth integration tests` completed successfully using local CI environment; this does not verify real hosted OTP/email delivery |
-| MVP route smoke | **PASS** on implementation head | Step `Run MVP route smoke` completed successfully for routes in `.github/workflows/database-tests.yml`. Additional smoke targets for the new role/draft edit routes were added afterwards and are pending a new run |
-| Vercel preview | **Ready** on implementation head | Preview check was `success`; this is not a production deployment/Auth acceptance claim |
+| GitHub CI | **PASS** on implementation head `4c152dfd37435952cccd2979f9fe69756bf37468` | Run `39020715310`; lint, TypeScript check, interaction/input tests, security-boundary check and build all completed successfully |
+| Database migration reset | **PASS** on the same head | Run `39020715323`; local Supabase database recreated and all migrations applied through `20261017110000_permission_based_activity_scope.sql` |
+| pgTAP database/RLS tests | **PASS — 13 files, 278 assertions** | `supabase test db` completed with `Files=13, Tests=278, Result: PASS`, including tests 009–012 and the updated test 002 |
+| Auth integration tests | **PASS** | Step `Run Auth integration tests` completed successfully using the local CI environment; this does not verify real hosted OTP/email delivery |
+| MVP route smoke | **PASS** | Step `Run MVP route smoke` passed on this head, including unauthenticated redirects for `/notifications/[id]/edit`, `/admin/roles/new`, and `/admin/roles/[id]/edit` |
+| Vercel preview | **Ready** on implementation head | Preview check `success`; this is not a production deployment/Auth acceptance claim |
 | Responsive screenshots / keyboard / screen reader | **NOT RUN** | No browser screenshot artifact or screen-reader evidence was generated; must be checked in a browser at 375/768/1024/1440 CSS px |
 | Hosted OTP / SMTP / recovery / production smoke | **UNVERIFIED** | No real hosted OTP or recovery session was used; track under Issue #13 and `docs/mvp-deployment.md` |
 | Canonical PDF page/section mapping | **UNVERIFIED** | The connected repository tool could not retrieve/render the binary PDF |
- 
+
 ## 5. Remaining decisions, blockers and backlog
 
 ### Canonical business document alignment
