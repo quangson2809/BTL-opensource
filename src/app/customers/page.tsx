@@ -32,9 +32,9 @@ export default async function CustomersPage({ searchParams }: CustomersPageProps
   const { supabase } = await requireBusinessAccount();
 
   const search = sanitizePostgrestOrSearch(query.q);
-  const type = customerTypes.has(query.loai ?? "") ? query.loai : "";
-  const status = customerStatuses.has(query.tinh_trang ?? "") ? query.tinh_trang : "";
-  const group = personalityGroups.has(query.nhom ?? "") ? query.nhom : "";
+  const type = query.loai && customerTypes.has(query.loai) ? query.loai : "";
+  const status = query.tinh_trang && customerStatuses.has(query.tinh_trang) ? query.tinh_trang : "";
+  const group = query.nhom && personalityGroups.has(query.nhom) ? query.nhom : "";
 
   let countQuery = supabase
     .from("khach_hang")
