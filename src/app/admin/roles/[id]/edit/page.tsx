@@ -10,6 +10,8 @@ import { isUuid } from "@/lib/input-validation.mjs";
 
 export const dynamic = "force-dynamic";
 
+const SYSTEM_ROLE_CODES = new Set(["ADMIN", "DM", "UM", "SA"]);
+
 type EditRolePageProps = {
   params: Promise<{ id: string }>;
   searchParams: Promise<{ error?: string }>;
@@ -48,7 +50,9 @@ export default async function EditRolePage({
   if (roleResult.error) {
     throw new Error("Không thể tải vai trò cần chỉnh sửa.");
   }
-  if (!roleResult.data) notFound();
+  if (!roleResult.data || SYSTEM_ROLE_CODES.has(roleResult.data.ma_vai_tro)) {
+    notFound();
+  }
   if (permissionsResult.error || mappingResult.error) {
     throw new Error("Không thể tải thông tin vai trò và quyền hiện có.");
   }
