@@ -81,7 +81,11 @@ export async function updateRole(formData: FormData) {
   const roleDescription = field(formData, "mo_ta");
   const selectedPermissions = permissionIds(formData);
 
-  if (!isUuid(roleId) || !validRoleName(roleName) || selectedPermissions === null) {
+  if (!isUuid(roleId)) {
+    redirect("/admin/roles?error=invalid");
+  }
+
+  if (!validRoleName(roleName) || selectedPermissions === null) {
     redirect(
       "/admin/roles/" + encodeURIComponent(roleId) + "/edit?error=invalid",
     );
