@@ -33,11 +33,15 @@ function getAuthCallbackUrl() {
   const deploymentHost =
     process.env.VERCEL_PROJECT_PRODUCTION_URL?.trim() ||
     process.env.VERCEL_URL?.trim();
+  const deploymentOrigin = deploymentHost
+    ? new URL(
+        deploymentHost.startsWith("http://") || deploymentHost.startsWith("https://")
+          ? deploymentHost
+          : `https://${deploymentHost}`,
+      ).origin
+    : null;
   const siteUrl =
-    configuredSiteUrl ||
-    (deploymentHost
-      ? `${deploymentHost.startsWith("http://") || deploymentHost.startsWith("https://") ? deploymentHost : `https://${deploymentHost}`}`
-      : "http://localhost:3000");
+    configuredSiteUrl || deploymentOrigin || "http://localhost:3000";
   const parsedUrl = new URL(siteUrl);
 
   if (
