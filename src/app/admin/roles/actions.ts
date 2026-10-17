@@ -14,11 +14,14 @@ function field(formData: FormData, name: string) {
 }
 
 function permissionIds(formData: FormData) {
-  const values = formData.getAll("permission_ids");
-  if (values.some((value) => typeof value !== "string" || !isUuid(value))) {
-    return null;
+  const ids: string[] = [];
+  for (const value of formData.getAll("permission_ids")) {
+    if (typeof value !== "string" || !isUuid(value)) {
+      return null;
+    }
+    ids.push(value);
   }
-  return [...new Set(values as string[])];
+  return [...new Set(ids)];
 }
 
 function validRoleName(value: string) {
