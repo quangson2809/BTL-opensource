@@ -31,8 +31,8 @@
 | unlockAccount | UUID account ID | requireAdmin plus admin_unlock_account role/state checks | Revalidates Admin account/role paths |
 | assignRole | UUID account ID and role ID | requireAdmin plus admin_assign_role Admin check and database constraints | Revalidates account detail and role list |
 | revokeRole | UUID account ID and role ID | requireAdmin plus admin_revoke_role Admin check and function ACL boundary | Revalidates account detail and role list |
-| createRole | Uppercase role-code format, non-empty name, existing permission UUIDs | requireAdmin plus admin_create_role; database validates reserved identifiers/permission IDs and commits role+mapping atomically | Safe duplicate/validation errors; revalidates role catalog |
-| updateRole | UUID role ID, non-empty name, existing permission UUIDs | requireAdmin plus admin_update_role; database locks role and atomically replaces mapping; role code cannot be changed | Safe duplicate/validation errors; revalidates role catalog |
+| createRole | Custom role code in uppercase identifier format, non-empty name, existing permission UUIDs | requireAdmin plus admin_create_role; database rejects reserved system codes and invalid permission IDs; role and mapping are created atomically | Safe duplicate/validation errors; revalidates role catalog |
+| updateRole | UUID custom-role ID, non-empty name, existing permission UUIDs | requireAdmin plus admin_update_role; database locks role and atomically replaces mapping; system roles are rejected and role codes remain immutable | Safe duplicate/validation errors; revalidates role catalog |
 
 ### Shared rules confirmed in code
 
@@ -89,9 +89,9 @@ Security-definer helpers such as current_account_has_application_access, is_in_s
 ## 5. RLS and mutation safety map
 
 - **Customers:** CRUD executes with the authenticated user; row ownership is enforced by RLS. New records derive chu_so_huu_id from the server-authenticated account.
-- **Activities:** create derives tai_khoan_id from the authenticated account; update/delete additionally filter by that account. Manager read access remains constrained by the existing policy/scope logic.
-- **Notifications:** drafts are creator-scoped; recipients only read sent notifications addressed to them; da_doc writes are restricted to the caller's recipient row. DM create/send RPCs repeat their role and subtree checks.
-- **Admin/RBAC:** the route guard and RPC both check ADMIN; the existing database function ACL migration limits execution to authenticated callers and functions verify role in SQL. UI visibility is not trusted.
+- **Activities:** create derives tai_khoan_id from the authenticated account; update/delete additionally filter by that account. Read access uses `can_view_activity`: own activity or `ACTIVITY_VIEW_SUBTREE` plus `is_in_subtree`; custom-role mappings cannot expand reads outside the caller's tree.
+- **Notifications:** drafts are creator-scoped; recipients only read sent notifications addressed to them; da_doc writes are restricted to the caller's recipient row. DM create/send/update/delete RPCs enforce role, owner/state, and subtree checks. Only owned drafts are editable/deletable; sent notifications remain immutable.
+- **Admin/RBAC:** custom-role create/update uses guarded RPCs, replacing permission mappings atomically. `ADMIN/DM/UM/SA` are read-only and undeletable; role codes are immutable, permission definitions remain migration-owned, and authenticated direct DML on role catalog/mapping tables is revoked. Admin lock/revoke RPCs protect self-lockout and the last active Admin.
 - **Reporting/personnel:** RPCs return scope-limited aggregates and enforce the authenticated caller's allowed scope. Export is not a service-role data bypass.
 - **Authentication:** changing/recovering a password does not turn an OTP-only recovery session into a workspace session; successful password update signs out the temporary/local session.
 
@@ -102,4 +102,4 @@ Security-definer helpers such as current_account_has_application_access, is_in_s
 3. The browser QA matrix is 375, 768, 1024 and 1440 CSS pixels, including keyboard-only drawer use, account-menu use, confirmation cancellation/acceptance, pending feedback, unauthorized route denial, and mutation success/failure/empty states.
 4. Mutation duplication is prevented only where the database operation's existing constraints/state checks guarantee it. A disabled button/confirmation dialog is not an exactly-once guarantee.
 
-**No schema, RLS policy, business role, or RPC implementation is changed by this acceptance-hardening phase.**
+**Database change note:** this feature branch adds notification-draft RPCs, role-catalog RPCs, a role-identity trigger, Admin lockout protection, and permission-based activity subtree checks. These migrations have not been applied to hosted production by this branch.
