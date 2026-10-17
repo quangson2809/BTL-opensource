@@ -81,7 +81,7 @@ select set_config(
 );
 
 select throws_ok(
-  $
+  $$
     select public.dm_update_notification_draft(
       current_setting('test.edited_notification_id')::uuid,
       '   ',
@@ -89,7 +89,7 @@ select throws_ok(
       'TIN_TỨC',
       array['c5000000-0000-4000-8000-000000000002'::uuid]
     )
-  $,
+  $$,
   '22023',
   null,
   'DM cannot replace a draft with an empty title'
