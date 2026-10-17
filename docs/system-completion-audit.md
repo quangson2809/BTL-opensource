@@ -38,46 +38,67 @@ Missing tests or screenshots alone are not classified as a missing feature.
 | UI/application shell/accessibility | Role navigation is guarded server-side | Same | Same | Same | shared `AppFrame`, PageHeader, EmptyState, LoadingState, ErrorState, list controls | Phase 1–2 acceptance doc marks keyboard/browser screenshots as unchecked | **PARTIAL** — existing shell/component work retained; 375/768/1024/1440 screenshots, screen-reader and cross-role browser smoke remain UNVERIFIED |
 | Production deployment readiness | Same deployment gate for all roles | Same | Same | Same | Vercel + hosted Supabase + SMTP/Auth settings | Issue #13 and `docs/mvp-deployment.md` require real OTP configuration readback, reauth/recovery, smoke and redacted evidence | **UNVERIFIED/PENDING** — a green baseline workflow or deployment status is not production acceptance |
 
+## 2. Role × screen × action/RPC × data-boundary matrix
+
+| Capability | ADMIN | DM | UM | SA | Screen / action / RPC | RLS / test evidence | Audit status |
+|---|---|---|---|---|---|---|---|
+| SA self-registration and pending approval | Approves through protected account actions | No approval bypass | No approval bypass | Public registration creates pending SA | `/register`, `/login`, auth Server Actions, `admin_approve_account` | Auth trigger/migrations; database tests and Auth integration suite | **PARTIAL** — CI proves local contract only; hosted OTP/email/reapproval behavior remains unverified |
+| Login/logout/password change/recovery | Same Auth boundary; role does not bypass account state | Same | Same | Same | `src/app/auth/actions.ts`; `/password/change`, `/password/recovery` | CI Auth integration tests pass; `docs/mvp-deployment.md` defines hosted OTP acceptance gate | **PARTIAL** — actual hosted OTP 8-digit/600-second settings, SMTP, reauth and recovery mail have not been verified |
+| Account approve/lock/unlock | Allowed through protected Admin actions | Denied | Denied | Denied | `/admin/accounts`, `/admin/accounts/[id]`; `admin_approve_account`, `admin_lock_account`, `admin_unlock_account` | DB test 004 and 011; active-account/RPC checks | **IMPLEMENTED in code + DB tests**; live multi-role browser flow still unverified |
+| Assign/revoke account role | Allowed through protected Admin actions | Denied | Denied | Denied | `/admin/accounts/[id]`; `assignRole`, `revokeRole`; `admin_assign_role`, `admin_revoke_role` | DB role guard/ACL tests; last-Admin and self-revoke protections in migration 011 | **IMPLEMENTED in code + DB tests** |
+| Role catalog / permission mapping | Creates/edits custom roles and maps existing permissions | No catalog mutation | No catalog mutation | No catalog mutation | `/admin/roles`, `/admin/roles/new`, `/admin/roles/[id]/edit`; `createRole`, `updateRole`; `admin_create_role`, `admin_update_role` | Migration 010 guards; authenticated direct DML revoked; tests 010–012 | **IMPLEMENTED on branch** — custom roles only. Built-in `ADMIN/DM/UM/SA` are read-only, immutable and undeletable; permission definitions remain migration-owned |
+| Personnel tree and detail | No assumed unrestricted hierarchy read | Views permitted subtree | Views permitted subtree | Manager-only routes deny | `/personnel`, `/personnel/[id]`; `personnel_summary(target_account_id)` | Caller RLS, `requireManager`, subtree checks; aggregate-only RPC | **IMPLEMENTED in code** for view/detail and aggregate scope. Manager reassignment remains intentionally out of scope |
+| Customer CRUD/details | No cross-owner bypass | RLS scope applies | RLS scope applies | Own permitted records | `/customers`, detail/edit/new and customer Server Actions | Ownership RLS; database tests 005; database-side filters, exact count, deterministic pagination | **IMPLEMENTED in code + CI** for current list contract; authenticated browser CRUD/mobile acceptance remains unverified |
+| Activity CRUD/history | Scope remains caller/RLS-driven | Own writes; reads descendants only with mapped permission | Own writes; reads descendants only with mapped permission | Own writes; reads own/descendants only when mapped | `/activities`, new/edit; `can_view_activity`; `ACTIVITY_VIEW_SUBTREE` | Migration 012 makes mapping authoritative; DB tests 002 and 012 cover descendants vs out-of-scope rows | **IMPLEMENTED in code + DB tests**; filters/page ranges are database-side; browser interaction/UX evidence remains pending |
+| Dashboard | Real account totals and pending approvals are Admin-only | RLS-scoped metrics | RLS-scoped metrics | RLS-scoped metrics | `/dashboard` | Exact customer/activity counts, unread notification count, latest five visible activities; no sales-revenue/pipeline KPI | **IMPLEMENTED in code**; role-specific browser rendering remains unverified |
+| Notifications: create/send/receive/read | No assumed DM powers | Can create/send to own subtree | Receives only addressed sent items within policy | Receives only addressed sent items within policy | `/notifications`, `/notifications/new`; create/send/read actions and RPCs | DB test 005; receiver visibility/read-state constraints remain in RLS | **IMPLEMENTED in code + CI** |
+| Notifications: edit/delete | No assumed DM powers | Only own drafts can edit/delete | Cannot edit/delete | Cannot edit/delete | `/notifications/[id]/edit`; `updateNotificationDraft`, `deleteNotificationDraft`; `dm_update_notification_draft`, `dm_delete_notification_draft` | Migration 009 row lock/ownership/state/subtree validation; DB test 009 verifies direct calls and sent-message immutability | **IMPLEMENTED in code + DB tests**; sent notifications remain immutable |
+| Reports and CSV export | Scope/role from report RPC | Personal + authorized subtree | Personal + authorized subtree | Personal scope | `/reports`, `/reports/export`; `report_scope` | DB tests 006/007; UTF-8 BOM and formula escaping implemented | **IMPLEMENTED in code + DB tests**; download/viewer and spreadsheet compatibility not separately tested in browser |
+| UI/Application Shell/accessibility | Role navigation protected server-side | Same | Same | Same | `AppFrame`, PageHeader, EmptyState, LoadingState, ErrorState, list controls | CI checks build/contracts and route smoke; no viewport screenshots or screen-reader artifact supplied | **PARTIAL** — 375/768/1024/1440 screenshots, keyboard-only flows and screen-reader acceptance remain unverified |
+| Production deployment readiness | Same production gate for all roles | Same | Same | Same | Vercel + hosted Supabase Auth/SMTP | Preview deployments and CI are not production Auth evidence | **UNVERIFIED/PENDING** — hosted OTP config/email, production smoke and redacted evidence still needed |
+
 ## 3. Changes implemented on this branch
 
-1. Added migration `supabase/migrations/20261017060000_notification_draft_management.sql` with two narrow, authenticated-only, DM-guarded RPCs for updating/deleting the creator's own draft. The existing `ĐÃ_GỬI` state cannot be updated or deleted through these operations.
-2. Added `supabase/tests/database/009_notification_draft_management_test.sql` covering grants, non-DM denial, outside-subtree recipients, atomic draft update, duplicate-recipient de-duplication, draft deletion/cascade and sent-notification immutability.
-3. Added `src/app/notifications/[id]/edit/page.tsx`; updated `src/app/notifications/actions.ts` and `src/app/notifications/page.tsx` to expose edit/delete controls only for the owner's draft.
-4. Added `src/lib/list-query.mjs` and its declaration; added unit coverage for conservative search sanitization and strict positive-page parsing.
-5. Changed customer, activity, notification and Admin account lists to apply supported filters in the database, calculate exact filtered counts, clamp invalid/out-of-range page numbers, use deterministic order with an ID tie-breaker, request only the visible page and avoid loading unrelated activity-account/notification-recipient rows.
-6. Updated `PROJECT_PLAN.md`, `docs/action-contracts.md` and `docs/business-change-log.md` to describe the draft-only owner decision and new database boundaries. PDF alignment has not been claimed.
+1. Added `supabase/migrations/20261017060000_notification_draft_management.sql` with two authenticated, DM-guarded RPCs. The creator can only edit/delete a locked `CHƯA_GỬI` draft; recipient subtree is checked atomically; sent notifications remain immutable.
+2. Added `src/app/notifications/[id]/edit/page.tsx`, corresponding Server Actions and draft-only list controls. Database test 009 covers DM/non-DM, other DM, outside-subtree recipient, invalid input, cascade, and sent-message immutability.
+3. Added `src/lib/list-query.mjs` and `.d.mts`; updated customer, activity, notification and Admin account lists to apply supported filters/counts/pagination in Supabase queries, cap page reads and use deterministic order. Test `tests/interaction-contracts.test.mjs` covers conservative PostgREST search sanitization and page parsing.
+4. Added `supabase/migrations/20261017090000_admin_role_catalog_management.sql` with role CRUD/mapping RPCs for custom roles, fixed role-code identity and protection for built-in role rows. Direct authenticated DML on role/permission catalog tables is revoked; permission definitions stay migration-managed.
+5. Added `supabase/migrations/20261017100000_rbac_lockout_protection.sql` to prevent self-lock/revoke of ADMIN and prevent concurrent actions from locking/removing the last active Admin. Matching UI controls are hidden where the operation would self-lock; database RPCs remain authoritative.
+6. Added `supabase/migrations/20261017110000_permission_based_activity_scope.sql`: `ACTIVITY_VIEW_SUBTREE` mapping now governs descendant activity visibility without hard-coding DM/UM membership, while the active-account/session check and `is_in_subtree` remain required. Database test 012 confirms the custom-role grant affects only the caller's tree.
+7. Added/updated pgTAP tests 009–012, updated RLS test 002 to reflect the permission-mapping rule and migration-managed permission definitions, and adjusted the rollback-only missing-SA fixture to disable only the role-protection trigger during setup.
+8. Updated `PROJECT_PLAN.md`, `docs/action-contracts.md` and `docs/business-change-log.md` to record BC-004/BC-005; PDF page/section alignment is explicitly unverified.
 
-No production migration or business-data mutation was executed. The new migration is only committed to this feature branch.
-
+No hosted production migration or production business-data mutation was executed by this branch.
+ 
 ## 4. Test/acceptance evidence
 
-| Check | Result at audit write time | Evidence / limitation |
+| Check | Result | Evidence / limitation |
 |---|---|---|
-| Baseline CI | **PASS on base commit only** | GitHub workflow run `38994643483` for `3b137b7d8d09772c097926e9b773f6483a514565`; does not prove changed branch passes |
-| Baseline Database Tests | **PASS on base commit only** | Run `38994643495` for base commit; does not exercise the new migration/test |
-| New list-query unit test | Added, **not yet run** | `tests/interaction-contracts.test.mjs`; requires changed-branch CI |
-| New pgTAP draft-management tests | Added, **not yet run** | `supabase/tests/database/009_notification_draft_management_test.sql`; requires `supabase db reset` and `supabase test db` on PR CI |
-| Lint/type-check/build | **PENDING on changed head** | No local repository checkout/runtime is available through the connected GitHub tool; do not infer from baseline |
-| Role-sensitive E2E/browser tests | **UNVERIFIED** | No browser automation was available through the GitHub connector for this audit |
-| Responsive screenshots (375/768/1024/1440) and keyboard/screen-reader test | **NOT RUN** | Must be done in an actual browser |
-| Production OTP/Auth/SMTP | **UNVERIFIED** | No real hosted OTP codes or session credentials were accessed; Issue #13 remains the acceptance tracking point |
-| PDF exact page/section evidence | **UNVERIFIED** | PDF binary contents could not be read/rendered in this connector session |
-
+| GitHub CI | **PASS** on implementation head `8fcdedf95eae8494e5ccaf2ff4c062ab3152559d` | Run `39020344956`; lint, TypeScript check, interaction/input tests, security-boundary check and build all completed successfully |
+| Database migration reset | **PASS** on the same head | Run `39020344917`; Supabase local recreated database and applied migrations through `20261017110000_permission_based_activity_scope.sql` |
+| pgTAP database/RLS tests | **PASS — 13 files, 278 assertions** | `supabase test db`; exact log summary `Files=13, Tests=278, Result: PASS`, including tests 009–012 |
+| Auth integration tests | **PASS** | Step `Run Auth integration tests` completed successfully using local CI environment; this does not verify real hosted OTP/email delivery |
+| MVP route smoke | **PASS** on implementation head | Step `Run MVP route smoke` completed successfully for routes in `.github/workflows/database-tests.yml`. Additional smoke targets for the new role/draft edit routes were added afterwards and are pending a new run |
+| Vercel preview | **Ready** on implementation head | Preview check was `success`; this is not a production deployment/Auth acceptance claim |
+| Responsive screenshots / keyboard / screen reader | **NOT RUN** | No browser screenshot artifact or screen-reader evidence was generated; must be checked in a browser at 375/768/1024/1440 CSS px |
+| Hosted OTP / SMTP / recovery / production smoke | **UNVERIFIED** | No real hosted OTP or recovery session was used; track under Issue #13 and `docs/mvp-deployment.md` |
+| Canonical PDF page/section mapping | **UNVERIFIED** | The connected repository tool could not retrieve/render the binary PDF |
+ 
 ## 5. Remaining decisions, blockers and backlog
 
-### Blocker — Role/permission catalog editing
-The previously selected direction asks for Admin to create/edit roles and configure permissions. The checked-in `PROJECT_PLAN.md`/Issue #9 instead keeps the catalog read-only for the MVP and defers CRUD. Do not add role CRUD until the project owner reconciles this with the canonical PDF and records the decision; this avoids changing privilege policy from an unresolved contract.
+### Canonical business document alignment
+The binary `docs/source/Bao-cao-mon-opensource.pdf` remains the named source of truth, but page/section references for BC-004 and BC-005 cannot be verified through the current connector. The owner-selected behaviors are recorded in the repository and must not be described as direct PDF quotes until the source is read.
 
 ### Production acceptance
-- Verify hosted email OTP length is 8 digits and expiry is 600 seconds by reading settings back from the actual project; run real reauthentication and recovery delivery/verification with a permitted demo mailbox.
-- Do not claim exact 6-failure/30-minute lock enforcement on hosted Free (BC-001), and do not claim unrestricted SMTP for arbitrary addresses (BC-002).
-- Run real authenticated flows for ADMIN/DM/UM/SA and record redacted evidence without OTP, password, JWT or secret values.
-- Inspect the latest Vercel deployment and effective environment configuration without exposing secret values; run unauthenticated and authenticated smoke tests.
+- Read back hosted Supabase email OTP length/expiry and verify against the documented 8-digit/600-second contract; run real reauthentication and recovery delivery/verification with an authorized mailbox.
+- Do not claim exact 6-failure/30-minute lock enforcement on hosted Free (BC-001), or unrestricted arbitrary-address SMTP (BC-002); retain documented MVP limitations.
+- Run authenticated browser flows as ADMIN/DM/UM/SA and record redacted evidence without OTP, password, JWT or secret values.
+- Confirm production Vercel effective configuration and run authenticated/unauthenticated smoke against production; a green preview is insufficient.
 
 ### Browser/UX acceptance
-- Exercise role navigation, validation, loading/empty/error/retry, confirmation cancellation/acceptance and authorization denial for each mutation at 375, 768, 1024 and 1440 CSS pixels.
-- Perform keyboard-only checks for drawer/account menu/dialog and a screen-reader smoke.
-- Verify CSV download and formula-escaping behavior in Excel-compatible software.
+- Exercise role-specific navigation, validation, loading/empty/error/retry, confirmation cancellation/acceptance, pending feedback and authorization denial at 375, 768, 1024 and 1440 CSS px.
+- Perform keyboard-only checks for the account menu/dialog/forms and a screen-reader smoke.
+- Download CSV in a browser and verify UTF-8/Excel formula handling in spreadsheet software.
 
 ### Not added
-Manager reassignment/transfer, role catalog CRUD (pending the decision blocker above), customer-to-activity linkage, Excel import, sent-notification edit/delete, insurance contracts/claims/premiums, sales orders, carts, revenue KPI, CRM integration and other requirements not established for the current scope.
+Manager reassignment/transfer; role deletion; permission-definition CRUD/new permission codes; customer-to-activity linkage; Excel import; sent-notification edit/delete; insurance contracts/claims/premiums; sales orders/carts/revenue KPIs; CRM integration or other requirements not established in the current scope.
