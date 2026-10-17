@@ -9,6 +9,7 @@ import { PendingSubmitButton } from "@/components/pending-submit-button";
 
 import { deleteActivity } from "@/app/activities/actions";
 import { requireBusinessAccount } from "@/lib/business";
+import { parsePositivePage } from "@/lib/list-query.mjs";
 
 export const dynamic = "force-dynamic";
 
@@ -17,12 +18,6 @@ type ActivitiesPageProps = {
 };
 
 const activityTypes = new Set(["KHẢO_SÁT", "GẶP_GỠ", "TƯ_VẤN"]);
-
-function parseRequestedPage(value: string | undefined) {
-  if (!value || !/^\\d+$/.test(value)) return 1;
-  const parsed = Number(value);
-  return Number.isSafeInteger(parsed) && parsed > 0 ? parsed : 1;
-}
 
 export default async function ActivitiesPage({
   searchParams,
@@ -44,7 +39,7 @@ export default async function ActivitiesPage({
   const total = count ?? 0;
   const pageSize = 8;
   const pageCount = Math.max(1, Math.ceil(total / pageSize));
-  const currentPage = Math.min(parseRequestedPage(query.page), pageCount);
+  const currentPage = Math.min(parsePositivePage(query.page), pageCount);
   const firstRow = (currentPage - 1) * pageSize;
 
   let activityQuery = supabase
