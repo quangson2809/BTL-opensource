@@ -20,8 +20,10 @@ select f.account_id,vt.id from (values
  ('93000000-0000-4000-8000-000000000004'::uuid,'SA'::text)
 ) f(account_id,role_code) join public.vai_tro vt on vt.ma_vai_tro=f.role_code;
 insert into auth.users (id,email,raw_user_meta_data) values
- ('93000000-0000-4000-8000-000000000011','registered-under-dm-p13@example.test',jsonb_build_object('registration_type','SA_SELF_REGISTRATION','ho_ten','SA under DM','so_dien_thoai','0930000011','ma_dai_ly','SA-P13-011','manager_code','DM-P13-001'));
+ ('93000000-0000-4000-8000-000000000011','registered-under-dm-p13@example.test',jsonb_build_object('registration_type','SA_SELF_REGISTRATION','ho_ten','SA under DM','so_dien_thoai','0930000011','ma_dai_ly','SA-P13-011','manager_code','DM-P13-001','role','ADMIN','manager_id','93000000-0000-4000-8000-000000000004'));
 select is((select manager_id from public.tai_khoan where id='93000000-0000-4000-8000-000000000011'),'93000000-0000-4000-8000-000000000001'::uuid,'active DM code becomes manager_id');
+select is((select count(*)::bigint from public.phan_cong_vai_tro pc join public.vai_tro vt on vt.id=pc.vai_tro_id where pc.tai_khoan_id='93000000-0000-4000-8000-000000000011' and vt.ma_vai_tro='SA'),1::bigint,'client-supplied ADMIN role metadata cannot override database-assigned SA role');
+select is((select count(*)::bigint from public.phan_cong_vai_tro pc join public.vai_tro vt on vt.id=pc.vai_tro_id where pc.tai_khoan_id='93000000-0000-4000-8000-000000000011'),1::bigint,'self-registration assigns exactly one role despite client role metadata');
 insert into auth.users (id,email,raw_user_meta_data) values
  ('93000000-0000-4000-8000-000000000012','registered-under-um-p13@example.test',jsonb_build_object('registration_type','SA_SELF_REGISTRATION','ho_ten','SA under UM','so_dien_thoai','0930000012','ma_dai_ly','SA-P13-012','manager_code','UM-P13-001'));
 select is((select manager_id from public.tai_khoan where id='93000000-0000-4000-8000-000000000012'),'93000000-0000-4000-8000-000000000002'::uuid,'active UM code becomes manager_id');
