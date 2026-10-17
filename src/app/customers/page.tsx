@@ -3,6 +3,8 @@ import Link from "next/link";
 import { ActionFeedback } from "@/components/action-feedback";
 import { EmptyState } from "@/components/empty-state";
 import { PageHeader } from "@/components/page-header";
+import { StatusBadge } from "@/components/status-badge";
+import { ListPagination, ResultSummary } from "@/components/list-controls";
 
 import { requireBusinessAccount } from "@/lib/business";
 
@@ -16,6 +18,7 @@ type CustomersPageProps = {
     nhom?: string;
     status?: string;
     error?: string;
+    page?: string;
   }>;
 };
 
@@ -47,6 +50,13 @@ export default async function CustomersPage({ searchParams }: CustomersPageProps
     const matchesGroup = !query.nhom || customer.nhom_tinh_cach === query.nhom;
     return matchesSearch && matchesType && matchesStatus && matchesGroup;
   });
+  const pageSize = 8;
+  const pageCount = Math.max(1, Math.ceil(customers.length / pageSize));
+  const requestedPage = Number.parseInt(query.page ?? "1", 10);
+  const currentPage = Math.min(Math.max(Number.isFinite(requestedPage) ? requestedPage : 1, 1), pageCount);
+  const visibleCustomers = customers.slice((currentPage - 1) * pageSize, currentPage * pageSize);
+  const filterParams = { q: query.q, loai: query.loai, tinh_trang: query.tinh_trang, nhom: query.nhom };
+  const hasFilters = Object.values(filterParams).some((value) => Boolean(value?.trim()));
 
   return (
     <main>
@@ -105,6 +115,8 @@ export default async function CustomersPage({ searchParams }: CustomersPageProps
           <button type="submit">Lọc</button>
         </form>
 
+        <ResultSummary label="khách hàng" total={customers.length} currentPage={currentPage} pageSize={pageSize} hasFilters={hasFilters} clearHref="/customers" />
+
         <div className="stack">
           {customers.length === 0 ? (
             <EmptyState
@@ -118,15 +130,14 @@ export default async function CustomersPage({ searchParams }: CustomersPageProps
               title={records.length === 0 ? "Chưa có khách hàng" : "Không tìm thấy kết quả"}
             />
           ) : null}
-          {customers.map((customer) => (
-            <article className="card" key={customer.id}>
+          {visibleCustomers.map((customer) => (
+            <article className="record-row" key={customer.id}>
               <p>
                 <strong>{customer.ho_ten}</strong> — {customer.ma_khach_hang}
               </p>
               <p>{customer.so_dien_thoai}</p>
               <p className="secondary-text">
-                {customer.loai_khach_hang} · {customer.tinh_trang} ·{" "}
-                {customer.nhom_tinh_cach}
+                {customer.loai_khach_hang} · <StatusBadge value={customer.tinh_trang} /> · {customer.nhom_tinh_cach}
               </p>
               <p className="secondary-text">
                 <Link href={"/customers/" + customer.id}>Xem chi tiết</Link>
@@ -134,6 +145,7 @@ export default async function CustomersPage({ searchParams }: CustomersPageProps
             </article>
           ))}
         </div>
+        <ListPagination basePath="/customers" currentPage={currentPage} pageCount={pageCount} params={filterParams} />
       </section>
     </main>
   );

@@ -3,6 +3,8 @@ import Link from "next/link";
 import { ActionFeedback } from "@/components/action-feedback";
 import { EmptyState } from "@/components/empty-state";
 import { PageHeader } from "@/components/page-header";
+import { StatusBadge } from "@/components/status-badge";
+import { ListPagination, ResultSummary } from "@/components/list-controls";
 import { PendingSubmitButton } from "@/components/pending-submit-button";
 
 import { deleteActivity } from "@/app/activities/actions";
@@ -11,7 +13,7 @@ import { requireBusinessAccount } from "@/lib/business";
 export const dynamic = "force-dynamic";
 
 type ActivitiesPageProps = {
-  searchParams: Promise<{ loai?: string; status?: string; error?: string }>;
+  searchParams: Promise<{ loai?: string; status?: string; error?: string; page?: string }>;
 };
 
 export default async function ActivitiesPage({
@@ -43,6 +45,13 @@ export default async function ActivitiesPage({
   const activities = allActivities.filter(
     (activity) => !query.loai || activity.loai_hoat_dong === query.loai,
   );
+  const pageSize = 8;
+  const pageCount = Math.max(1, Math.ceil(activities.length / pageSize));
+  const requestedPage = Number.parseInt(query.page ?? "1", 10);
+  const currentPage = Math.min(Math.max(Number.isFinite(requestedPage) ? requestedPage : 1, 1), pageCount);
+  const visibleActivities = activities.slice((currentPage - 1) * pageSize, currentPage * pageSize);
+  const filterParams = { loai: query.loai };
+  const hasFilters = Boolean(query.loai);
 
   return (
     <main>
@@ -72,6 +81,8 @@ export default async function ActivitiesPage({
           <button type="submit">Lọc</button>
         </form>
 
+        <ResultSummary label="hoạt động" total={activities.length} currentPage={currentPage} pageSize={pageSize} hasFilters={hasFilters} clearHref="/activities" />
+
         <div className="stack">
           {activities.length === 0 ? (
             <EmptyState
@@ -85,12 +96,12 @@ export default async function ActivitiesPage({
               title={allActivities.length === 0 ? "Chưa có hoạt động" : "Không tìm thấy kết quả"}
             />
           ) : null}
-          {activities.map((activity) => {
+          {visibleActivities.map((activity) => {
             const owned = activity.tai_khoan_id === accountId;
             return (
-              <article className="card" key={activity.id}>
+              <article className="record-row" key={activity.id}>
                 <p>
-                  <strong>{activity.loai_hoat_dong}</strong> —{" "}
+                  <strong>{activity.loai_hoat_dong}</strong> <StatusBadge value={activity.loai_hoat_dong} /> —{" "}
                   {names.get(activity.tai_khoan_id) ?? activity.tai_khoan_id}
                 </p>
                 <p>{activity.dia_diem}</p>
@@ -124,6 +135,7 @@ export default async function ActivitiesPage({
             );
           })}
         </div>
+        <ListPagination basePath="/activities" currentPage={currentPage} pageCount={pageCount} params={filterParams} />
       </section>
     </main>
   );
