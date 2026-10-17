@@ -140,7 +140,8 @@ Password/OTP contract:
 - [x] Gán/thu hồi vai trò.
 - [x] Xem danh sách vai trò/quyền và mapping cần thiết.
 - [x] Không gán quyền trực tiếp cho tài khoản.
-- [ ] CRUD nâng cao cho role/permission catalog chỉ làm nếu source-derived use case bắt buộc cho MVP.
+- [x] Tạo/sửa metadata vai trò và cấu hình mapping tới các quyền đã định nghĩa theo owner decision BC-005 (2026-10-17); mã vai trò là định danh bất biến, vai trò hệ thống không thể xóa, danh mục permission tiếp tục do migration quản lý.
+- [ ] Mở rộng permission-based guard cho custom roles — hiện các route nghiệp vụ vẫn gate theo ADMIN/DM/UM/SA và chỉ `ACTIVITY_VIEW_SUBTREE` được kiểm tra bằng permission. Không mặc định việc tạo role/mapping tự cấp quyền vào route chưa được ánh xạ.
 
 ### Phase 4 — Customer + Personnel — MVP
 
