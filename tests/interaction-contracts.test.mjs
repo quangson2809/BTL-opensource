@@ -92,7 +92,7 @@ test("Vietnam-local date time requires a valid date and exact minute format", ()
 
 test("list query parsing fails closed for unsafe search syntax and malformed pages", () => {
   const sanitized = sanitizePostgrestOrSearch("Tên,(mã).%_\\\\ OR true");
-  assert.doesNotMatch(sanitized, /[(),.%_\\\\]/);
+  assert.doesNotMatch(sanitized, /[^\\p{L}\\p{N}\\s@+-]/u);
   assert.match(sanitized, /Tên/);
   assert.equal(parsePositivePage(undefined), 1);
   assert.equal(parsePositivePage("3"), 3);
