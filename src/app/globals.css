@@ -960,5 +960,5 @@ tbody tr:hover {
   .recent-activity-list .record-row { align-items: flex-start; flex-direction: column; }
 }
 @media (prefers-reduced-motion: reduce) {
-  .loading-indicator { animation-duration: 2s; }
+  .loading-indicator { animation: none; }
 }
