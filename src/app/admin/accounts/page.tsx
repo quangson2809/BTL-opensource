@@ -19,7 +19,7 @@ export default async function AccountsPage({ searchParams }: AccountsPageProps) 
   const params = await searchParams;
   const { supabase } = await requireAdmin();
   const search = sanitizePostgrestOrSearch(params.q);
-  const status = accountStatuses.has(params.trang_thai ?? "") ? params.trang_thai : "";
+  const status = params.trang_thai && accountStatuses.has(params.trang_thai) ? params.trang_thai : "";
 
   let countQuery = supabase
     .from("tai_khoan")
