@@ -47,6 +47,20 @@
 | Acceptance hiện tại | **PENDING**: verify settings 8/600 trên project `kulaguukpngkzpwforok`, evidence ngày kiểm tra, test reauthentication và recovery OTP thật |
 | Nơi ghi evidence | Issue #13, theo `docs/mvp-deployment.md`; tuyệt đối không lưu mã OTP/password/JWT |
 
+## BC-004 — Quản lý thông báo chỉ khi còn bản nháp
+
+| Thuộc tính | Nội dung |
+| --- | --- |
+| Loại | **BUSINESS IMPACT: YES — owner-selected workflow policy** |
+| Trước thay đổi | Giao diện cho phép DM tạo/gửi thông báo nhưng chưa có luồng sửa/xóa; kế hoạch ghi thao tác này đang deferred cho đến khi quy tắc nghiệp vụ được khóa. |
+| Quyết định người sở hữu | Ngày 2026-10-17: DM được sửa/xóa thông báo do chính mình tạo khi trạng thái còn `CHƯA_GỬI`; khi đã `ĐÃ_GỬI`, nội dung và người nhận được giữ nguyên, không hỗ trợ sửa/xóa. |
+| Sau thay đổi trên nhánh feature | Bổ sung RPC có kiểm tra role/creator/state và khóa hàng bản nháp; update kiểm tra người nhận trong subtree, thay danh sách người nhận atomically; delete xóa draft và recipient rows theo FK cascade. UI chỉ hiển thị thao tác draft cho chủ sở hữu. |
+| Phạm vi vai trò/luồng | DM tạo/sửa/xóa/gửi; người nhận chỉ đọc thông báo đã gửi và tự cập nhật trạng thái đã đọc. Không đổi quyền người nhận hoặc mở rộng scope dữ liệu. |
+| Schema/runtime | Thêm hai PostgreSQL functions trong migration; không thêm bảng/cột. Migration trên branch chưa được áp dụng lên production. |
+| Canonical PDF mapping | Yêu cầu thông báo — trang/section PDF **UNVERIFIED**. Đây là quyết định workflow do project owner chọn trong hội thoại; không khẳng định đã được PDF gốc yêu cầu. |
+| Tài liệu liên quan | `PROJECT_PLAN.md` Phase 6 và Decision Log; `docs/action-contracts.md`; migration `20261017060000_notification_draft_management.sql`; pgTAP test `009_notification_draft_management_test.sql`. |
+| Acceptance | Chờ exact-branch CI/database test; đặc biệt kiểm tra DM/non-DM, ngoài subtree, draft edit/delete, gửi thành công, và không thể sửa/xóa thông báo đã gửi. |
+
 ## Hướng dẫn cập nhật tài liệu gốc
 
 Người sở hữu tài liệu sau khi mở `docs/source/Bao-cao-mon-opensource.pdf` cần:
@@ -61,4 +75,4 @@ Người sở hữu tài liệu sau khi mở `docs/source/Bao-cao-mon-opensource
 | Thời điểm | Sự kiện | Business impact | Tài liệu nguồn |
 | --- | --- | --- | --- |
 | 2026-10-09 | PR #14 ACL production security hotfix | **NO** — thay đổi quyền thực thi DB, không đổi use case/requirement | Không cần sửa business PDF; ghi security implementation review |
-| 2026-10-09 | PR #15 hosted Free Auth demo contract | **YES** — BC-001 khác biệt 6/30; BC-002 giới hạn người nhận email demo; BC-003 yêu cầu OTP hiện hữu cần verify, **chưa đổi** | **PENDING PDF ALIGNMENT** |
+| 2026-10-09 | PR #15 hosted Free Auth demo contract | **YES** — BC-001 khác biệt 6/30; BC-002 giới hạn người nhận email demo; BC-003 yêu cầu OTP hiện hữu cần verify, **chưa đổi** | **PENDING PDF ALIGNMENT** |\n| 2026-10-17 | Owner decision for notification drafts | **YES** — only own drafts are editable/deletable; sent notifications stay immutable (BC-004) | PDF page/section **UNVERIFIED**; decision recorded in repo docs |
