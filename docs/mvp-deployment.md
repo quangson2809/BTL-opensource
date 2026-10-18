@@ -172,7 +172,7 @@ Before promoting to production:
 ### Admin/RBAC
 
 - account list/detail loads for Admin;
-- approve/lock/unlock valid transitions work;
+- approve/lock/unlock valid transitions work; account deletion is intentionally unsupported, with no delete control/action/RPC;
 - invalid transitions fail;
 - assign/revoke role works;
 - non-Admin direct Admin RPC attempts fail.
