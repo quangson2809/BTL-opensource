@@ -212,6 +212,7 @@ Notification update/delete remains deferred until the canonical business rule is
 - DM/UM sees self + subtree, not unrelated accounts;
 - personal/team/overview totals render;
 - comparison table renders;
+- leaderboard ranks only subordinate rows returned by `report_scope`, handles ties consistently and never includes unrelated accounts;
 - CSV export contains only the same scoped rows and opens correctly in Excel.
 
 ## 6. Acceptance evidence
