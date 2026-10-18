@@ -257,7 +257,7 @@ Không merge PR khi lint/type-check/build/test liên quan chưa pass.
 - [x] OTP/email: Supabase Auth email OTP; Mailpit local/CI; **hosted Free classroom/demo** có thể dùng default SMTP **chỉ với email pre-authorized trong project team**; gửi email công khai/không giới hạn địa chỉ cần custom SMTP. Hosted production acceptance vẫn phải xác minh OTP 8 chữ số / hết hạn 600 giây.
 - [x] Audit log: Supabase Auth audit logging; không thêm business audit table.
 - [ ] Enum strategy.
-- [ ] Delete/cascade/restrict strategy.
+- [x] Account lifecycle decision (owner, 2026-10-18): no account deletion; Admin may only approve, lock and unlock. Keep restrictive foreign keys as integrity protection; no delete/cascade/restrict product workflow will be implemented.
 - [ ] Chuẩn hóa thuật ngữ “vai trò” và “chức danh” trong code.
 - [x] Password policy: minimum 8, lowercase + uppercase + digit, symbol optional.
 - [x] MVP production Auth exception (2026-10-09, **BC-001** ở `docs/business-change-log.md`): dùng hosted Supabase Free. Password Verification Attempt Hook chỉ có Teams/Enterprise, nên exact per-account 6 failures -> 30-minute lock được defer khỏi production MVP acceptance. Không thay bằng Next.js-only counter vì public Auth endpoint có thể bypass. Production dùng provider rate limits/abuse protection + existing password policy; local/CI vẫn test hook state machine. Nếu canonical PDF bắt buộc exact 6/30, ghi nhận đây là known MVP deviation.
