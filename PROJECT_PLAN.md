@@ -180,6 +180,7 @@ Nhân sự:
 - [x] Tổng quan.
 - [x] Ngày/tuần/tháng.
 - [x] So sánh cá nhân/nhóm.
+- [x] Bảng xếp hạng nhân sự trong scope được phép, xếp theo số hoạt động trong kỳ; đồng hạng khi số hoạt động bằng nhau.
 - [x] Xuất Excel-compatible UTF-8 CSV cho MVP.
 - [x] Mọi query/export dùng cùng scoped aggregate RPC và tuân thủ scope.
 
