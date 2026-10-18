@@ -1,23 +1,9 @@
-export type ReportLeaderboardRow = {
-  account_id: string;
-  ho_ten: string;
-  ma_dai_ly: string;
-  is_self: boolean;
-  customer_count: number | string;
-  activity_count: number | string;
-  connected_customer_count: number | string;
-};
-
-export type RankedReportRow = ReportLeaderboardRow & {
-  rank: number;
-};
-
 /**
  * Rank only subordinate rows already returned by the caller-scoped report RPC.
  * Activity count is the explicit ranking metric; customer count is displayed
  * for context and used only to make ordering within a tie deterministic.
  */
-export function rankReportRows(rows: ReportLeaderboardRow[]): RankedReportRow[] {
+export function rankReportRows(rows) {
   const subordinateRows = rows
     .filter((row) => !row.is_self)
     .map((row) => ({
@@ -33,7 +19,7 @@ export function rankReportRows(rows: ReportLeaderboardRow[]): RankedReportRow[] 
       left.account_id.localeCompare(right.account_id),
     );
 
-  let previousActivityCount: number | null = null;
+  let previousActivityCount = null;
   let currentRank = 0;
 
   return subordinateRows.map((row, index) => {
