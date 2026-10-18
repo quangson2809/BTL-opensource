@@ -76,6 +76,16 @@
 | Tài liệu liên quan | `PROJECT_PLAN.md` Phase 3; `docs/action-contracts.md`; migrations `20261017090000_admin_role_catalog_management.sql`, `20261017100000_rbac_lockout_protection.sql`; tests `010_admin_role_catalog_management_test.sql`, `011_rbac_lockout_protection_test.sql`. |
 | Acceptance | pgTAP tests 010–012 bao phủ role CRUD/mapping, system-role protection, self-lockout và activity subtree scope. CI/database/Auth/route smoke pass gần nhất trên `8fcdedf95eae8494e5ccaf2ff4c062ab3152559d`; rerun cho nhánh sau các cập nhật route-smoke/documentation vẫn là gate cuối. Browser role-matrix and production Auth remain unverified. |
 
+## BC-007 — Vòng đời tài khoản chỉ khóa, không xóa
+
+| Thuộc tính | Nội dung |
+| --- | --- |
+| Loại | **OWNER-SELECTED SCOPE DECISION — 2026-10-18** |
+| Quyết định | Project owner xác nhận: **không có chức năng xóa tài khoản; Admin chỉ được duyệt, khóa và mở khóa**. |
+| Implementation boundary | Không thêm nút xóa, Server Action, RPC xóa tài khoản hoặc cascade workflow. Các FK `ON DELETE RESTRICT` được giữ để bảo vệ tính toàn vẹn dữ liệu, không phải để chờ triển khai xóa về sau. |
+| Ảnh hưởng tài liệu | Dù bản DOCX có vẻ liệt kê xóa tài khoản trong Table 5 / UC-2.1.5, phạm vi triển khai hiện tại theo quyết định rõ ràng của owner là không hỗ trợ xóa. Không sửa tài liệu PDF gốc trong thay đổi này. |
+| Acceptance | Xác minh UI/action/API chỉ có approve/lock/unlock; thử các trạng thái hợp lệ và bất hợp lệ; xác nhận không có account-delete endpoint/RPC. |
+
 ## Hướng dẫn cập nhật tài liệu gốc
 
 Người sở hữu tài liệu sau khi mở `docs/source/Bao-cao-mon-opensource.pdf` cần:
