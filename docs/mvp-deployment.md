@@ -203,7 +203,7 @@ Before promoting to production:
 - non-recipient cannot read;
 - stale recipient that leaves subtree before send causes send failure.
 
-Notification update/delete remains deferred until the canonical business rule is explicitly locked.
+Draft update/delete is in scope under owner decision BC-004: only the creating DM may edit/delete an owned `CHƯA_GỬI` draft; sent notifications remain immutable. Verify the behavior against the feature PR and do not treat the owner decision as a verified PDF quotation.
 
 ### Reports/export
 
