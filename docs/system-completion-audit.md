@@ -95,6 +95,13 @@ The binary `docs/source/Bao-cao-mon-opensource.pdf` remains the named source of 
 - Run authenticated browser flows as ADMIN/DM/UM/SA and record redacted evidence without OTP, password, JWT or secret values.
 - Confirm production Vercel effective configuration and run authenticated/unauthenticated smoke against production; a green preview is insufficient.
 
+### Source-derived gaps that cannot be safely completed without a business decision
+
+- **Physical account deletion — BLOCKED.** The uploaded DOCX lists Admin physical account deletion as Must Have (Table 5, function 2.1.5; Table 20, UC-2.1.5). The current implementation supports lock/unlock but not physical deletion. The repository Decision Log still leaves delete/cascade/restrict strategy unresolved. Deleting a user can affect owned customers, activities, notifications/recipients and hierarchy links; no behavior will be guessed. Before implementing, decide whether deletion must cascade through dependent business data, be rejected while dependencies exist, or use another explicitly approved policy. Exact PDF page numbers remain unverified.
+- **Contract conversion rate — BLOCKED by source-scope conflict.** DOCX Tables 48–51 (UC-7.1–UC-7.4) specify a contract-conversion metric, while §2.1.2 explicitly excludes insurance-contract operations and the nine-table model has no contract/outcome entity. The app currently reports customer/activity/connected-customer aggregates and does not fabricate a conversion rate. Owner decision is needed: add a minimal, defined conversion outcome data model, or formally accept this metric as deferred for the MVP.
+- **Team-vs-team leaderboard — PARTIAL.** This branch adds a subordinate-personnel leaderboard by activity count, using only caller-scoped `report_scope` rows. The RPC does not identify role codes or return team aggregates, so this is not a claim of a true team-vs-team comparison. Agent-only ranking or team aggregation should be added only after the aggregation unit and metric are defined; otherwise the current personnel ranking is the safe bounded implementation.
+- **Role deletion and permission-definition CRUD — OUT OF SCOPE by current owner decision.** Although the DOCX includes these use cases, the current owner-selected scope protects built-in roles, does not add custom-role deletion, and keeps permission definitions migration-owned. Do not implement them as part of this remaining-work pass without a new scope decision.
+
 ### Browser/UX acceptance
 - Exercise role-specific navigation, validation, loading/empty/error/retry, confirmation cancellation/acceptance, pending feedback and authorization denial at 375, 768, 1024 and 1440 CSS px.
 - Perform keyboard-only checks for the account menu/dialog/forms and a screen-reader smoke.
