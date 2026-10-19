@@ -1,5 +1,7 @@
 import Link from "next/link";
 
+import { buildFilterHref } from "@/lib/list-query.mjs";
+
 type ActiveFilter = {
   key: string;
   label: string;
@@ -30,15 +32,6 @@ export function ResultSummary({
   const from = total === 0 ? 0 : (currentPage - 1) * pageSize + 1;
   const to = Math.min(total, currentPage * pageSize);
 
-  function filterHref(removedKey: string) {
-    const next = new URLSearchParams();
-    for (const [key, value] of Object.entries(filterParams)) {
-      if (key !== removedKey && key !== "page" && value) next.set(key, value);
-    }
-    const query = next.toString();
-    return query ? clearHref + "?" + query : clearHref;
-  }
-
   return (
     <div className="list-summary" aria-live="polite">
       <div className="list-summary-content">
@@ -55,7 +48,7 @@ export function ResultSummary({
                 <Link
                   aria-label={"Xóa bộ lọc " + filter.label}
                   className="filter-chip-remove"
-                  href={filterHref(filter.key)}
+                  href={buildFilterHref(clearHref, filterParams, filter.key)}
                 >
                   ×
                 </Link>
