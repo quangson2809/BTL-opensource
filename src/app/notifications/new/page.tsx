@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { DraftCancelLink } from "@/components/draft-cancel-link";
 import { GuardedForm } from "@/components/guarded-form";
 
 import { ActionFeedback } from "@/components/action-feedback";
@@ -76,7 +77,7 @@ export default async function NewNotificationPage({
           </fieldset>
           <div className="form-actions">
             <PendingSubmitButton pendingLabel="Đang tạo bản nháp…">Tạo bản nháp</PendingSubmitButton>
-            <Link className="button-link button-secondary" href="/notifications">Hủy</Link>
+            <DraftCancelLink className="button-link button-secondary" href="/notifications" scopeKey={accountId} persistKeys={["notification-draft"]}>Hủy</DraftCancelLink>
           </div>
         </GuardedForm>
       </section>
