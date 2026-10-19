@@ -82,51 +82,51 @@ export default async function RolesPage({ searchParams }: RolesPageProps) {
               />
             ) : (
               (roleResult.data ?? []).map((role) => {
-                const rolePermissions = mappings
-                  .filter((mapping) => mapping.vai_tro_id === role.id)
-                  .map((mapping) =>
-                    permissions.find((permission) => permission.id === mapping.quyen_id),
-                  )
-                  .filter((permission) => permission !== undefined);
-  
-                const isSystemRole = ["ADMIN", "DM", "UM", "SA"].includes(role.ma_vai_tro);
-  
-                return (
-                  <article className="role-assignment" key={role.id}>
-                    <div>
-                      <p>
-                        <strong>{role.ma_vai_tro}</strong> — {role.ten_vai_tro}
-                        {["ADMIN", "DM", "UM", "SA"].includes(role.ma_vai_tro) ? (
-                          <span className="secondary-text"> · Vai trò hệ thống</span>
-                        ) : null}
+              const rolePermissions = mappings
+                .filter((mapping) => mapping.vai_tro_id === role.id)
+                .map((mapping) =>
+                  permissions.find((permission) => permission.id === mapping.quyen_id),
+                )
+                .filter((permission) => permission !== undefined);
+
+              const isSystemRole = ["ADMIN", "DM", "UM", "SA"].includes(role.ma_vai_tro);
+
+            return (
+                <article className="role-assignment" key={role.id}>
+                  <div>
+                    <p>
+                      <strong>{role.ma_vai_tro}</strong> — {role.ten_vai_tro}
+                      {["ADMIN", "DM", "UM", "SA"].includes(role.ma_vai_tro) ? (
+                        <span className="secondary-text"> · Vai trò hệ thống</span>
+                      ) : null}
+                    </p>
+                    <p className="secondary-text">{role.mo_ta ?? "Không có mô tả."}</p>
+                    <p>
+                      <strong>Quyền:</strong>{" "}
+                      {rolePermissions.length > 0
+                        ? rolePermissions
+                            .map((permission) => permission.ma_quyen + " — " + permission.ten_quyen)
+                            .join(", ")
+                        : "Không có"}
+                    </p>
+                  </div>
+                  <div className="actions">
+                    {isSystemRole ? (
+                      <p className="secondary-text">
+                        Vai trò hệ thống được bảo vệ; không thể sửa tại đây.
                       </p>
-                      <p className="secondary-text">{role.mo_ta ?? "Không có mô tả."}</p>
-                      <p>
-                        <strong>Quyền:</strong>{" "}
-                        {rolePermissions.length > 0
-                          ? rolePermissions
-                              .map((permission) => permission.ma_quyen + " — " + permission.ten_quyen)
-                              .join(", ")
-                          : "Không có"}
-                      </p>
-                    </div>
-                    <div className="actions">
-                      {isSystemRole ? (
-                        <p className="secondary-text">
-                          Vai trò hệ thống được bảo vệ; không thể sửa tại đây.
-                        </p>
-                      ) : (
-                        <Link
-                          className="button-link button-secondary"
-                          href={"/admin/roles/" + role.id + "/edit"}
-                        >
-                          Sửa vai trò & quyền
-                        </Link>
-                      )}
-                    </div>
-                  </article>
-                  );
-              })
+                    ) : (
+                      <Link
+                        className="button-link button-secondary"
+                        href={"/admin/roles/" + role.id + "/edit"}
+                      >
+                        Sửa vai trò & quyền
+                      </Link>
+                    )}
+                  </div>
+                </article>
+              );
+            })
             )}
           </div>
         </section>
