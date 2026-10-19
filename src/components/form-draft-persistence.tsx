@@ -173,6 +173,7 @@ export function FormDraftPersistence({
     form.addEventListener("input", saveDraft);
     form.addEventListener("change", saveDraft);
     form.addEventListener("submit", saveDraft);
+    if (form.dataset.userEdited === "true") saveDraft();
     return () => {
       form.removeEventListener("input", saveDraft);
       form.removeEventListener("change", saveDraft);
