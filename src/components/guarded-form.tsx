@@ -42,6 +42,12 @@ export function GuardedForm({ action, children, ...props }: GuardedFormProps) {
     <form
       {...props}
       action={action}
+      onInput={(event) => {
+        event.currentTarget.dataset.userEdited = "true";
+      }}
+      onChange={(event) => {
+        event.currentTarget.dataset.userEdited = "true";
+      }}
       onSubmit={(event) => {
         if (submitting.current) {
           event.preventDefault();
