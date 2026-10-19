@@ -1,5 +1,6 @@
 import Link from "next/link";
 
+import { GuardedForm } from "@/components/guarded-form";
 import { FormDraftClear } from "@/components/form-draft-clear";
 import { ActionFeedback } from "@/components/action-feedback";
 import { EmptyState } from "@/components/empty-state";
@@ -105,7 +106,7 @@ export default async function ActivitiesPage({
             </select>
           </label>
           <button type="submit">Lọc</button>
-        </form>
+        </GuardedForm>
 
         <ResultSummary label="hoạt động" total={total} currentPage={currentPage} pageSize={pageSize} hasFilters={hasFilters} clearHref="/activities" />
 
@@ -138,7 +139,7 @@ export default async function ActivitiesPage({
                 {owned ? (
                   <div className="actions">
                     <Link href={"/activities/" + activity.id + "/edit"}>Chỉnh sửa</Link>
-                    <form action={deleteActivity}>
+                    <GuardedForm action={deleteActivity}>
                       <input name="activity_id" type="hidden" value={activity.id} />
                       <PendingSubmitButton
                         confirmMessage="Bạn có chắc muốn xóa hoạt động này?"
