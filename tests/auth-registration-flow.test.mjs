@@ -17,6 +17,7 @@ const validInput = {
   email: "Test.Agent@example.test",
   phone: "0901234567",
   agentCode: "SA-TEST-001",
+  managerCode: "DM-TEST-001",
   password: "Phase2Integration1",
 };
 
@@ -25,6 +26,8 @@ function fixture({
   agentCodeExists = false,
   phoneCheckError = null,
   agentCodeCheckError = null,
+  managerEligible = true,
+  managerCheckError = null,
   adminCreateError,
   authCreateError,
   signUpResult = {
@@ -38,7 +41,7 @@ function fixture({
   thrownSignOutError,
   logError = false,
 } = {}) {
-  const calls = { phoneChecks: [], agentChecks: [], signUps: [], signOuts: 0, logs: [] };
+  const calls = { phoneChecks: [], agentChecks: [], managerChecks: [], signUps: [], signOuts: 0, logs: [] };
   const admin = {
     async findExistingPhone(phone) {
       calls.phoneChecks.push(phone);
@@ -49,6 +52,11 @@ function fixture({
       calls.agentChecks.push(code);
       if (agentCodeCheckError) return { exists: false, error: agentCodeCheckError };
       return { exists: agentCodeExists, error: null };
+    },
+    async findEligibleManagerByAgentCode(code) {
+      calls.managerChecks.push(code);
+      if (managerCheckError) return { eligible: false, error: managerCheckError };
+      return { eligible: managerEligible, error: null };
     },
   };
   const auth = {
@@ -88,6 +96,7 @@ function fixture({
 
 test("registration validates required fields, email, and password before touching services", async () => {
   assert.equal(validateRegistrationInput({ ...validInput, phone: "" }), "/register?error=missing");
+  assert.equal(validateRegistrationInput({ ...validInput, managerCode: "" }), "/register?error=missing");
   assert.equal(validateRegistrationInput({ ...validInput, email: "bad-email" }), "/register?error=invalid-email");
   assert.equal(validateRegistrationInput({ ...validInput, password: "short" }), "/register?error=weak-password");
 
@@ -95,6 +104,20 @@ test("registration validates required fields, email, and password before touchin
   assert.equal(await missing.run({ phone: "" }), "/register?error=missing");
   assert.equal(missing.calls.phoneChecks.length, 0);
   assert.equal(missing.calls.signUps.length, 0);
+});
+
+test("invalid manager is rejected before Auth signup", async () => {
+  const state = fixture({ managerEligible: false });
+  assert.equal(await state.run(), "/register?error=invalid-manager");
+  assert.equal(state.calls.signUps.length, 0);
+  assert.equal(state.calls.logs[0].category, CATEGORY.INVALID_MANAGER);
+});
+
+test("manager lookup errors fail closed", async () => {
+  const state = fixture({ managerCheckError: { code: "PGRST000", status: 503 } });
+  assert.equal(await state.run(), "/register?error=service");
+  assert.equal(state.calls.signUps.length, 0);
+  assert.equal(state.calls.logs[0].category, CATEGORY.DATABASE_ERROR);
 });
 
 test("existing phone number returns a specific message without calling Auth signup", async () => {
@@ -183,6 +206,7 @@ test("successful auto-confirm signup clears the local session and shows approval
   assert.equal(state.calls.signOuts, 1);
   assert.equal(state.calls.signUps[0].email, "test.agent@example.test");
   assert.equal(state.calls.signUps[0].metadata.registration_type, "SA_SELF_REGISTRATION");
+  assert.equal(state.calls.signUps[0].metadata.manager_code, validInput.managerCode);
   assert.equal(state.calls.phoneChecks[0], validInput.phone);
   assert.equal(state.calls.agentChecks[0], validInput.agentCode);
 });

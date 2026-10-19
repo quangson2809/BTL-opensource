@@ -28,6 +28,33 @@ function rawField(formData: FormData, name: string) {
   return typeof value === "string" ? value : "";
 }
 
+function getAuthCallbackUrl() {
+  const configuredSiteUrl = process.env.NEXT_PUBLIC_SITE_URL?.trim();
+  const deploymentHost =
+    process.env.VERCEL_PROJECT_PRODUCTION_URL?.trim() ||
+    process.env.VERCEL_URL?.trim();
+  const deploymentOrigin = deploymentHost
+    ? new URL(
+        deploymentHost.startsWith("http://") || deploymentHost.startsWith("https://")
+          ? deploymentHost
+          : `https://${deploymentHost}`,
+      ).origin
+    : null;
+  const siteUrl =
+    configuredSiteUrl || deploymentOrigin || "http://localhost:3000";
+  const parsedUrl = new URL(siteUrl);
+
+  if (
+    !["http:", "https:"].includes(parsedUrl.protocol) ||
+    parsedUrl.username ||
+    parsedUrl.password
+  ) {
+    throw new Error("Invalid site URL configuration.");
+  }
+
+  return new URL("/auth/callback", parsedUrl.origin).toString();
+}
+
 async function logLoginFailure(
   category: LoginFailureCategory,
   error?: unknown,
@@ -97,6 +124,7 @@ export async function register(formData: FormData) {
     email: field(formData, "email").toLowerCase(),
     phone: field(formData, "so_dien_thoai"),
     agentCode: field(formData, "ma_dai_ly"),
+    managerCode: field(formData, "ma_nguoi_quan_ly"),
     password: rawField(formData, "password"),
     createAuthClient: async () => {
       const supabase = await createClient();
@@ -105,7 +133,7 @@ export async function register(formData: FormData) {
           const { data, error } = await supabase.auth.signUp({
             email,
             password,
-            options: { data: metadata },
+            options: { data: metadata, emailRedirectTo: getAuthCallbackUrl() },
           });
           return {
             user: data.user
@@ -138,12 +166,20 @@ export async function register(formData: FormData) {
           return { exists: Boolean(data), error };
         },
         findExistingAgentCode: async (agentCode) => {
-          const { data, error } = await admin
-            .from("tai_khoan")
-            .select("id")
-            .eq("ma_dai_ly", agentCode)
-            .maybeSingle();
+          const { data, error } = await admin.from("tai_khoan").select("id").eq("ma_dai_ly", agentCode).maybeSingle();
           return { exists: Boolean(data), error };
+        },
+        findEligibleManagerByAgentCode: async (managerCode) => {
+          const { data: manager, error: managerError } = await admin.from("tai_khoan").select("id,trang_thai").eq("ma_dai_ly", managerCode).maybeSingle();
+          if (managerError) return { eligible: false, error: managerError };
+          if (!manager || manager.trang_thai !== "DANG_HOAT_DONG") return { eligible: false, error: null };
+          const { data: assignments, error: roleError } = await admin.from("phan_cong_vai_tro").select("vai_tro(ma_vai_tro)").eq("tai_khoan_id", manager.id);
+          if (roleError) return { eligible: false, error: roleError };
+          const eligible = (assignments ?? []).some((assignment) => {
+            const role = Array.isArray(assignment.vai_tro) ? assignment.vai_tro[0] : assignment.vai_tro;
+            return role?.ma_vai_tro === "DM" || role?.ma_vai_tro === "UM";
+          });
+          return { eligible, error: null };
         },
       };
     },

@@ -2,13 +2,13 @@
 
 **Scope:** current MVP contract inventory plus verified list-query and draft-notification work on `feature/idaily-system-completion-20261017`.  
 **Security boundary:** the UI and navigation are not authorization controls. Server guards, user-scoped Supabase clients, RPC checks and RLS remain authoritative.  
-**Database changes:** one additive migration introduces two authenticated, role-guarded notification draft RPCs; no business tables or columns are added, and no production database has been changed by this branch.
+**Database changes:** the branch includes role-guarded notification draft RPCs and a follow-up migration that validates the direct manager during SA provisioning; no business tables or columns are added. Hosted production has not been migrated.
 
 ## 1. Server Action inventory
 
 | Server Action | Input / validation | Server authorization and data boundary | Outcome / refresh |
 |---|---|---|---|
-| register | Required name, email, phone, agency code; password policy (8+ chars, lower/upper/digit) | Public Supabase Auth sign-up; registration metadata remains SA_SELF_REGISTRATION; Auth trigger and database constraints are authoritative | Safe redirect to login; provider error is not exposed |
+| register | Required name, email, phone, own agency code, direct manager agency code; password policy (8+ chars, lower/upper/digit) | Server precheck requires an active DM/UM; provisioning trigger independently resolves the code and persists manager_id; role remains database-assigned SA | Safe redirect to login; manager/service errors use safe codes |
 | login | Required email/password | Supabase Auth verifies credentials; narrow server-only client reads account state; only DANG_HOAT_DONG proceeds | Inactive/pending/locked states sign out and use safe codes |
 | requestPasswordChangeOtp | No client-supplied account ID | Requires signed-in claim and an account row with DANG_HOAT_DONG; calls Supabase reauthentication | otp-sent or safe failure code |
 | changePassword | OTP, new password and confirmation; exact match and existing password policy | Rechecks active account; Supabase Auth validates nonce/OTP and password mutation | Sign out after success; redirect to login |
@@ -92,7 +92,7 @@ Security-definer helpers such as current_account_has_application_access, is_in_s
 - **Activities:** create derives tai_khoan_id from the authenticated account; update/delete additionally filter by that account. Read access uses `can_view_activity`: own activity or `ACTIVITY_VIEW_SUBTREE` plus `is_in_subtree`; custom-role mappings cannot expand reads outside the caller's tree.
 - **Notifications:** drafts are creator-scoped; recipients only read sent notifications addressed to them; da_doc writes are restricted to the caller's recipient row. DM create/send/update/delete RPCs enforce role, owner/state, and subtree checks. Only owned drafts are editable/deletable; sent notifications remain immutable.
 - **Admin/RBAC:** custom-role create/update uses guarded RPCs, replacing permission mappings atomically. `ADMIN/DM/UM/SA` are read-only and undeletable; role codes are immutable, permission definitions remain migration-owned, and authenticated direct DML on role catalog/mapping tables is revoked. Admin lock/revoke RPCs protect self-lockout and the last active Admin.
-- **Reporting/personnel:** RPCs return scope-limited aggregates and enforce the authenticated caller's allowed scope. Export is not a service-role data bypass.
+- **Reporting/personnel:** RPCs return scope-limited aggregates and enforce the authenticated caller's allowed scope. Export is not a service-role data bypass. The `/reports` leaderboard ranks only subordinate rows returned by `report_scope`, by activity count for the selected period; ties share rank and no extra account query is performed.
 - **Authentication:** changing/recovering a password does not turn an OTP-only recovery session into a workspace session; successful password update signs out the temporary/local session.
 
 ## 6. Acceptance gaps still requiring evidence or a source decision

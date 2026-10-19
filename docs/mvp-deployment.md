@@ -135,7 +135,12 @@ Production branch:
 
 `main`
 
-Configure the three application variables above for both Preview and Production with environment-appropriate values.
+Configure the three application variables above for both Preview and Production with environment-appropriate values. Also configure:
+
+- `NEXT_PUBLIC_SITE_URL`: the canonical app origin for that environment (for example, the deployed Vercel URL or the production custom domain). Local development uses `http://localhost:3000`; Vercel deployment-host fallback is only a convenience, not a substitute for an explicit production value.
+- In Supabase **Authentication → URL Configuration**, set **Site URL** to the deployed app origin rather than `http://localhost:3000` for the hosted project.
+- Add the exact callback URL `https://<app-origin>/auth/callback` to **Redirect URLs** for every intended environment. Add Preview origins only if Preview email-confirmation flows are needed; use an appropriately constrained Vercel preview pattern supported by Supabase rather than allowing arbitrary external URLs.
+- The signup action sends `emailRedirectTo` to `/auth/callback`. The callback exchanges the confirmation code and clears the temporary session, then directs the user to login. Email confirmation does **not** approve the account; the existing Admin approval remains required.
 
 Do not put production secrets in GitHub source, build logs, or client-visible environment names.
 
@@ -167,7 +172,7 @@ Before promoting to production:
 ### Admin/RBAC
 
 - account list/detail loads for Admin;
-- approve/lock/unlock valid transitions work;
+- approve/lock/unlock valid transitions work; account deletion is intentionally unsupported, with no delete control/action/RPC;
 - invalid transitions fail;
 - assign/revoke role works;
 - non-Admin direct Admin RPC attempts fail.
@@ -198,7 +203,7 @@ Before promoting to production:
 - non-recipient cannot read;
 - stale recipient that leaves subtree before send causes send failure.
 
-Notification update/delete remains deferred until the canonical business rule is explicitly locked.
+Draft update/delete is in scope under owner decision BC-004: only the creating DM may edit/delete an owned `CHƯA_GỬI` draft; sent notifications remain immutable. Verify the behavior against the feature PR and do not treat the owner decision as a verified PDF quotation.
 
 ### Reports/export
 
@@ -207,6 +212,7 @@ Notification update/delete remains deferred until the canonical business rule is
 - DM/UM sees self + subtree, not unrelated accounts;
 - personal/team/overview totals render;
 - comparison table renders;
+- leaderboard ranks only subordinate rows returned by `report_scope`, handles ties consistently and never includes unrelated accounts;
 - CSV export contains only the same scoped rows and opens correctly in Excel.
 
 ## 6. Acceptance evidence

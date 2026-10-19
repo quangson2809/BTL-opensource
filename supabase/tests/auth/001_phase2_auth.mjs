@@ -32,6 +32,7 @@ const duplicateEmail = `phase2-duplicate-${suffix}@example.test`;
 const password = "Phase2Integration1";
 const phone = `09${String(Date.now()).slice(-8)}`;
 const agentCode = `SA-INT-${suffix}`;
+const managerCode = `DM-INT-${suffix}`;
 
 function assertNoError(error, context) {
   assert.equal(error, null, `${context}: ${error?.message ?? "unexpected error"}`);
@@ -88,6 +89,14 @@ async function assertBusinessDenied(client, label) {
 }
 
 const registrationClient = createAnonClient();
+const managerEmail = `manager-${suffix}@example.test`;
+const { data: managerIdentity, error: managerIdentityError } = await admin.auth.admin.createUser({ email: managerEmail, password: "ManagerPassword1", email_confirm: true });
+assertNoError(managerIdentityError, "create manager Auth fixture");
+const managerId = managerIdentity.user.id;
+const { error: managerAccountError } = await admin.from("tai_khoan").insert({ id: managerId, ho_ten: "Phase 2 DM Manager", email: managerEmail, so_dien_thoai: `06${String(Date.now()).slice(-8)}`, ma_dai_ly: managerCode, manager_id: null, trang_thai: "DANG_HOAT_DONG" });
+assertNoError(managerAccountError, "create manager business fixture");
+const { error: managerRoleError } = await admin.from("phan_cong_vai_tro").insert({ tai_khoan_id: managerId, vai_tro_id: "10000000-0000-0000-0000-000000000002" });
+assertNoError(managerRoleError, "assign DM manager fixture role");
 
 const {
   data: registration,
@@ -101,6 +110,7 @@ const {
       ho_ten: "Phase 2 Integration SA",
       so_dien_thoai: phone,
       ma_dai_ly: agentCode,
+      manager_code: managerCode,
     },
   },
 });
@@ -184,6 +194,7 @@ const {
       ho_ten: "Duplicate Business Identifier",
       so_dien_thoai: phone,
       ma_dai_ly: `SA-DUP-${suffix}`,
+      manager_code: managerCode,
     },
   },
 });
@@ -220,6 +231,7 @@ const {
       ho_ten: "Duplicate Agent Identifier",
       so_dien_thoai: `07${String(Date.now()).slice(-8)}`,
       ma_dai_ly: agentCode,
+      manager_code: managerCode,
     },
   },
 });
@@ -245,6 +257,7 @@ const {
       ho_ten: "Missing Required Metadata",
       so_dien_thoai: `06${String(Date.now()).slice(-8)}`,
       ma_dai_ly: "",
+      manager_code: managerCode,
     },
   },
 });
