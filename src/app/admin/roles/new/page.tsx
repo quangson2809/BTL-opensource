@@ -1,4 +1,3 @@
-import Link from "next/link";
 
 import { DraftCancelLink } from "@/components/draft-cancel-link";
 import { FormDraftPersistence } from "@/components/form-draft-persistence";
