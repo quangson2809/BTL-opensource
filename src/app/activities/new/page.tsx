@@ -16,7 +16,7 @@ type NewActivityPageProps = {
 
 export default async function NewActivityPage({ searchParams }: NewActivityPageProps) {
   const query = await searchParams;
-  await requireBusinessAccount();
+  const { accountId } = await requireBusinessAccount();
 
   return (
     <main>
@@ -27,7 +27,7 @@ export default async function NewActivityPage({ searchParams }: NewActivityPageP
           actions={<Link className="button-link button-secondary" href="/activities">Quay lại lịch sử</Link>}
         />
         {query.error ? <ActionFeedback error={query.error} /> : null}
-        <FormDraftPersistence persistKey="activity-create" hasError={Boolean(query.error)} />
+        <FormDraftPersistence scopeKey={accountId} persistKey="activity-create" hasError={Boolean(query.error)} />
         <p className="form-required-note"><span aria-hidden="true">*</span> Các trường trong biểu mẫu đều bắt buộc.</p>
         <GuardedForm action={createActivity} className="stack form-layout" data-persist-key="activity-create">
           <fieldset className="form-section">
