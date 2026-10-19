@@ -144,9 +144,9 @@ export default async function EditRolePage({
             <PendingSubmitButton pendingLabel="Đang lưu thay đổi…">
               Lưu thay đổi
             </PendingSubmitButton>
-            <Link className="button-link button-secondary" href="/admin/roles">
+            <DraftCancelLink className="button-link button-secondary" href="/admin/roles" scopeKey={accountId} persistKeys={["role-edit-" + roleResult.data.id]}>
               Hủy
-            </Link>
+            </DraftCancelLink>
           </div>
         </GuardedForm>
       </section>
