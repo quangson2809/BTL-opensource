@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { PublicHeader } from "@/components/public-header";
 import { GuardedForm } from "@/components/guarded-form";
+import { FormDraftPersistence } from "@/components/form-draft-persistence";
 import { PendingSubmitButton } from "@/components/pending-submit-button";
 
 import { login } from "@/app/auth/actions";
