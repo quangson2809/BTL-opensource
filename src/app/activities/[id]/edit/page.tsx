@@ -54,7 +54,7 @@ export default async function EditActivityPage({ params, searchParams }: EditAct
           actions={<Link className="button-link button-secondary" href="/activities">Quay lại lịch sử</Link>}
         />
         {query.error ? <ActionFeedback error={query.error} /> : null}
-        <FormDraftPersistence persistKey={persistKey} hasError={Boolean(query.error)} />
+        <FormDraftPersistence persistKey={persistKey} scopeKey={accountId} hasError={Boolean(query.error)} />
         <p className="form-required-note"><span aria-hidden="true">*</span> Các trường trong biểu mẫu đều bắt buộc.</p>
         <GuardedForm action={updateActivity} className="stack form-layout" data-persist-key={persistKey}>
           <input name="activity_id" type="hidden" value={activity.id} />
