@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { DraftCancelLink } from "@/components/draft-cancel-link";
 import { GuardedForm } from "@/components/guarded-form";
 
 import { ActionFeedback } from "@/components/action-feedback";
@@ -24,7 +25,7 @@ export default async function NewCustomerPage({ searchParams }: NewCustomerPageP
         <PageHeader
           title="Thêm khách hàng"
           description="Tạo hồ sơ khách hàng trong phạm vi được cấp quyền."
-          actions={<Link className="button-link button-secondary" href="/customers">Quay lại danh sách</Link>}
+          actions={<DraftCancelLink className="button-link button-secondary" href="/customers" scopeKey={accountId} persistKeys={["customer-create"]}>Quay lại danh sách</DraftCancelLink>}
         />
         {query.error ? <ActionFeedback error={query.error} /> : null}
         <FormDraftPersistence scopeKey={accountId} persistKey="customer-create" hasError={Boolean(query.error)} />
