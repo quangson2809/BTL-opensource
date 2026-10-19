@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { GuardedForm } from "@/components/guarded-form";
 
+import { DraftCancelLink } from "@/components/draft-cancel-link";
 import { FormDraftPersistence } from "@/components/form-draft-persistence";
 import { ActionFeedback } from "@/components/action-feedback";
 import { PageHeader } from "@/components/page-header";
