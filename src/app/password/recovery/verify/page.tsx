@@ -1,4 +1,6 @@
 import Link from "next/link";
+import { GuardedForm } from "@/components/guarded-form";
+import { PendingSubmitButton } from "@/components/pending-submit-button";
 
 import { verifyRecoveryOtp } from "@/app/auth/actions";
 
@@ -34,7 +36,7 @@ export default async function VerifyRecoveryPage({
         ) : null}
         {errorMessage ? <p role="alert" aria-live="assertive" className="message error">{errorMessage}</p> : null}
 
-        <form action={verifyRecoveryOtp} className="stack">
+        <GuardedForm action={verifyRecoveryOtp} className="stack">
           <label>
             Email
             <input
@@ -65,8 +67,8 @@ export default async function VerifyRecoveryPage({
           <p className="secondary-text">
             Tối thiểu 8 ký tự, có chữ thường, chữ hoa và số. Mật khẩu mới phải khác mật khẩu cũ.
           </p>
-          <button type="submit">Xác minh và đặt lại mật khẩu</button>
-        </form>
+          <PendingSubmitButton pendingLabel="Đang xác minh…">Xác minh và đặt lại mật khẩu</PendingSubmitButton>
+        </GuardedForm>
 
         <p className="secondary-text">
           <Link href="/password/recovery">Yêu cầu OTP mới</Link>
