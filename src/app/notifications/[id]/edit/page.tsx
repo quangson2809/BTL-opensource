@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { GuardedForm } from "@/components/guarded-form";
 
 import { ActionFeedback } from "@/components/action-feedback";
 import { PageHeader } from "@/components/page-header";
@@ -78,7 +79,7 @@ export default async function EditNotificationPage({
         <p className="form-required-note">
           <span aria-hidden="true">*</span> Trường bắt buộc
         </p>
-        <form action={updateNotificationDraft} className="stack notification-composer">
+        <GuardedForm action={updateNotificationDraft} className="stack notification-composer">
           <input name="notification_id" type="hidden" value={notification.id} />
           <fieldset className="form-section">
             <legend>Nội dung thông báo</legend>
@@ -140,7 +141,7 @@ export default async function EditNotificationPage({
               Hủy
             </Link>
           </div>
-        </form>
+        </GuardedForm>
       </section>
     </main>
   );
