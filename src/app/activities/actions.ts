@@ -82,7 +82,7 @@ export async function updateActivity(formData: FormData) {
     redirect("/activities/" + encodeURIComponent(activityId) + "/edit?error=update");
   }
 
-  redirect("/activities?status=updated");
+  redirect("/activities?status=updated&id=" + encodeURIComponent(activityId));
 }
 
 export async function deleteActivity(formData: FormData) {
