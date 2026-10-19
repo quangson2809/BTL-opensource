@@ -2,7 +2,7 @@
 const assert = require("node:assert/strict");
 const { chromium } = require("playwright");
 
-const baseURL = process.env.E2E_BASE_URL || "http://127.0.0.1:3000";
+const baseURL = process.env.E2E_BASE_URL || "http://localhost:3000";
 const draftPrefix = "idaily:form-draft:v2:public-auth:";
 
 async function waitForDraft(page, key, expectedField, expectedValue) {
