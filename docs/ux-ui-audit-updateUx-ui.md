@@ -12,7 +12,7 @@
 - `src/app/notifications/[id]/edit/page.tsx`: biểu mẫu sửa bản nháp không dùng cơ chế lưu nháp, trong khi trang tạo thông báo đã dùng.
 - `src/app/admin/roles/new/page.tsx` và `src/app/admin/roles/[id]/edit/page.tsx`: tên/mô tả và lựa chọn permission có thể mất khi server trả lỗi.
 - Các luồng đặt lại/đổi mật khẩu cần giữ email hoặc thông tin không nhạy cảm khi phù hợp, nhưng tuyệt đối không lưu OTP hay mật khẩu.
-- **Đã xử lý trong nhánh này:** thêm lưu nháp có chọn lọc cho đăng nhập, đăng ký và sửa bản nháp thông báo; loại trừ password, OTP/token/secret, hidden và các input không thể khôi phục. Các trang vai trò và password vẫn là phần cần xử lý tiếp.
+- **Đã xử lý trong nhánh này:** thêm lưu nháp có chọn lọc cho đăng nhập, đăng ký, sửa bản nháp thông báo và tạo/sửa vai trò; hỗ trợ lựa chọn nhiều checkbox/select và loại trừ password, OTP/token/secret, hidden và các input không thể khôi phục. Các luồng password/recovery vẫn cần được kiểm tra riêng theo nguyên tắc không lưu bí mật.
 
 ### P1 — Thiếu trạng thái tải ở cấp điều hướng
 - Không có `loading.tsx` trong cây route tại commit gốc, dù nhiều trang chờ truy vấn Supabase phía server. Khi chuyển trang hoặc tải trang chậm, người dùng không có phản hồi tiến trình nhất quán.
@@ -24,7 +24,7 @@
 
 ### P1 — Lỗi tải ngữ cảnh tài khoản ở application shell
 - `src/components/app-frame.tsx`: `loadAccountContext()` gọi `getUser`, truy vấn tài khoản và nhiều RPC mà không có `try/catch`. Nếu promise bị reject do mạng/runtime, trạng thái `accountLoaded` có thể không bao giờ chuyển; email vẫn hiện “Đang tải tài khoản…” và menu vai trò có thể vắng mặt mà không giải thích.
-- **Cần xử lý tiếp:** thêm trạng thái lỗi có thể nhìn thấy và hành động thử lại; không tự cấp quyền/menu khi chưa xác minh vai trò.
+- **Đã xử lý trong nhánh này:** bắt lỗi promise, fail-closed đối với menu theo vai trò khi RPC quyền lỗi, hiển thị cảnh báo trong sidebar và cung cấp thao tác tải lại.
 
 ### P1 — Tạo thông báo không có hướng dẫn khi không có người nhận
 - `src/app/notifications/new/page.tsx` luôn render select nhiều lựa chọn bắt buộc. Nếu danh sách `recipients` rỗng, form không thể gửi nhưng không có thông báo giải thích hoặc hướng xử lý rõ ràng.
@@ -41,7 +41,7 @@
 ### P2 — Phản hồi lỗi không nhất quán về khả năng truy cập
 - Một số nơi dùng `ActionFeedback` với `role=alert`/aria-live, nhưng `src/app/admin/accounts/page.tsx` hiển thị lỗi bằng paragraph thường, không có live region.
 - Nhiều form chỉ có lỗi tổng quát phía trên, không liên kết lỗi cụ thể với trường nhập; người dùng phải tự dò trường cần sửa.
-- **Cần xử lý tiếp:** thống nhất component phản hồi và bổ sung liên kết lỗi-trường ở các lỗi xác thực có thể xác định cụ thể.
+- **Đã xử lý trong nhánh này:** lỗi tại danh sách tài khoản quản trị được đưa vào live region bằng `role=alert`. **Còn cần xử lý:** thống nhất component phản hồi và bổ sung liên kết lỗi-trường ở các lỗi xác thực có thể xác định cụ thể.
 
 ### P2 — Breadcrumb chưa nhất quán giữa các phân hệ
 - `src/components/app-frame.tsx`: `breadcrumbHref()` chỉ hỗ trợ một số đường dẫn chi tiết. Các đường dẫn chi tiết của thông báo và vai trò quản trị không có cùng khả năng quay lại theo breadcrumb.

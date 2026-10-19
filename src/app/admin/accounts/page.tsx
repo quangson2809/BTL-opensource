@@ -73,7 +73,7 @@ export default async function AccountsPage({ searchParams }: AccountsPageProps) 
         />
 
         {params.error ? (
-          <p className="message error">Yêu cầu quản trị không hợp lệ.</p>
+          <p aria-live="assertive" className="message error" role="alert">Yêu cầu quản trị không hợp lệ.</p>
         ) : null}
 
         <form className="filter-grid" method="get">

@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { PageHeader } from "@/components/page-header";
+import { FormDraftPersistence } from "@/components/form-draft-persistence";
 import { PendingSubmitButton } from "@/components/pending-submit-button";
 
 import { updateRole } from "@/app/admin/roles/actions";
@@ -79,7 +80,8 @@ export default async function EditRolePage({
           </p>
         ) : null}
 
-        <form action={updateRole} className="stack">
+        <FormDraftPersistence persistKey={"role-edit-" + roleResult.data.id} hasError={Boolean(query.error)} />
+        <form action={updateRole} className="stack" data-persist-key={"role-edit-" + roleResult.data.id}>
           <input name="role_id" type="hidden" value={roleResult.data.id} />
           <fieldset className="form-section">
             <legend>Thông tin vai trò</legend>

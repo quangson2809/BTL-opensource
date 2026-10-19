@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import { PageHeader } from "@/components/page-header";
+import { FormDraftPersistence } from "@/components/form-draft-persistence";
 import { PendingSubmitButton } from "@/components/pending-submit-button";
 
 import { createRole } from "@/app/admin/roles/actions";
@@ -51,7 +52,8 @@ export default async function NewRolePage({ searchParams }: NewRolePageProps) {
         <p className="form-required-note">
           <span aria-hidden="true">*</span> Trường bắt buộc
         </p>
-        <form action={createRole} className="stack">
+        <FormDraftPersistence persistKey="role-create" hasError={Boolean(query.error)} />
+        <form action={createRole} className="stack" data-persist-key="role-create">
           <fieldset className="form-section">
             <legend>Thông tin vai trò</legend>
             <div className="form-grid">
