@@ -294,10 +294,15 @@ export async function requestPasswordRecovery(formData: FormData) {
   }
 
   const supabase = await createClient();
-  await supabase.auth.resetPasswordForEmail(email);
+  const { error } = await supabase.auth.resetPasswordForEmail(email);
 
-  // Use the same response regardless of whether the address exists to avoid
-  // turning this endpoint into an account-enumeration mechanism.
+  if (error) {
+    // Keep the response generic; do not disclose whether the account exists.
+    redirect("/password/recovery?error=service");
+  }
+
+  // Use the same success response regardless of whether the address exists to
+  // avoid turning this endpoint into an account-enumeration mechanism.
   redirect(
     "/password/recovery/verify?email=" + encodeURIComponent(email) + "&status=otp-sent",
   );
