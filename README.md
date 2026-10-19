@@ -156,7 +156,7 @@ Không tạo bảng `nhom`, bảng báo cáo/thống kê, `customer_activity` ju
 - Role/account và role/permission parent FKs: `ON DELETE CASCADE`.
 - Customer owner, activity owner, notification creator và notification recipient account FKs: `ON DELETE RESTRICT`.
 - Notification -> recipient rows: `ON DELETE CASCADE`.
-- `tai_khoan.id -> auth.users.id`: `ON DELETE RESTRICT`; account deletion cần use-case phối hợp ở phase sau thay vì cascade âm thầm.
+- Account lifecycle policy (owner decision, 2026-10-18): Admin can approve and lock/unlock accounts; **account deletion is not supported**. `tai_khoan.id -> auth.users.id` remains `ON DELETE RESTRICT`; this protects integrity and is not a deferred deletion feature.
 
 `nguoi_gan_id` trong các junction assignment dùng `ON DELETE SET NULL` để giữ bản ghi gán khi người thực hiện không còn tồn tại. Đây là implementation choice cho trường người gán mà PDF yêu cầu lưu, không thay đổi D3 trên hai parent FK chính.
 

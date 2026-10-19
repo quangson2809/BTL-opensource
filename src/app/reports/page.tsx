@@ -2,6 +2,7 @@ import Link from "next/link";
 
 import { requireBusinessAccount } from "@/lib/business";
 import { resolveReportRange } from "@/lib/reporting";
+import { rankReportRows } from "@/lib/report-leaderboard.mjs";
 
 export const dynamic = "force-dynamic";
 
@@ -47,6 +48,7 @@ export default async function ReportsPage({ searchParams }: ReportsPageProps) {
   const rows = (data ?? []) as ReportRow[];
   const personal = rows.find((row) => row.is_self);
   const teamRows = rows.filter((row) => !row.is_self);
+  const leaderboard = rankReportRows(teamRows);
   const team = totals(teamRows);
   const overview = totals(rows);
   const exportQuery = new URLSearchParams({
@@ -108,6 +110,40 @@ export default async function ReportsPage({ searchParams }: ReportsPageProps) {
             <p>Lượt khách kết nối: {overview.connected_customer_count}</p>
           </article>
         </div>
+
+        {leaderboard.length > 0 ? (
+          <section aria-labelledby="report-leaderboard-title">
+            <h2 id="report-leaderboard-title">Xếp hạng nhân sự theo số hoạt động</h2>
+            <p className="secondary-text">
+              Xếp hạng trong phạm vi cấp dưới mà tài khoản hiện tại được phép xem, theo {range.label.toLowerCase()}.
+              Nhân sự có cùng số hoạt động được đồng hạng; số khách hàng dùng để sắp xếp ổn định trong nhóm đồng hạng.
+            </p>
+            <div className="table-scroll">
+              <table>
+                <thead>
+                  <tr>
+                    <th scope="col">Hạng</th>
+                    <th scope="col">Nhân sự</th>
+                    <th scope="col">Mã đại lý</th>
+                    <th scope="col">Hoạt động</th>
+                    <th scope="col">Khách hàng mới</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {leaderboard.map((row) => (
+                    <tr key={row.account_id}>
+                      <td>{row.rank}</td>
+                      <td>{row.ho_ten}</td>
+                      <td>{row.ma_dai_ly}</td>
+                      <td>{row.activity_count}</td>
+                      <td>{row.customer_count}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </section>
+        ) : null}
 
         <h2>So sánh cá nhân / nhóm</h2>
         <div className="table-scroll">

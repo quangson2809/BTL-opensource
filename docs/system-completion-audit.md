@@ -34,7 +34,7 @@ Missing tests or screenshots alone are not classified as a missing feature.
 | Dashboard | Real account counts and pending approvals are Admin-only | RLS-scoped metrics | RLS-scoped metrics | RLS-scoped metrics | `/dashboard` | Exact counts for customers/activities, unread notifications, latest five visible activities; no sales revenue/pipeline KPI | **IMPLEMENTED in code**; per-role browser checks remain |
 | Notifications: create/send/receive/read | No assumed DM powers | Can create/send to own subtree | Receives only addressed sent items when in recipient scope | Receives only addressed sent items when in recipient scope | `/notifications`, `/notifications/new`, `createNotification`, `sendNotification`, `markNotificationRead`; `dm_create_notification`, `dm_send_notification` | Recipient visibility only after send; DM and subtree checks in RPC; DB test 005 | **IMPLEMENTED in existing code** |
 | Notifications: edit/delete | No assumed DM powers | Only own drafts can edit/delete | Cannot edit/delete | Cannot edit/delete | New `/notifications/[id]/edit`; `updateNotificationDraft`, `deleteNotificationDraft`; new `dm_update_notification_draft`, `dm_delete_notification_draft` | Additive migration locks and checks owned `CHƯA_GỬI` rows; recipient subtree validated; sent notifications rejected; new DB test 009 | **IMPLEMENTED on branch; ACCEPTANCE PENDING** — requires exact-branch CI/database test |
-| Reports and CSV export | Role/scope as returned by report RPC | Personal + authorized subtree | Personal + authorized subtree | Personal scope | `/reports`, `/reports/export`; `report_scope` | RPC checks active session/scope, CSV uses UTF-8 BOM and formula escaping; tests 006/007 | **IMPLEMENTED in code**; production data and browser download not separately verified |
+| Reports, leaderboard and CSV export | Role/scope as returned by report RPC | Personal + authorized subtree | Personal + authorized subtree | Personal scope | `/reports`, `/reports/export`; `report_scope`; `rankReportRows` | RPC checks active session/scope; leaderboard ranks only subordinate rows returned by the caller-scoped RPC; CSV uses UTF-8 BOM and formula escaping | **PARTIAL on branch** — subordinate-personnel activity-count leaderboard implemented; true team-level aggregation is not supported by the current RPC. Browser download, visual review and production data remain unverified |
 | UI/application shell/accessibility | Role navigation is guarded server-side | Same | Same | Same | shared `AppFrame`, PageHeader, EmptyState, LoadingState, ErrorState, list controls | Phase 1–2 acceptance doc marks keyboard/browser screenshots as unchecked | **PARTIAL** — existing shell/component work retained; 375/768/1024/1440 screenshots, screen-reader and cross-role browser smoke remain UNVERIFIED |
 | Production deployment readiness | Same deployment gate for all roles | Same | Same | Same | Vercel + hosted Supabase + SMTP/Auth settings | Issue #13 and `docs/mvp-deployment.md` require real OTP configuration readback, reauth/recovery, smoke and redacted evidence | **UNVERIFIED/PENDING** — a green baseline workflow or deployment status is not production acceptance |
 
@@ -95,6 +95,13 @@ The binary `docs/source/Bao-cao-mon-opensource.pdf` remains the named source of 
 - Run authenticated browser flows as ADMIN/DM/UM/SA and record redacted evidence without OTP, password, JWT or secret values.
 - Confirm production Vercel effective configuration and run authenticated/unauthenticated smoke against production; a green preview is insufficient.
 
+### Source-derived gaps that cannot be safely completed without a business decision
+
+- **Account deletion — OUT_OF_SCOPE by owner decision (2026-10-18).** There is no account deletion feature or account-delete RPC in the current implementation; Admin lifecycle operations are approve, lock and unlock only. The owner explicitly confirmed that accounts must not be deleted. Keep `ON DELETE RESTRICT` foreign keys as data-integrity safeguards; do not add deletion UI, Server Actions, RPCs or cascade workflows. Although the DOCX appears to describe account deletion in Table 5 / UC-2.1.5, that source requirement is overridden for the current project scope by this explicit owner decision. Exact PDF page/heading mapping remains unverified.
+- **Contract conversion rate — BLOCKED by source-scope conflict.** DOCX Tables 48–51 (UC-7.1–UC-7.4) specify a contract-conversion metric, while §2.1.2 explicitly excludes insurance-contract operations and the nine-table model has no contract/outcome entity. The app currently reports customer/activity/connected-customer aggregates and does not fabricate a conversion rate. Owner decision is needed: add a minimal, defined conversion outcome data model, or formally accept this metric as deferred for the MVP.
+- **Team-vs-team leaderboard — PARTIAL.** This branch adds a subordinate-personnel leaderboard by activity count, using only caller-scoped `report_scope` rows. The RPC does not identify role codes or return team aggregates, so this is not a claim of a true team-vs-team comparison. Agent-only ranking or team aggregation should be added only after the aggregation unit and metric are defined; otherwise the current personnel ranking is the safe bounded implementation.
+- **Role deletion and permission-definition CRUD — OUT OF SCOPE by current owner decision.** Although the DOCX includes these use cases, the current owner-selected scope protects built-in roles, does not add custom-role deletion, and keeps permission definitions migration-owned. Do not implement them as part of this remaining-work pass without a new scope decision.
+
 ### Browser/UX acceptance
 - Exercise role-specific navigation, validation, loading/empty/error/retry, confirmation cancellation/acceptance, pending feedback and authorization denial at 375, 768, 1024 and 1440 CSS px.
 - Perform keyboard-only checks for the account menu/dialog/forms and a screen-reader smoke.
@@ -102,3 +109,25 @@ The binary `docs/source/Bao-cao-mon-opensource.pdf` remains the named source of 
 
 ### Not added
 Manager reassignment/transfer; role deletion; permission-definition CRUD/new permission codes; customer-to-activity linkage; Excel import; sent-notification edit/delete; insurance contracts/claims/premiums; sales orders/carts/revenue KPIs; CRM integration or other requirements not established in the current scope.
+
+## Reporting leaderboard audit update — 2026-10-18
+
+The source report explicitly lists a leaderboard comparing groups or agents as a system objective (paragraph 199). The reports page previously exposed aggregate cards and a comparison table but no ranked view. The follow-up adds a subordinate-scope leaderboard ranked by activity count for the selected day/week/month. It uses only rows already returned by `report_scope`; it does not query or expose additional accounts. Equal activity counts receive the same rank; customer count and Vietnamese name are used only to make ordering deterministic within ties. This is a limited agent/personnel ranking, not a team-level roll-up: the current RPC does not return explicit team aggregates or role codes, so a true team-vs-team leaderboard remains unimplemented rather than inferred.
+
+## Registration direct-manager audit update — 2026-10-17
+
+Before this change, `/register` did not collect a direct-manager code and
+`provision_self_registered_sa()` always wrote `manager_id = null` for a
+self-registered SA. That left registration disconnected from the existing personnel tree.
+
+The follow-up implementation adds a required manager agent-code field, performs
+a server-side eligibility precheck, and makes the Auth provisioning trigger
+authoritatively resolve the code to an active DM/UM account before writing
+`manager_id`. The client cannot choose a role or submit a manager UUID. Database
+regression coverage verifies DM and UM success plus missing, unknown, inactive,
+and non-manager rejection cases.
+
+The migration has not been applied to hosted production. CI/database-test status
+for this follow-up must be read from the new PR head; baseline results above are
+not evidence for this change. Hosted email/OTP acceptance and production smoke
+remain separate, unverified gates.
