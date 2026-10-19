@@ -16,7 +16,7 @@ import { parsePositivePage, sanitizePostgrestOrSearch } from "@/lib/list-query.m
 export const dynamic = "force-dynamic";
 
 type ActivitiesPageProps = {
-  searchParams: Promise<{ loai?: string; status?: string; error?: string; page?: string; id?: string }>;
+  searchParams: Promise<{ q?: string; loai?: string; status?: string; error?: string; page?: string; id?: string }>;
 };
 
 const activityTypes = new Set(["KHẢO_SÁT", "GẶP_GỠ", "TƯ_VẤN"]);
@@ -25,13 +25,15 @@ export default async function ActivitiesPage({
   searchParams,
 }: ActivitiesPageProps) {
   const query = await searchParams;
+  const search = sanitizePostgrestOrSearch(query.q);
   const { supabase, accountId } = await requireBusinessAccount();
   const type = query.loai && activityTypes.has(query.loai) ? query.loai : "";
 
   let countQuery = supabase
     .from("hoat_dong")
     .select("id", { count: "exact", head: true });
-  if (type) countQuery = countQuery.eq("loai_hoat_dong", type);\n  if (search) countQuery = countQuery.ilike("dia_diem", "%" + search + "%");
+  if (type) countQuery = countQuery.eq("loai_hoat_dong", type);
+  if (search) countQuery = countQuery.ilike("dia_diem", "%" + search + "%");
 
   const { count, error: countError } = await countQuery;
   if (countError) {
@@ -50,7 +52,8 @@ export default async function ActivitiesPage({
     .order("thoi_gian", { ascending: false })
     .order("id", { ascending: true })
     .range(firstRow, firstRow + pageSize - 1);
-  if (type) activityQuery = activityQuery.eq("loai_hoat_dong", type);\n  if (search) activityQuery = activityQuery.ilike("dia_diem", "%" + search + "%");
+  if (type) activityQuery = activityQuery.eq("loai_hoat_dong", type);
+  if (search) activityQuery = activityQuery.ilike("dia_diem", "%" + search + "%");
 
   const { data: activities, error } = await activityQuery;
   if (error) {
@@ -76,8 +79,8 @@ export default async function ActivitiesPage({
       account.ho_ten + " (" + account.ma_dai_ly + ")",
     ]),
   );
-  const filterParams = { loai: type };
-  const hasFilters = Boolean(type);
+  const filterParams = { q: search, loai: type };
+  const hasFilters = Boolean(search || type);
 
   return (
     <main>
@@ -96,6 +99,10 @@ export default async function ActivitiesPage({
         {query.error ? <ActionFeedback error={query.error} /> : null}
 
         <form className="filter-grid" method="get">
+          <label>
+            Tìm kiếm địa điểm
+            <input defaultValue={search} name="q" placeholder="Nhập địa điểm hoạt động" />
+          </label>
           <label>
             Loại hoạt động
             <select defaultValue={type} name="loai">
