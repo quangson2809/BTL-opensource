@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { GuardedForm } from "@/components/guarded-form";
 
 import { ActionFeedback } from "@/components/action-feedback";
 import { FormDraftPersistence } from "@/components/form-draft-persistence";
@@ -28,7 +29,7 @@ export default async function NewCustomerPage({ searchParams }: NewCustomerPageP
         {query.error ? <ActionFeedback error={query.error} /> : null}
         <FormDraftPersistence persistKey="customer-create" hasError={Boolean(query.error)} />
         <p className="form-required-note"><span aria-hidden="true">*</span> Các trường trong biểu mẫu đều bắt buộc.</p>
-        <form action={createCustomer} className="stack form-layout" data-persist-key="customer-create">
+        <GuardedForm action={createCustomer} className="stack form-layout" data-persist-key="customer-create">
           <fieldset className="form-section">
             <legend>Thông tin cơ bản</legend>
             <div className="form-grid">
@@ -63,7 +64,7 @@ export default async function NewCustomerPage({ searchParams }: NewCustomerPageP
             </div>
           </fieldset>
           <div className="form-actions"><PendingSubmitButton pendingLabel="Đang lưu khách hàng…">Lưu khách hàng</PendingSubmitButton></div>
-        </form>
+        </GuardedForm>
       </section>
     </main>
   );
