@@ -112,9 +112,9 @@ export default async function NewRolePage({ searchParams }: NewRolePageProps) {
             <PendingSubmitButton pendingLabel="Đang tạo vai trò…">
               Tạo vai trò
             </PendingSubmitButton>
-            <Link className="button-link button-secondary" href="/admin/roles">
+            <DraftCancelLink className="button-link button-secondary" href="/admin/roles" scopeKey={accountId} persistKeys={["role-create"]}>
               Hủy
-            </Link>
+            </DraftCancelLink>
           </div>
         </GuardedForm>
       </section>
