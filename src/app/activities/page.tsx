@@ -11,12 +11,12 @@ import { PendingSubmitButton } from "@/components/pending-submit-button";
 
 import { deleteActivity } from "@/app/activities/actions";
 import { requireBusinessAccount } from "@/lib/business";
-import { parsePositivePage } from "@/lib/list-query.mjs";
+import { parsePositivePage, sanitizePostgrestOrSearch } from "@/lib/list-query.mjs";
 
 export const dynamic = "force-dynamic";
 
 type ActivitiesPageProps = {
-  searchParams: Promise<{ loai?: string; status?: string; error?: string; page?: string; id?: string }>;
+  searchParams: Promise<{ q?: string; loai?: string; status?: string; error?: string; page?: string; id?: string }>;
 };
 
 const activityTypes = new Set(["KHẢO_SÁT", "GẶP_GỠ", "TƯ_VẤN"]);
@@ -25,6 +25,7 @@ export default async function ActivitiesPage({
   searchParams,
 }: ActivitiesPageProps) {
   const query = await searchParams;
+  const search = sanitizePostgrestOrSearch(query.q);
   const { supabase, accountId } = await requireBusinessAccount();
   const type = query.loai && activityTypes.has(query.loai) ? query.loai : "";
 
@@ -32,6 +33,7 @@ export default async function ActivitiesPage({
     .from("hoat_dong")
     .select("id", { count: "exact", head: true });
   if (type) countQuery = countQuery.eq("loai_hoat_dong", type);
+  if (search) countQuery = countQuery.ilike("dia_diem", "%" + search + "%");
 
   const { count, error: countError } = await countQuery;
   if (countError) {
@@ -51,6 +53,7 @@ export default async function ActivitiesPage({
     .order("id", { ascending: true })
     .range(firstRow, firstRow + pageSize - 1);
   if (type) activityQuery = activityQuery.eq("loai_hoat_dong", type);
+  if (search) activityQuery = activityQuery.ilike("dia_diem", "%" + search + "%");
 
   const { data: activities, error } = await activityQuery;
   if (error) {
@@ -76,8 +79,8 @@ export default async function ActivitiesPage({
       account.ho_ten + " (" + account.ma_dai_ly + ")",
     ]),
   );
-  const filterParams = { loai: type };
-  const hasFilters = Boolean(type);
+  const filterParams = { q: search, loai: type };
+  const hasFilters = Boolean(search || type);
 
   return (
     <main>
@@ -97,6 +100,10 @@ export default async function ActivitiesPage({
 
         <form className="filter-grid" method="get">
           <label>
+            Tìm kiếm địa điểm
+            <input defaultValue={search} name="q" placeholder="Nhập địa điểm hoạt động" />
+          </label>
+          <label>
             Loại hoạt động
             <select defaultValue={type} name="loai">
               <option value="">Tất cả</option>
@@ -108,7 +115,19 @@ export default async function ActivitiesPage({
           <button type="submit">Lọc</button>
         </form>
 
-        <ResultSummary label="hoạt động" total={total} currentPage={currentPage} pageSize={pageSize} hasFilters={hasFilters} clearHref="/activities" />
+        <ResultSummary
+          label="hoạt động"
+          total={total}
+          currentPage={currentPage}
+          pageSize={pageSize}
+          hasFilters={hasFilters}
+          clearHref="/activities"
+          filterParams={filterParams}
+          activeFilters={[
+            ...(search ? [{ key: "q", label: "Địa điểm", value: search }] : []),
+            ...(type ? [{ key: "loai", label: "Loại hoạt động", value: type === "KHẢO_SÁT" ? "Khảo sát" : type === "GẶP_GỠ" ? "Gặp gỡ" : "Tư vấn" }] : []),
+          ]}
+        />
 
         <div className="stack">
           {total === 0 ? (

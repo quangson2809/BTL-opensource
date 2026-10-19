@@ -1,5 +1,13 @@
 import Link from "next/link";
 
+import { buildFilterHref } from "@/lib/list-query.mjs";
+
+type ActiveFilter = {
+  key: string;
+  label: string;
+  value: string;
+};
+
 type ResultSummaryProps = {
   label: string;
   total: number;
@@ -7,17 +15,49 @@ type ResultSummaryProps = {
   pageSize: number;
   hasFilters: boolean;
   clearHref: string;
+  activeFilters?: ActiveFilter[];
+  filterParams?: Record<string, string | undefined>;
 };
 
-export function ResultSummary({ label, total, currentPage, pageSize, hasFilters, clearHref }: ResultSummaryProps) {
+export function ResultSummary({
+  label,
+  total,
+  currentPage,
+  pageSize,
+  hasFilters,
+  clearHref,
+  activeFilters = [],
+  filterParams = {},
+}: ResultSummaryProps) {
   const from = total === 0 ? 0 : (currentPage - 1) * pageSize + 1;
   const to = Math.min(total, currentPage * pageSize);
+
   return (
     <div className="list-summary" aria-live="polite">
-      <p>{hasFilters ? "Kết quả lọc: " : "Tổng số: "}<strong>{total}</strong> {label}
-        {total > 0 ? <span className="list-range"> · Hiển thị {from}–{to}</span> : null}
-      </p>
-      {hasFilters ? <Link href={clearHref}>Xóa bộ lọc</Link> : null}
+      <div className="list-summary-content">
+        <p>
+          {hasFilters ? "Kết quả lọc: " : "Tổng số: "}
+          <strong>{total}</strong> {label}
+          {total > 0 ? <span className="list-range"> · Hiển thị {from}–{to}</span> : null}
+        </p>
+        {activeFilters.length > 0 ? (
+          <ul aria-label="Bộ lọc đang áp dụng" className="active-filters">
+            {activeFilters.map((filter) => (
+              <li className="filter-chip" key={filter.key}>
+                <span>{filter.label}: <strong>{filter.value}</strong></span>
+                <Link
+                  aria-label={"Xóa bộ lọc " + filter.label}
+                  className="filter-chip-remove"
+                  href={buildFilterHref(clearHref, filterParams, filter.key)}
+                >
+                  ×
+                </Link>
+              </li>
+            ))}
+          </ul>
+        ) : null}
+      </div>
+      {hasFilters ? <Link href={clearHref}>Xóa tất cả bộ lọc</Link> : null}
     </div>
   );
 }

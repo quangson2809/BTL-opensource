@@ -81,7 +81,7 @@ export default async function CustomersPage({ searchParams }: CustomersPageProps
     throw new Error("Không thể tải danh sách khách hàng.");
   }
 
-  const filterParams = { q: query.q, loai: type, tinh_trang: status, nhom: group };
+  const filterParams = { q: search, loai: type, tinh_trang: status, nhom: group };
   const hasFilters = Boolean(search || type || status || group);
 
   return (
@@ -141,7 +141,21 @@ export default async function CustomersPage({ searchParams }: CustomersPageProps
           <button type="submit">Lọc</button>
         </form>
 
-        <ResultSummary label="khách hàng" total={total} currentPage={currentPage} pageSize={pageSize} hasFilters={hasFilters} clearHref="/customers" />
+        <ResultSummary
+          label="khách hàng"
+          total={total}
+          currentPage={currentPage}
+          pageSize={pageSize}
+          hasFilters={hasFilters}
+          clearHref="/customers"
+          filterParams={filterParams}
+          activeFilters={[
+            ...(search ? [{ key: "q", label: "Từ khóa", value: search }] : []),
+            ...(type ? [{ key: "loai", label: "Loại", value: type === "MUC_TIEU" ? "Mục tiêu" : type === "NUOI_DUONG" ? "Nuôi dưỡng" : "Đối tác" }] : []),
+            ...(status ? [{ key: "tinh_trang", label: "Tình trạng", value: status }] : []),
+            ...(group ? [{ key: "nhom", label: "Nhóm tính cách", value: group }] : []),
+          ]}
+        />
 
         <div className="stack">
           {total === 0 ? (

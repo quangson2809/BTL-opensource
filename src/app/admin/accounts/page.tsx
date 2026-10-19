@@ -60,7 +60,7 @@ export default async function AccountsPage({ searchParams }: AccountsPageProps) 
     throw new Error("Không thể tải danh sách tài khoản.");
   }
 
-  const filterParams = { q: params.q, trang_thai: status };
+  const filterParams = { q: search, trang_thai: status };
   const hasFilters = Boolean(search || status);
 
   return (
@@ -92,7 +92,19 @@ export default async function AccountsPage({ searchParams }: AccountsPageProps) 
           </label>
           <button type="submit">Lọc</button>
         </form>
-        <ResultSummary label="tài khoản" total={total} currentPage={currentPage} pageSize={pageSize} hasFilters={hasFilters} clearHref="/admin/accounts" />
+        <ResultSummary
+          label="tài khoản"
+          total={total}
+          currentPage={currentPage}
+          pageSize={pageSize}
+          hasFilters={hasFilters}
+          clearHref="/admin/accounts"
+          filterParams={filterParams}
+          activeFilters={[
+            ...(search ? [{ key: "q", label: "Từ khóa", value: search }] : []),
+            ...(status ? [{ key: "trang_thai", label: "Trạng thái", value: status === "CHO_PHE_DUYET" ? "Chờ phê duyệt" : status === "DANG_HOAT_DONG" ? "Đang hoạt động" : "Đã khóa" }] : []),
+          ]}
+        />
         <div className="stack">
           {total === 0 ? (
             <EmptyState
