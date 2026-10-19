@@ -71,9 +71,9 @@ export default async function EditRolePage({
           title="Sửa vai trò và quyền"
           description="Cập nhật tên, mô tả và tập quyền đã chọn. Mã vai trò là định danh cố định."
           actions={
-            <Link className="button-link button-secondary" href="/admin/roles">
+            <DraftCancelLink className="button-link button-secondary" href="/admin/roles" scopeKey={accountId} persistKeys={["role-edit-" + roleResult.data.id]}>
               Quay lại vai trò & quyền
-            </Link>
+            </DraftCancelLink>
           }
         />
         {query.error && errorMessages[query.error] ? (
