@@ -51,6 +51,37 @@ async function readDraft(page, key) {
     await page.reload();
     await page.waitForFunction(() => document.querySelector('input[name="email"]')?.value === "draft-login@example.test");
     assert.equal(await page.locator('input[name="password"]').inputValue(), "");
+    await page.locator('form[data-persist-key="login"][data-draft-persistence-ready="true"]').waitFor();
+
+    let interceptedPosts = 0;
+    await page.route("**/login", async (route) => {
+      if (route.request().method() === "POST") {
+        interceptedPosts += 1;
+        await new Promise((resolve) => setTimeout(resolve, 500));
+        await route.abort();
+        return;
+      }
+      await route.continue();
+    });
+    await page.locator('input[name="email"]').fill("duplicate-test@example.test");
+    await page.locator('input[name="password"]').fill("DuplicateSecretForTest123");
+    await page.getByRole("button", { name: "Đăng nhập" }).dblclick({ delay: 10 });
+    await page.waitForTimeout(800);
+    assert.equal(interceptedPosts, 1, "a rapid double-click must issue only one form submission");
+    await page.unroute("**/login");
+
+    await page.goto(baseURL + "/login");
+    await page.locator('form[data-persist-key="login"][data-draft-persistence-ready="true"]').waitFor();
+    await page.locator('input[name="email"]').fill("retry-user@example.test");
+    await page.locator('input[name="password"]').fill("WrongPassword123");
+    await Promise.all([
+      page.waitForURL((url) => url.pathname === "/login" && url.searchParams.has("error"), { timeout: 15_000 }),
+      page.getByRole("button", { name: "Đăng nhập" }).click(),
+    ]);
+    await page.locator('form[data-persist-key="login"][data-draft-persistence-ready="true"]').waitFor();
+    await page.waitForFunction(() => document.querySelector('input[name="email"]')?.value === "retry-user@example.test");
+    assert.equal(await page.locator('input[name="password"]').inputValue(), "");
+    assert.equal(await page.getByRole("button", { name: /Đăng nhập|Đang đăng nhập/ }).isEnabled(), true);
 
     const registerKey = draftPrefix + "register";
     await page.goto(baseURL + "/register");
