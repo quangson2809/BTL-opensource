@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { GuardedForm } from "@/components/guarded-form";
+import { FormDraftClear } from "@/components/form-draft-clear";
 import { FormDraftPersistence } from "@/components/form-draft-persistence";
 import { PendingSubmitButton } from "@/components/pending-submit-button";
 
@@ -36,8 +37,10 @@ export default async function VerifyRecoveryPage({
           </p>
         ) : null}
         {errorMessage ? <p role="alert" aria-live="assertive" className="message error">{errorMessage}</p> : null}
+        <FormDraftClear scopeKey="public-auth" persistKeys={["password-recovery"]} clearOn={otpSent} />
+        <FormDraftPersistence persistKey="password-recovery-verify" scopeKey="public-auth" hasError={Boolean(errorMessage)} />
 
-        <GuardedForm action={verifyRecoveryOtp} className="stack">
+        <GuardedForm action={verifyRecoveryOtp} className="stack" data-persist-key="password-recovery-verify">
           <label>
             Email
             <input
