@@ -62,8 +62,11 @@ export async function createActivity(formData: FormData) {
 export async function updateActivity(formData: FormData) {
   const activityId = field(formData, "activity_id");
   const payload = activityPayload(formData);
-  if (!isUuid(activityId) || !payload) {
+  if (!isUuid(activityId)) {
     redirect("/activities?error=invalid");
+  }
+  if (!payload) {
+    redirect("/activities/" + encodeURIComponent(activityId) + "/edit?error=invalid");
   }
 
   const { supabase, accountId } = await requireBusinessAccount();
@@ -76,7 +79,7 @@ export async function updateActivity(formData: FormData) {
     .maybeSingle();
 
   if (error || !data) {
-    redirect("/activities?error=update");
+    redirect("/activities/" + encodeURIComponent(activityId) + "/edit?error=update");
   }
 
   redirect("/activities?status=updated");
