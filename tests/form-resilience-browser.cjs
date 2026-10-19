@@ -32,6 +32,10 @@ async function readDraft(page, key) {
   const browser = await chromium.launch({ headless: true });
   const page = await browser.newPage();
   page.setDefaultTimeout(10_000);
+  page.on("pageerror", (error) => console.error("BROWSER_PAGE_ERROR", error.stack || error.message));
+  page.on("console", (message) => {
+    if (message.type() === "error") console.error("BROWSER_CONSOLE_ERROR", message.text());
+  });
 
   try {
     const loginKey = draftPrefix + "login";
