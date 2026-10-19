@@ -159,6 +159,13 @@ export function FormDraftPersistence({
       // Restore after errors, refresh, or returning to the same form, but never
       // overwrite values entered before this effect attached its listeners.
       restoreDraft(form, values);
+      // Let controlled client-side checkbox pickers reconcile their React state
+      // after the restored DOM values have been applied.
+      queueMicrotask(() => {
+        if (form.isConnected) {
+          form.dispatchEvent(new Event("idaily:form-draft-restored", { bubbles: true }));
+        }
+      });
     } else if (hasError && !values) {
       try {
         sessionStorage.removeItem(storageKey);
