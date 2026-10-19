@@ -32,9 +32,11 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
         <h1>Đăng nhập IDAILY</h1>
         {statusMessage ? <p role="status" aria-live="polite" className="message success">{statusMessage}</p> : null}
         {errorMessage ? <p role="alert" aria-live="assertive" className="message error">{errorMessage}</p> : null}
+        <FormDraftClear scopeKey="public-auth" persistKeys={["login", "register", "password-recovery", "password-recovery-verify"]} clearOn={Boolean(statusMessage)} />
+        <FormDraftPersistence persistKey="login" scopeKey="public-auth" hasError={Boolean(errorMessage)} />
 
         <p className="form-required-note"><span aria-hidden="true">*</span> Trường bắt buộc</p>
-        <GuardedForm action={login} className="stack">
+        <GuardedForm action={login} className="stack" data-persist-key="login">
           <label>
             Email
             <input name="email" type="email" autoComplete="email" required />
