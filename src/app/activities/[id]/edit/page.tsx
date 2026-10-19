@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { DraftCancelLink } from "@/components/draft-cancel-link";
 import { GuardedForm } from "@/components/guarded-form";
 
 import { ActionFeedback } from "@/components/action-feedback";
@@ -51,7 +52,7 @@ export default async function EditActivityPage({ params, searchParams }: EditAct
         <PageHeader
           title="Chỉnh sửa hoạt động"
           description="Cập nhật thông tin bản ghi đã chọn."
-          actions={<Link className="button-link button-secondary" href="/activities">Quay lại lịch sử</Link>}
+          actions={<DraftCancelLink className="button-link button-secondary" href="/activities" scopeKey={accountId} persistKeys={[persistKey]}>Quay lại lịch sử</DraftCancelLink>}
         />
         {query.error ? <ActionFeedback error={query.error} /> : null}
         <FormDraftPersistence persistKey={persistKey} scopeKey={accountId} hasError={Boolean(query.error)} />
