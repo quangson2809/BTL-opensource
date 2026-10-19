@@ -124,21 +124,15 @@ export function FormDraftPersistence({
       ":" +
       encodeURIComponent(persistKey);
 
-    if (hasError) {
-      const values = readDraft(storageKey);
-      if (values) restoreDraft(form, values);
-      else {
-        try {
-          sessionStorage.removeItem(storageKey);
-        } catch {
-          // Draft persistence is an optional enhancement.
-        }
-      }
-    } else {
+    const values = readDraft(storageKey);
+    if (values) {
+      // Restore after errors, refresh, or returning to the same form.
+      restoreDraft(form, values);
+    } else if (hasError) {
       try {
         sessionStorage.removeItem(storageKey);
       } catch {
-        // Storage may be unavailable in restricted browser contexts.
+        // Draft persistence is an optional enhancement.
       }
     }
 
