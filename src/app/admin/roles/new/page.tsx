@@ -1,5 +1,7 @@
 import Link from "next/link";
 
+import { FormDraftPersistence } from "@/components/form-draft-persistence";
+import { GuardedForm } from "@/components/guarded-form";
 import { PageHeader } from "@/components/page-header";
 import { PendingSubmitButton } from "@/components/pending-submit-button";
 
@@ -20,7 +22,7 @@ const errorMessages: Record<string, string> = {
 
 export default async function NewRolePage({ searchParams }: NewRolePageProps) {
   const query = await searchParams;
-  const { supabase } = await requireAdmin();
+  const { supabase, accountId } = await requireAdmin();
   const { data: permissions, error } = await supabase
     .from("quyen")
     .select("id,ma_quyen,ten_quyen,mo_ta")
@@ -51,7 +53,8 @@ export default async function NewRolePage({ searchParams }: NewRolePageProps) {
         <p className="form-required-note">
           <span aria-hidden="true">*</span> Trường bắt buộc
         </p>
-        <form action={createRole} className="stack">
+        <FormDraftPersistence persistKey="role-create" scopeKey={accountId} hasError={Boolean(query.error)} />
+        <GuardedForm action={createRole} className="stack" data-persist-key="role-create">
           <fieldset className="form-section">
             <legend>Thông tin vai trò</legend>
             <div className="form-grid">
@@ -112,7 +115,7 @@ export default async function NewRolePage({ searchParams }: NewRolePageProps) {
               Hủy
             </Link>
           </div>
-        </form>
+        </GuardedForm>
       </section>
     </main>
   );
