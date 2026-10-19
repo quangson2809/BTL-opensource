@@ -84,7 +84,7 @@ export async function updateNotificationDraft(formData: FormData) {
     );
   }
 
-  redirect("/notifications?status=updated");
+  redirect("/notifications?status=updated&id=" + encodeURIComponent(notificationId));
 }
 
 export async function deleteNotificationDraft(formData: FormData) {
