@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { DraftCancelLink } from "@/components/draft-cancel-link";
 import { GuardedForm } from "@/components/guarded-form";
 
 import { ActionFeedback } from "@/components/action-feedback";
@@ -30,7 +31,7 @@ export default async function EditCustomerPage({ params, searchParams }: EditCus
         <PageHeader
           title="Chỉnh sửa khách hàng"
           description={"Cập nhật hồ sơ · " + customer.ma_khach_hang}
-          actions={<Link className="button-link button-secondary" href={"/customers/" + customer.id}>Quay lại chi tiết</Link>}
+          actions={<DraftCancelLink className="button-link button-secondary" href={"/customers/" + customer.id} scopeKey={accountId} persistKeys={["customer-edit-" + customer.id]}>Quay lại chi tiết</DraftCancelLink>}
         />
         {query.error ? <ActionFeedback error={query.error} /> : null}
         <FormDraftPersistence persistKey={"customer-edit-" + customer.id} scopeKey={accountId} hasError={Boolean(query.error)} />
