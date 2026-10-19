@@ -2,7 +2,7 @@
 
 Base: \`feature/phase-2-ui-states\` at \`b309307c5510e1514af5c7247be0cdf08def8467\`
 
-This audit records implementation scope, not a claim of successful browser or production verification.
+This audit records implementation scope. Results of CI and integration checks are tracked in the pull request.
 
 | Route/feature | Existing contract observed | Phase 3 changes | State/recovery notes |
 |---|---|---|---|
@@ -15,6 +15,14 @@ This audit records implementation scope, not a claim of successful browser or pr
 | \`/admin/roles/[id]/edit\` | System roles are protected; permission mappings are read with role data; saving uses \`admin_update_role\`. | Same picker preselected from permission mapping. | Query/RPC errors remain fail-closed; keys and RPC contracts are unchanged. |
 | \`/admin/roles\` | Role/permission query failures throw; permission definitions are migration-owned. | Permission catalog is grouped by known prefix. | Unknown permission prefixes use neutral “Quyền khác” group. |
 
+## Root cause and fix for the failed route smoke
+
+The failing workflow expected unauthenticated requests to protected routes to receive an HTTP redirect, but \`src/lib/supabase/proxy.ts\` only awaited \`supabase.auth.getClaims()\` and discarded its result. The server page guards still called \`redirect("/login")\`, but the Next.js route-smoke observed a streamed HTTP 200 for \`/dashboard\`. The same failure was present on the Phase 2 base commit, so it was not introduced by the Phase 3 UI edits.
+
+The fix adds an explicit early redirect in Proxy for protected application route prefixes when verified claims are missing or invalid. Public auth routes remain reachable. \`/reports/export\` is intentionally excluded so its Route Handler keeps returning HTTP 401 for unauthenticated requests. Existing per-page, Server Action, and Route Handler authorization stays in place; Proxy is not treated as the sole security boundary.
+
+A dedicated contract suite covers route prefixes, public routes, path-segment boundaries, consumption of verified claims, and retention of the report-export 401 contract. The results of the CI and Supabase workflows determine final acceptance; the presence of tests alone is not proof that the workflow passes.
+
 ## Security and regression constraints
 
 - No migrations, API contracts, permission keys, or authorization RPCs were changed.
@@ -22,4 +30,4 @@ This audit records implementation scope, not a claim of successful browser or pr
 - If a draft references recipients no longer present in the current permitted list, saving is blocked rather than silently replacing its recipient set.
 - Permission grouping is presentation-only and does not change persisted IDs.
 - Draft persistence still excludes sensitive controls. The new picker listens for the restoration event to reconcile its controlled state.
-- This document does not claim that lint, type-check, tests, build, browser verification, or CI have passed.
+- The Proxy is an early navigation guard; server-side authorization remains authoritative.
