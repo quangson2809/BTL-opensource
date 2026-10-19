@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { GuardedForm } from "@/components/guarded-form";
 
 import { ActionFeedback } from "@/components/action-feedback";
 import { FormDraftPersistence } from "@/components/form-draft-persistence";
@@ -28,7 +29,7 @@ export default async function NewActivityPage({ searchParams }: NewActivityPageP
         {query.error ? <ActionFeedback error={query.error} /> : null}
         <FormDraftPersistence persistKey="activity-create" hasError={Boolean(query.error)} />
         <p className="form-required-note"><span aria-hidden="true">*</span> Các trường trong biểu mẫu đều bắt buộc.</p>
-        <form action={createActivity} className="stack form-layout" data-persist-key="activity-create">
+        <GuardedForm action={createActivity} className="stack form-layout" data-persist-key="activity-create">
           <fieldset className="form-section">
             <legend>Chi tiết hoạt động</legend>
             <div className="form-grid">
@@ -43,7 +44,7 @@ export default async function NewActivityPage({ searchParams }: NewActivityPageP
             </div>
           </fieldset>
           <div className="form-actions"><PendingSubmitButton pendingLabel="Đang lưu hoạt động…">Lưu hoạt động</PendingSubmitButton></div>
-        </form>
+        </GuardedForm>
       </section>
     </main>
   );
