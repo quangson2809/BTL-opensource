@@ -1,5 +1,6 @@
 import Link from "next/link";
 
+import { FormDraftClear } from "@/components/form-draft-clear";
 import { PageHeader } from "@/components/page-header";
 
 import { requireAdmin } from "@/lib/admin";
@@ -7,7 +8,7 @@ import { requireAdmin } from "@/lib/admin";
 export const dynamic = "force-dynamic";
 
 type RolesPageProps = {
-  searchParams: Promise<{ status?: string }>;
+  searchParams: Promise<{ status?: string; id?: string }>;
 };
 
 const statusMessages: Record<string, string> = {
@@ -17,7 +18,7 @@ const statusMessages: Record<string, string> = {
 
 export default async function RolesPage({ searchParams }: RolesPageProps) {
   const query = await searchParams;
-  const { supabase } = await requireAdmin();
+  const { supabase, accountId } = await requireAdmin();
 
   const [roleResult, permissionResult, mappingResult] = await Promise.all([
     supabase
@@ -57,6 +58,7 @@ export default async function RolesPage({ searchParams }: RolesPageProps) {
             </>
           }
         />
+        <FormDraftClear scopeKey={accountId} persistKeys={["role-create", ...(query.id ? ["role-edit-" + query.id] : [])]} clearOn={query.status === "created" || query.status === "updated"} />
         {query.status && statusMessages[query.status] ? (
           <p aria-live="polite" className="message success" role="status">
             {statusMessages[query.status]}
