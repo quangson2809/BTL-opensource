@@ -8,6 +8,7 @@ import { requestPasswordRecovery } from "@/app/auth/actions";
 const errorMessages: Record<string, string> = {
   missing: "Vui lòng nhập email.",
   session: "Phiên đặt lại mật khẩu không hợp lệ. Vui lòng yêu cầu OTP mới.",
+  service: "Chưa thể xử lý yêu cầu lúc này. Vui lòng thử lại sau.",
 };
 
 type RecoveryPageProps = {
