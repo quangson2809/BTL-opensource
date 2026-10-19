@@ -206,7 +206,7 @@ export default async function NotificationsPage({
                       >
                         Xóa bản nháp
                       </PendingSubmitButton>
-                    </form>
+                    </GuardedForm>
                     <GuardedForm action={sendNotification}>
                       <input name="notification_id" type="hidden" value={notification.id} />
                       <PendingSubmitButton
@@ -215,7 +215,7 @@ export default async function NotificationsPage({
                       >
                         Gửi thông báo
                       </PendingSubmitButton>
-                    </form>
+                    </GuardedForm>
                   </div>
                 ) : null}
                 {ownRecipientRow && !ownRecipientRow.da_doc ? (
@@ -224,7 +224,7 @@ export default async function NotificationsPage({
                     <PendingSubmitButton pendingLabel="Đang cập nhật…">
                       Đánh dấu đã đọc
                     </PendingSubmitButton>
-                  </form>
+                  </GuardedForm>
                 ) : null}
                 {ownRecipientRow?.da_doc ? (
                   <p className="secondary-text">Đã đọc</p>
