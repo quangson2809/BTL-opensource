@@ -11,7 +11,7 @@ import { PendingSubmitButton } from "@/components/pending-submit-button";
 
 import { deleteActivity } from "@/app/activities/actions";
 import { requireBusinessAccount } from "@/lib/business";
-import { parsePositivePage } from "@/lib/list-query.mjs";
+import { parsePositivePage, sanitizePostgrestOrSearch } from "@/lib/list-query.mjs";
 
 export const dynamic = "force-dynamic";
 
@@ -31,7 +31,7 @@ export default async function ActivitiesPage({
   let countQuery = supabase
     .from("hoat_dong")
     .select("id", { count: "exact", head: true });
-  if (type) countQuery = countQuery.eq("loai_hoat_dong", type);
+  if (type) countQuery = countQuery.eq("loai_hoat_dong", type);\n  if (search) countQuery = countQuery.ilike("dia_diem", "%" + search + "%");
 
   const { count, error: countError } = await countQuery;
   if (countError) {
@@ -50,7 +50,7 @@ export default async function ActivitiesPage({
     .order("thoi_gian", { ascending: false })
     .order("id", { ascending: true })
     .range(firstRow, firstRow + pageSize - 1);
-  if (type) activityQuery = activityQuery.eq("loai_hoat_dong", type);
+  if (type) activityQuery = activityQuery.eq("loai_hoat_dong", type);\n  if (search) activityQuery = activityQuery.ilike("dia_diem", "%" + search + "%");
 
   const { data: activities, error } = await activityQuery;
   if (error) {
@@ -108,7 +108,19 @@ export default async function ActivitiesPage({
           <button type="submit">Lọc</button>
         </form>
 
-        <ResultSummary label="hoạt động" total={total} currentPage={currentPage} pageSize={pageSize} hasFilters={hasFilters} clearHref="/activities" />
+        <ResultSummary
+          label="hoạt động"
+          total={total}
+          currentPage={currentPage}
+          pageSize={pageSize}
+          hasFilters={hasFilters}
+          clearHref="/activities"
+          filterParams={filterParams}
+          activeFilters={[
+            ...(search ? [{ key: "q", label: "Địa điểm", value: search }] : []),
+            ...(type ? [{ key: "loai", label: "Loại hoạt động", value: type === "KHẢO_SÁT" ? "Khảo sát" : type === "GẶP_GỠ" ? "Gặp gỡ" : "Tư vấn" }] : []),
+          ]}
+        />
 
         <div className="stack">
           {total === 0 ? (
