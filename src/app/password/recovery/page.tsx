@@ -1,4 +1,6 @@
 import Link from "next/link";
+import { GuardedForm } from "@/components/guarded-form";
+import { PendingSubmitButton } from "@/components/pending-submit-button";
 
 import { requestPasswordRecovery } from "@/app/auth/actions";
 
@@ -24,13 +26,13 @@ export default async function RecoveryPage({ searchParams }: RecoveryPageProps) 
         </p>
         {errorMessage ? <p role="alert" aria-live="assertive" className="message error">{errorMessage}</p> : null}
 
-        <form action={requestPasswordRecovery} className="stack">
+        <GuardedForm action={requestPasswordRecovery} className="stack">
           <label>
             Email
             <input name="email" type="email" autoComplete="email" required />
           </label>
-          <button type="submit">Gửi OTP đặt lại mật khẩu</button>
-        </form>
+          <PendingSubmitButton pendingLabel="Đang gửi OTP…">Gửi OTP đặt lại mật khẩu</PendingSubmitButton>
+        </GuardedForm>
 
         <p className="secondary-text">
           <Link href="/login">Quay lại đăng nhập</Link>
