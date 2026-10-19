@@ -1,5 +1,6 @@
 import Link from "next/link";
 
+import { GuardedForm } from "@/components/guarded-form";
 import { FormDraftClear } from "@/components/form-draft-clear";
 import { ActionFeedback } from "@/components/action-feedback";
 import { EmptyState } from "@/components/empty-state";
@@ -197,7 +198,7 @@ export default async function NotificationsPage({
                     <Link href={"/notifications/" + notification.id + "/edit"}>
                       Sửa bản nháp
                     </Link>
-                    <form action={deleteNotificationDraft}>
+                    <GuardedForm action={deleteNotificationDraft}>
                       <input name="notification_id" type="hidden" value={notification.id} />
                       <PendingSubmitButton
                         confirmMessage="Xóa bản nháp này? Người nhận chưa thể xem thông báo."
@@ -206,7 +207,7 @@ export default async function NotificationsPage({
                         Xóa bản nháp
                       </PendingSubmitButton>
                     </form>
-                    <form action={sendNotification}>
+                    <GuardedForm action={sendNotification}>
                       <input name="notification_id" type="hidden" value={notification.id} />
                       <PendingSubmitButton
                         confirmMessage="Gửi thông báo này đến toàn bộ người nhận đã chọn?"
@@ -218,7 +219,7 @@ export default async function NotificationsPage({
                   </div>
                 ) : null}
                 {ownRecipientRow && !ownRecipientRow.da_doc ? (
-                  <form action={markNotificationRead}>
+                  <GuardedForm action={markNotificationRead}>
                     <input name="recipient_row_id" type="hidden" value={ownRecipientRow.id} />
                     <PendingSubmitButton pendingLabel="Đang cập nhật…">
                       Đánh dấu đã đọc
