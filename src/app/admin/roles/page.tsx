@@ -55,7 +55,7 @@ export default async function RolesPage({ searchParams }: RolesPageProps) {
     permissionIdsByRole.set(mapping.vai_tro_id, ids);
   }
   const matchesSearch = (values: Array<string | null | undefined>) =>
-    values.join(" ").toLocaleLowerCase("vi-VN").includes(search);
+    values.join(" ").replace(/_/g, " ").toLocaleLowerCase("vi-VN").includes(search);
   const visibleRoles = search
     ? allRoles.filter((role) =>
         matchesSearch([role.ma_vai_tro, role.ten_vai_tro, role.mo_ta]) ||
