@@ -62,8 +62,11 @@ export async function updateNotificationDraft(formData: FormData) {
   const notificationId = field(formData, "notification_id");
   const payload = notificationDraftPayload(formData);
 
-  if (!isUuid(notificationId) || !payload) {
+  if (!isUuid(notificationId)) {
     redirect("/notifications?error=invalid");
+  }
+  if (!payload) {
+    redirect("/notifications/" + encodeURIComponent(notificationId) + "/edit?error=invalid");
   }
 
   const { supabase } = await requireDm();
