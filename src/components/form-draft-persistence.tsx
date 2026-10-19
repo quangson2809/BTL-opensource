@@ -125,10 +125,11 @@ export function FormDraftPersistence({
       encodeURIComponent(persistKey);
 
     const values = readDraft(storageKey);
-    if (values) {
-      // Restore after errors, refresh, or returning to the same form.
+    if (values && form.dataset.userEdited !== "true") {
+      // Restore after errors, refresh, or returning to the same form, but never
+      // overwrite input typed before this effect ran.
       restoreDraft(form, values);
-    } else if (hasError) {
+    } else if (hasError && !values) {
       try {
         sessionStorage.removeItem(storageKey);
       } catch {
