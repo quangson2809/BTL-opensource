@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { GuardedForm } from "@/components/guarded-form";
 
 import { PendingSubmitButton } from "@/components/pending-submit-button";
 import { requireActiveBusinessAccount } from "@/lib/business";
@@ -50,13 +51,13 @@ export default async function ChangePasswordPage({
           </p>
         ) : null}
 
-        <form action={requestPasswordChangeOtp}>
+        <GuardedForm action={requestPasswordChangeOtp}>
           <PendingSubmitButton pendingLabel="Đang gửi OTP…">
             Gửi OTP đổi mật khẩu
           </PendingSubmitButton>
-        </form>
+        </GuardedForm>
 
-        <form action={changePassword} className="stack">
+        <GuardedForm action={changePassword} className="stack">
           <label>
             OTP
             <input name="otp" inputMode="numeric" autoComplete="one-time-code" required />
@@ -80,7 +81,7 @@ export default async function ChangePasswordPage({
           <PendingSubmitButton pendingLabel="Đang cập nhật mật khẩu…">
             Đổi mật khẩu
           </PendingSubmitButton>
-        </form>
+        </GuardedForm>
 
         <p className="secondary-text">
           <Link href="/dashboard">Quay lại tổng quan</Link>
