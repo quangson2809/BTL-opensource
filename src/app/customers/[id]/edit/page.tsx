@@ -18,7 +18,7 @@ type EditCustomerPageProps = {
 
 export default async function EditCustomerPage({ params, searchParams }: EditCustomerPageProps) {
   const [{ id }, query] = await Promise.all([params, searchParams]);
-  const { supabase } = await requireBusinessAccount();
+  const { supabase, accountId } = await requireBusinessAccount();
   const { data: customer, error } = await supabase.from("khach_hang").select("*").eq("id", id).maybeSingle();
 
   if (error) throw new Error("Không thể tải khách hàng.");
@@ -33,7 +33,7 @@ export default async function EditCustomerPage({ params, searchParams }: EditCus
           actions={<Link className="button-link button-secondary" href={"/customers/" + customer.id}>Quay lại chi tiết</Link>}
         />
         {query.error ? <ActionFeedback error={query.error} /> : null}
-        <FormDraftPersistence persistKey={"customer-edit-" + customer.id} hasError={Boolean(query.error)} />
+        <FormDraftPersistence persistKey={"customer-edit-" + customer.id} scopeKey={accountId} hasError={Boolean(query.error)} />
         <p className="form-required-note"><span aria-hidden="true">*</span> Các trường trong biểu mẫu đều bắt buộc.</p>
         <GuardedForm action={updateCustomer} className="stack form-layout" data-persist-key={"customer-edit-" + customer.id}>
           <input name="customer_id" type="hidden" value={customer.id} />
