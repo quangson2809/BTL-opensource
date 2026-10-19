@@ -13,6 +13,7 @@ import {
   parseVietnamLocalDateTime,
 } from "../src/lib/input-validation.mjs";
 import {
+  buildFilterHref,
   parsePositivePage,
   sanitizePostgrestOrSearch,
 } from "../src/lib/list-query.mjs";
@@ -100,4 +101,20 @@ test("list query parsing fails closed for unsafe search syntax and malformed pag
   assert.equal(parsePositivePage("-3"), 1);
   assert.equal(parsePositivePage("2abc"), 1);
   assert.equal(parsePositivePage("9007199254740992"), 1);
+});
+
+
+test("removing one active list filter preserves the others and resets pagination", () => {
+  assert.equal(
+    buildFilterHref("/customers", { q: "an", loai: "MUC_TIEU", page: "4" }, "loai"),
+    "/customers?q=an",
+  );
+  assert.equal(
+    buildFilterHref("/notifications", { q: "họp nhóm", trang_thai: "ĐÃ_GỬI", page: "2" }, "q"),
+    "/notifications?trang_thai=%C4%90%C3%83_G%E1%BB%ACI",
+  );
+  assert.equal(
+    buildFilterHref("/activities", { q: "", loai: "" }, "loai"),
+    "/activities",
+  );
 });
