@@ -1,3 +1,4 @@
+/* eslint @typescript-eslint/no-require-imports: "off" -- CJS is used to resolve Playwright from npm exec in CI. */
 const assert = require("node:assert/strict");
 const { chromium } = require("playwright");
 
@@ -35,7 +36,7 @@ async function readDraft(page, key) {
   try {
     const loginKey = draftPrefix + "login";
     await page.goto(baseURL + "/login");
-    await page.locator('form[data-persist-key="login"]').waitFor();
+    await page.locator('form[data-persist-key="login"][data-draft-persistence-ready="true"]').waitFor();
     await page.locator('input[name="email"]').fill("draft-login@example.test");
     await page.locator('input[name="password"]').fill("LoginSecretForTest123");
     await waitForDraft(page, loginKey, "email", "draft-login@example.test");
@@ -49,7 +50,7 @@ async function readDraft(page, key) {
 
     const registerKey = draftPrefix + "register";
     await page.goto(baseURL + "/register");
-    await page.locator('form[data-persist-key="register"]').waitFor();
+    await page.locator('form[data-persist-key="register"][data-draft-persistence-ready="true"]').waitFor();
     await page.locator('input[name="ho_ten"]').fill("Draft User");
     await page.locator('input[name="email"]').fill("draft-register@example.test");
     await page.locator('input[name="so_dien_thoai"]').fill("0900000000");
@@ -67,7 +68,7 @@ async function readDraft(page, key) {
 
     const verifyKey = draftPrefix + "password-recovery-verify";
     await page.goto(baseURL + "/password/recovery/verify?email=otp-user%40example.test&status=otp-sent");
-    await page.locator('form[data-persist-key="password-recovery-verify"]').waitFor();
+    await page.locator('form[data-persist-key="password-recovery-verify"][data-draft-persistence-ready="true"]').waitFor();
     await page.locator('input[name="otp"]').fill("12345678");
     await page.locator('input[name="new_password"]').fill("RecoverySecretForTest123");
     await page.locator('input[name="confirm_password"]').fill("RecoverySecretForTest123");
