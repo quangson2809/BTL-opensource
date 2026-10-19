@@ -31,6 +31,28 @@ function canPersist(control: HTMLInputElement | HTMLTextAreaElement | HTMLSelect
   return true;
 }
 
+function hasEditedControls(form: HTMLFormElement) {
+  const controls = Array.from(
+    form.querySelectorAll<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>(
+      "input[name], textarea[name], select[name]",
+    ),
+  );
+
+  return controls.some((control) => {
+    if (!canPersist(control)) return false;
+
+    if (control instanceof HTMLInputElement && (control.type === "checkbox" || control.type === "radio")) {
+      return control.checked !== control.defaultChecked;
+    }
+
+    if (control instanceof HTMLSelectElement) {
+      return Array.from(control.options).some((option) => option.selected !== option.defaultSelected);
+    }
+
+    return control.value !== control.defaultValue;
+  });
+}
+
 function restoreDraft(form: HTMLFormElement, values: DraftValues) {
   const controls = Array.from(
     form.querySelectorAll<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>(
@@ -131,9 +153,11 @@ export function FormDraftPersistence({
       encodeURIComponent(persistKey);
 
     const values = readDraft(storageKey);
-    if (values && form.dataset.userEdited !== "true") {
+    const hasCurrentUserInput =
+      form.dataset.userEdited === "true" || hasEditedControls(form);
+    if (values && !hasCurrentUserInput) {
       // Restore after errors, refresh, or returning to the same form, but never
-      // overwrite input typed before this effect ran.
+      // overwrite values entered before this effect attached its listeners.
       restoreDraft(form, values);
     } else if (hasError && !values) {
       try {
@@ -179,11 +203,13 @@ export function FormDraftPersistence({
     form.addEventListener("input", saveDraft);
     form.addEventListener("change", saveDraft);
     form.addEventListener("submit", saveDraft);
-    if (form.dataset.userEdited === "true") saveDraft();
+    form.dataset.draftPersistenceReady = "true";
+    if (hasCurrentUserInput) saveDraft();
     return () => {
       form.removeEventListener("input", saveDraft);
       form.removeEventListener("change", saveDraft);
       form.removeEventListener("submit", saveDraft);
+      delete form.dataset.draftPersistenceReady;
     };
   }, [hasError, persistKey, scopeKey]);
 
