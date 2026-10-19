@@ -40,9 +40,9 @@ export default async function NewRolePage({ searchParams }: NewRolePageProps) {
           title="Tạo vai trò"
           description="Tạo mã vai trò mới và chọn các quyền đã được định nghĩa trong danh mục."
           actions={
-            <Link className="button-link button-secondary" href="/admin/roles">
+            <DraftCancelLink className="button-link button-secondary" href="/admin/roles" scopeKey={accountId} persistKeys={["role-create"]}>
               Quay lại vai trò & quyền
-            </Link>
+            </DraftCancelLink>
           }
         />
         {query.error && errorMessages[query.error] ? (
