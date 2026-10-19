@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { GuardedForm } from "@/components/guarded-form";
 
 import { ActionFeedback } from "@/components/action-feedback";
 import { FormDraftPersistence } from "@/components/form-draft-persistence";
@@ -34,7 +35,7 @@ export default async function EditCustomerPage({ params, searchParams }: EditCus
         {query.error ? <ActionFeedback error={query.error} /> : null}
         <FormDraftPersistence persistKey={"customer-edit-" + customer.id} hasError={Boolean(query.error)} />
         <p className="form-required-note"><span aria-hidden="true">*</span> Các trường trong biểu mẫu đều bắt buộc.</p>
-        <form action={updateCustomer} className="stack form-layout" data-persist-key={"customer-edit-" + customer.id}>
+        <GuardedForm action={updateCustomer} className="stack form-layout" data-persist-key={"customer-edit-" + customer.id}>
           <input name="customer_id" type="hidden" value={customer.id} />
           <fieldset className="form-section">
             <legend>Thông tin cơ bản</legend>
@@ -70,7 +71,7 @@ export default async function EditCustomerPage({ params, searchParams }: EditCus
             </div>
           </fieldset>
           <div className="form-actions"><PendingSubmitButton pendingLabel="Đang lưu thay đổi…">Lưu thay đổi</PendingSubmitButton></div>
-        </form>
+        </GuardedForm>
       </section>
     </main>
   );
