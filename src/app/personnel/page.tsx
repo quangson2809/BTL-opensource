@@ -1,9 +1,14 @@
 import Link from "next/link";
 
 import { EmptyState } from "@/components/empty-state";
+import { sanitizePostgrestOrSearch } from "@/lib/list-query.mjs";
 import { requireManager } from "@/lib/business";
 
 export const dynamic = "force-dynamic";
+
+type PersonnelPageProps = {
+  searchParams: Promise<{ q?: string }>;
+};
 
 type AccountRow = {
   id: string;
@@ -43,7 +48,9 @@ function flattenTree(accounts: AccountRow[], rootId: string) {
   return output;
 }
 
-export default async function PersonnelPage() {
+export default async function PersonnelPage({ searchParams }: PersonnelPageProps) {
+  const query = await searchParams;
+  const search = sanitizePostgrestOrSearch(query.q);
   const { supabase, accountId } = await requireManager();
   const { data, error } = await supabase
     .from("tai_khoan")
@@ -54,7 +61,32 @@ export default async function PersonnelPage() {
     throw new Error("Không thể tải cây nhân sự.");
   }
 
-  const rows = flattenTree((data ?? []) as AccountRow[], accountId);
+  const accounts = (data ?? []) as AccountRow[];
+  const rows = flattenTree(accounts, accountId);
+  const visibleRows = search
+    ? (() => {
+        const term = search.toLocaleLowerCase("vi-VN");
+        const accountsById = new Map(accounts.map((account) => [account.id, account]));
+        const visibleIds = new Set<string>();
+
+        for (const account of accounts) {
+          const searchableText = [account.ho_ten, account.email, account.ma_dai_ly]
+            .join(" ")
+            .toLocaleLowerCase("vi-VN");
+          if (!searchableText.includes(term)) continue;
+
+          let ancestor: AccountRow | undefined = account;
+          while (ancestor) {
+            visibleIds.add(ancestor.id);
+            ancestor = ancestor.manager_id
+              ? accountsById.get(ancestor.manager_id)
+              : undefined;
+          }
+        }
+
+        return rows.filter(({ account }) => visibleIds.has(account.id));
+      })()
+    : rows;
 
   return (
     <main>
@@ -63,14 +95,31 @@ export default async function PersonnelPage() {
         <p>
           <Link href="/dashboard">Dashboard</Link>
         </p>
-        {rows.length === 0 ? (
+        <form className="filter-grid" method="get" role="search">
+          <label>
+            Tìm nhân sự
+            <input
+              autoComplete="off"
+              defaultValue={search}
+              name="q"
+              placeholder="Họ tên, email hoặc mã đại lý"
+            />
+          </label>
+          <button type="submit">Tìm kiếm</button>
+          {search ? <Link className="button-link button-secondary" href="/personnel">Xóa tìm kiếm</Link> : null}
+        </form>
+        {visibleRows.length === 0 ? (
           <EmptyState
-            title="Chưa có nhân sự trong phạm vi"
-            description="Nhân sự thuộc cây quản lý của bạn sẽ xuất hiện tại đây khi có dữ liệu."
+            title={search ? "Không tìm thấy nhân sự" : "Chưa có nhân sự trong phạm vi"}
+            description={
+              search
+                ? "Thử từ khóa khác. Cây chỉ hiển thị nhân sự và cấp quản lý trong phạm vi được cấp quyền."
+                : "Nhân sự thuộc cây quản lý của bạn sẽ xuất hiện tại đây khi có dữ liệu."
+            }
           />
         ) : (
           <div className="stack">
-            {rows.map(({ account, depth }) => (
+            {visibleRows.map(({ account, depth }) => (
               <article
                 className="personnel-row"
                 key={account.id}
