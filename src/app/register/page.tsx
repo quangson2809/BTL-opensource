@@ -34,9 +34,10 @@ export default async function RegisterPage({ searchParams }: RegisterPageProps) 
         </p>
         {statusMessage ? <p role="status" aria-live="polite" className="message success">{statusMessage}</p> : null}
         {errorMessage ? <p role="alert" aria-live="assertive" className="message error">{errorMessage}</p> : null}
+        <FormDraftPersistence persistKey="register" scopeKey="public-auth" hasError={Boolean(errorMessage)} />
 
         <p className="form-required-note"><span aria-hidden="true">*</span> Trường bắt buộc</p>
-        <GuardedForm action={register} className="stack">
+        <GuardedForm action={register} className="stack" data-persist-key="register">
           <label>
             Họ tên
             <input name="ho_ten" autoComplete="name" required />
