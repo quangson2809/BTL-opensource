@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { GuardedForm } from "@/components/guarded-form";
 
 import { ActionFeedback } from "@/components/action-feedback";
 import { FormDraftPersistence } from "@/components/form-draft-persistence";
@@ -55,7 +56,7 @@ export default async function EditActivityPage({ params, searchParams }: EditAct
         {query.error ? <ActionFeedback error={query.error} /> : null}
         <FormDraftPersistence persistKey={persistKey} hasError={Boolean(query.error)} />
         <p className="form-required-note"><span aria-hidden="true">*</span> Các trường trong biểu mẫu đều bắt buộc.</p>
-        <form action={updateActivity} className="stack form-layout" data-persist-key={persistKey}>
+        <GuardedForm action={updateActivity} className="stack form-layout" data-persist-key={persistKey}>
           <input name="activity_id" type="hidden" value={activity.id} />
           <fieldset className="form-section">
             <legend>Chi tiết hoạt động</legend>
@@ -71,7 +72,7 @@ export default async function EditActivityPage({ params, searchParams }: EditAct
             </div>
           </fieldset>
           <div className="form-actions"><PendingSubmitButton pendingLabel="Đang lưu thay đổi…">Lưu thay đổi</PendingSubmitButton></div>
-        </form>
+        </GuardedForm>
       </section>
     </main>
   );
