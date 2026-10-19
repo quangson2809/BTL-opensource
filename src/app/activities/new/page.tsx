@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { DraftCancelLink } from "@/components/draft-cancel-link";
 import { GuardedForm } from "@/components/guarded-form";
 
 import { ActionFeedback } from "@/components/action-feedback";
@@ -24,7 +25,7 @@ export default async function NewActivityPage({ searchParams }: NewActivityPageP
         <PageHeader
           title="Tạo hoạt động"
           description="Ghi nhận hoạt động kinh doanh và số khách hàng kết nối."
-          actions={<Link className="button-link button-secondary" href="/activities">Quay lại lịch sử</Link>}
+          actions={<DraftCancelLink className="button-link button-secondary" href="/activities" scopeKey={accountId} persistKeys={["activity-create"]}>Quay lại lịch sử</DraftCancelLink>}
         />
         {query.error ? <ActionFeedback error={query.error} /> : null}
         <FormDraftPersistence scopeKey={accountId} persistKey="activity-create" hasError={Boolean(query.error)} />
