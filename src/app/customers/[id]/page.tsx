@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
+import { GuardedForm } from "@/components/guarded-form";
 import { FormDraftClear } from "@/components/form-draft-clear";
 import { ActionFeedback } from "@/components/action-feedback";
 import { PageHeader } from "@/components/page-header";
@@ -60,7 +61,7 @@ export default async function CustomerDetailPage({ params, searchParams }: Custo
             <div><dt>Ghi chú</dt><dd>{customer.ghi_chu}</dd></div>
           </dl>
         </section>
-        <form action={deleteCustomer} className="form-actions">
+        <GuardedForm action={deleteCustomer} className="form-actions">
           <input name="customer_id" type="hidden" value={customer.id} />
           <PendingSubmitButton
             confirmMessage="Bạn có chắc muốn xóa hồ sơ khách hàng này? Thao tác không thể hoàn tác."
@@ -68,7 +69,7 @@ export default async function CustomerDetailPage({ params, searchParams }: Custo
           >
             Xóa khách hàng
           </PendingSubmitButton>
-        </form>
+        </GuardedForm>
       </section>
     </main>
   );
