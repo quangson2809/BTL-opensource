@@ -15,6 +15,19 @@ export function DraftCancelLink({
   ...linkProps
 }: DraftCancelLinkProps) {
   function handleClick(event: MouseEvent<HTMLAnchorElement>) {
+    onClick?.(event);
+    if (
+      event.defaultPrevented ||
+      event.button !== 0 ||
+      event.metaKey ||
+      event.ctrlKey ||
+      event.shiftKey ||
+      event.altKey ||
+      event.currentTarget.target === "_blank"
+    ) {
+      return;
+    }
+
     for (const persistKey of persistKeys) {
       try {
         sessionStorage.removeItem(
@@ -27,7 +40,6 @@ export function DraftCancelLink({
         // Cancellation/navigation must remain available if storage is blocked.
       }
     }
-    onClick?.(event);
   }
 
   return <Link {...linkProps} onClick={handleClick} />;
