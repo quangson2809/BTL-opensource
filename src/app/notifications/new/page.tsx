@@ -37,7 +37,7 @@ export default async function NewNotificationPage({
         {query.error ? (
           <ActionFeedback error={query.error} />
         ) : null}
-        <FormDraftPersistence persistKey="notification-draft" hasError={Boolean(query.error)} />
+        <FormDraftPersistence scopeKey={accountId} persistKey="notification-draft" hasError={Boolean(query.error)} />
         <p className="form-required-note"><span aria-hidden="true">*</span> Trường bắt buộc</p>
         <GuardedForm action={createNotification} className="stack notification-composer" data-persist-key="notification-draft">
           <fieldset className="form-section">
