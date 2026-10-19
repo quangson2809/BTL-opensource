@@ -1,5 +1,7 @@
 import Link from "next/link";
 import { PublicHeader } from "@/components/public-header";
+import { FormDraftPersistence } from "@/components/form-draft-persistence";
+import { PendingSubmitButton } from "@/components/pending-submit-button";
 
 import { register } from "@/app/auth/actions";
 import {
@@ -33,7 +35,8 @@ export default async function RegisterPage({ searchParams }: RegisterPageProps) 
         {errorMessage ? <p role="alert" aria-live="assertive" className="message error">{errorMessage}</p> : null}
 
         <p className="form-required-note"><span aria-hidden="true">*</span> Trường bắt buộc</p>
-        <form action={register} className="stack">
+        <FormDraftPersistence persistKey="register" hasError={Boolean(params.error)} />
+        <form action={register} className="stack" data-persist-key="register">
           <label>
             Họ tên
             <input name="ho_ten" autoComplete="name" required />
@@ -61,7 +64,7 @@ export default async function RegisterPage({ searchParams }: RegisterPageProps) 
           <p className="secondary-text">
             Tối thiểu 8 ký tự, có chữ thường, chữ hoa và số.
           </p>
-          <button type="submit">Tạo tài khoản</button>
+          <PendingSubmitButton pendingLabel="Đang tạo tài khoản…">Tạo tài khoản</PendingSubmitButton>
         </form>
 
         <p className="secondary-text">

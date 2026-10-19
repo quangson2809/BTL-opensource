@@ -1,5 +1,7 @@
 import Link from "next/link";
 import { PublicHeader } from "@/components/public-header";
+import { FormDraftPersistence } from "@/components/form-draft-persistence";
+import { PendingSubmitButton } from "@/components/pending-submit-button";
 
 import { login } from "@/app/auth/actions";
 import { LOGIN_ERROR_MESSAGES } from "@/lib/auth-login-errors.mjs";
@@ -30,7 +32,8 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
         {errorMessage ? <p role="alert" aria-live="assertive" className="message error">{errorMessage}</p> : null}
 
         <p className="form-required-note"><span aria-hidden="true">*</span> Trường bắt buộc</p>
-        <form action={login} className="stack">
+        <FormDraftPersistence persistKey="login" hasError={Boolean(params.error)} />
+        <form action={login} className="stack" data-persist-key="login">
           <label>
             Email
             <input name="email" type="email" autoComplete="email" required />
@@ -39,7 +42,7 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
             Mật khẩu
             <input name="password" type="password" autoComplete="current-password" required />
           </label>
-          <button type="submit">Đăng nhập</button>
+          <PendingSubmitButton pendingLabel="Đang đăng nhập…">Đăng nhập</PendingSubmitButton>
         </form>
 
         <p className="secondary-text">
