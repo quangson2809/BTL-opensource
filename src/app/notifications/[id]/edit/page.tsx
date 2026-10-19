@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { GuardedForm } from "@/components/guarded-form";
 
+import { FormDraftPersistence } from "@/components/form-draft-persistence";
 import { ActionFeedback } from "@/components/action-feedback";
 import { PageHeader } from "@/components/page-header";
 import { PendingSubmitButton } from "@/components/pending-submit-button";
@@ -76,10 +77,11 @@ export default async function EditNotificationPage({
           }
         />
         {query.error ? <ActionFeedback error={query.error} /> : null}
+        <FormDraftPersistence persistKey={"notification-edit-" + notification.id} scopeKey={accountId} hasError={Boolean(query.error)} />
         <p className="form-required-note">
           <span aria-hidden="true">*</span> Trường bắt buộc
         </p>
-        <GuardedForm action={updateNotificationDraft} className="stack notification-composer">
+        <GuardedForm action={updateNotificationDraft} className="stack notification-composer" data-persist-key={"notification-edit-" + notification.id}>
           <input name="notification_id" type="hidden" value={notification.id} />
           <fieldset className="form-section">
             <legend>Nội dung thông báo</legend>
