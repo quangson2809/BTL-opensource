@@ -106,7 +106,7 @@ export default async function ActivitiesPage({
             </select>
           </label>
           <button type="submit">Lọc</button>
-        </GuardedForm>
+        </form>
 
         <ResultSummary label="hoạt động" total={total} currentPage={currentPage} pageSize={pageSize} hasFilters={hasFilters} clearHref="/activities" />
 
@@ -147,7 +147,7 @@ export default async function ActivitiesPage({
                       >
                         Xóa
                       </PendingSubmitButton>
-                    </form>
+                    </GuardedForm>
                   </div>
                 ) : (
                   <p className="secondary-text">Chỉ xem hoạt động cấp dưới.</p>
