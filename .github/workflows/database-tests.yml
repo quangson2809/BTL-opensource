@@ -64,7 +64,7 @@ jobs:
           export NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY="$ANON_KEY"
           export SUPABASE_SECRET_KEY="$SERVICE_ROLE_KEY"
 
-          npm run dev > /tmp/idaily-next.log 2>&1 &
+          ./node_modules/.bin/next dev -p 3000 > /tmp/idaily-next.log 2>&1 &
           APP_PID=$!
           trap 'kill "$APP_PID" 2>/dev/null || true' EXIT
 
@@ -116,7 +116,7 @@ jobs:
 
           npm exec --yes --package=playwright -- playwright install --with-deps chromium
 
-          npm run dev > /tmp/idaily-browser.log 2>&1 &
+          ./node_modules/.bin/next dev -p 3000 > /tmp/idaily-browser.log 2>&1 &
           APP_PID=$!
           trap 'kill "$APP_PID" 2>/dev/null || true' EXIT
 
@@ -131,7 +131,10 @@ jobs:
             sleep 1
           done
 
-          npm exec --yes --package=playwright -- sh -c 'NODE_PATH="$(dirname "$(dirname "$(command -v playwright)")")" node tests/form-resilience-browser.cjs'
+          if ! npm exec --yes --package=playwright -- sh -c 'NODE_PATH="$(dirname "$(dirname "$(command -v playwright)")")" node tests/form-resilience-browser.cjs'; then
+            cat /tmp/idaily-browser.log
+            exit 1
+          fi
           kill "$APP_PID"
           wait "$APP_PID" 2>/dev/null || true
           trap - EXIT
