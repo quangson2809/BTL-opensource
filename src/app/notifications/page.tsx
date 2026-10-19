@@ -110,7 +110,7 @@ export default async function NotificationsPage({
     ]);
   }
 
-  const filterParams = { q: query.q, loai: type, trang_thai: status };
+  const filterParams = { q: search, loai: type, trang_thai: status };
   const hasFilters = Boolean(search || type || status);
 
   return (
@@ -156,7 +156,20 @@ export default async function NotificationsPage({
           <button type="submit">Lọc</button>
         </form>
 
-        <ResultSummary label="thông báo" total={total} currentPage={currentPage} pageSize={pageSize} hasFilters={hasFilters} clearHref="/notifications" />
+        <ResultSummary
+          label="thông báo"
+          total={total}
+          currentPage={currentPage}
+          pageSize={pageSize}
+          hasFilters={hasFilters}
+          clearHref="/notifications"
+          filterParams={filterParams}
+          activeFilters={[
+            ...(search ? [{ key: "q", label: "Từ khóa", value: search }] : []),
+            ...(type ? [{ key: "loai", label: "Loại thông báo", value: type === "TIN_TỨC" ? "Tin tức" : "Tự động hệ thống" }] : []),
+            ...(status ? [{ key: "trang_thai", label: "Trạng thái", value: status === "CHƯA_GỬI" ? "Chưa gửi" : "Đã gửi" }] : []),
+          ]}
+        />
 
         <div className="stack">
           {total === 0 ? (
