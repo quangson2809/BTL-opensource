@@ -34,7 +34,7 @@ export default async function NewNotificationPage({
   return (
     <main>
       <section className="page-content">
-        <PageHeader title="Tạo thông báo" description="Soạn nội dung, chọn người nhận trong scope và tạo bản nháp trước khi gửi." actions={<Link className="button-link button-secondary" href="/notifications">Quay lại thông báo</Link>} />
+        <PageHeader title="Tạo thông báo" description="Soạn nội dung, chọn người nhận trong scope và tạo bản nháp trước khi gửi." actions={<DraftCancelLink className="button-link button-secondary" href="/notifications" scopeKey={accountId} persistKeys={["notification-draft"]}>Quay lại thông báo</DraftCancelLink>} />
         {query.error ? (
           <ActionFeedback error={query.error} />
         ) : null}
