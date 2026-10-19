@@ -12,20 +12,24 @@ type PendingSubmitButtonProps = {
   children: ReactNode;
   pendingLabel?: string;
   confirmMessage?: string;
+  disabled?: boolean;
 };
 
 export function PendingSubmitButton({
   children,
   pendingLabel = "Đang xử lý…",
   confirmMessage,
+  disabled = false,
 }: PendingSubmitButtonProps) {
   const { pending } = useFormStatus();
   const presentation = getSubmitPresentation(pending, pendingLabel, children);
 
+  const isDisabled = presentation.disabled || disabled;
+
   return (
     <button
-      aria-disabled={presentation.disabled}
-      disabled={presentation.disabled}
+      aria-disabled={isDisabled}
+      disabled={isDisabled}
       onClick={(event) => {
         const cancelled = shouldCancelSubmission(
           confirmMessage,

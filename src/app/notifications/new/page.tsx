@@ -5,11 +5,18 @@ import { ActionFeedback } from "@/components/action-feedback";
 import { PendingSubmitButton } from "@/components/pending-submit-button";
 import { PageHeader } from "@/components/page-header";
 import { FormDraftPersistence } from "@/components/form-draft-persistence";
+import { SearchableCheckboxPicker } from "@/components/searchable-checkbox-picker";
 
 import { createNotification } from "@/app/notifications/actions";
 import { requireDm } from "@/lib/business";
 
 export const dynamic = "force-dynamic";
+
+const accountStatusLabels: Record<string, string> = {
+  CHO_PHE_DUYET: "Chờ phê duyệt",
+  DANG_HOAT_DONG: "Đang hoạt động",
+  KHOA: "Đã khóa",
+};
 
 type NewNotificationPageProps = {
   searchParams: Promise<{ error?: string }>;
@@ -62,17 +69,24 @@ export default async function NewNotificationPage({
           </fieldset>
           <fieldset className="form-section">
             <legend>Phạm vi nhận</legend>
-            <label>
-              Người nhận trong scope <span aria-hidden="true" className="required-indicator">*</span>
-              <select multiple name="recipient_ids" required size={Math.min(Math.max((recipients ?? []).length, 4), 10)}>
-                {(recipients ?? []).map((recipient) => (
-                  <option key={recipient.id} value={recipient.id}>
-                    {recipient.ho_ten} — {recipient.ma_dai_ly} — {recipient.trang_thai}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <p className="field-help">Giữ Ctrl/Cmd để chọn nhiều người nhận. Bản nháp chưa hiển thị cho người nhận cho đến khi DM bấm gửi.</p>
+            <SearchableCheckboxPicker
+              name="recipient_ids"
+              options={(recipients ?? []).map((recipient) => ({
+                id: recipient.id,
+                label: recipient.ho_ten,
+                detail: recipient.ma_dai_ly + " · " + (accountStatusLabels[recipient.trang_thai] ?? "Chưa xác định trạng thái"),
+                searchText: recipient.ho_ten + " " + recipient.ma_dai_ly + " " + recipient.trang_thai,
+                group: "Người nhận trong phạm vi",
+              }))}
+              searchLabel="Tìm người nhận"
+              searchPlaceholder="Tên hoặc mã đại lý"
+              selectedCountLabel="người nhận"
+              emptyMessage="Không có tài khoản nào khác trong phạm vi có thể chọn làm người nhận."
+              noResultsMessage="Không tìm thấy người nhận phù hợp. Thử tên hoặc mã đại lý khác."
+              required
+              requiredMessage="Chọn ít nhất một người nhận trước khi tạo bản nháp."
+            />
+            <p className="field-help">Bản nháp chưa hiển thị cho người nhận cho đến khi DM bấm gửi.</p>
           </fieldset>
           <div className="form-actions">
             <PendingSubmitButton pendingLabel="Đang tạo bản nháp…">Tạo bản nháp</PendingSubmitButton>

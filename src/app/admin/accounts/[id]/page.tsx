@@ -111,13 +111,16 @@ export default async function AccountDetailPage({
             {account.trang_thai === "CHO_PHE_DUYET" ? (
               <form action={approveAccount}>
                 <input name="account_id" type="hidden" value={account.id} />
-                <PendingSubmitButton pendingLabel="Đang phê duyệt…">Phê duyệt</PendingSubmitButton>
+                <PendingSubmitButton
+                  pendingLabel="Đang phê duyệt…"
+                  confirmMessage={"Phê duyệt tài khoản " + account.ho_ten + " (" + account.ma_dai_ly + ")? Tài khoản sẽ chuyển sang trạng thái Đang hoạt động."}
+                >Phê duyệt</PendingSubmitButton>
               </form>
             ) : null}
             {account.trang_thai === "DANG_HOAT_DONG" && account.id !== currentAccountId ? (
               <form action={lockAccount}>
                 <input name="account_id" type="hidden" value={account.id} />
-                <PendingSubmitButton pendingLabel="Đang khóa…" confirmMessage="Bạn có chắc muốn khóa tài khoản này?">Khóa tài khoản</PendingSubmitButton>
+                <PendingSubmitButton pendingLabel="Đang khóa…" confirmMessage={"Bạn có chắc muốn khóa tài khoản " + account.ho_ten + " (" + account.ma_dai_ly + ")? Người dùng sẽ không thể tiếp tục truy cập khi tài khoản bị khóa."}>Khóa tài khoản</PendingSubmitButton>
               </form>
             ) : null}
             {account.trang_thai === "DANG_HOAT_DONG" && account.id === currentAccountId ? (
@@ -126,7 +129,10 @@ export default async function AccountDetailPage({
             {account.trang_thai === "KHOA" ? (
               <form action={unlockAccount}>
                 <input name="account_id" type="hidden" value={account.id} />
-                <PendingSubmitButton pendingLabel="Đang mở khóa…">Mở khóa tài khoản</PendingSubmitButton>
+                <PendingSubmitButton
+                  pendingLabel="Đang mở khóa…"
+                  confirmMessage={"Mở khóa tài khoản " + account.ho_ten + " (" + account.ma_dai_ly + ")? Tài khoản sẽ được chuyển sang trạng thái Đang hoạt động."}
+                >Mở khóa tài khoản</PendingSubmitButton>
               </form>
             ) : null}
         </div>
@@ -153,8 +159,8 @@ export default async function AccountDetailPage({
                           pendingLabel={assigned ? "Đang thu hồi…" : "Đang gán…"}
                           confirmMessage={
                             assigned
-                              ? "Bạn có chắc muốn thu hồi vai trò này?"
-                              : "Bạn có chắc muốn gán vai trò này cho tài khoản?"
+                              ? "Thu hồi vai trò " + role.ten_vai_tro + " (" + role.ma_vai_tro + ") khỏi " + account.ho_ten + "?"
+                              : "Gán vai trò " + role.ten_vai_tro + " (" + role.ma_vai_tro + ") cho " + account.ho_ten + "?"
                           }
                         >
                           {assigned ? "Thu hồi vai trò" : "Gán vai trò"}

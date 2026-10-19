@@ -3,6 +3,7 @@ import Link from "next/link";
 import { FormDraftClear } from "@/components/form-draft-clear";
 import { PageHeader } from "@/components/page-header";
 import { EmptyState } from "@/components/empty-state";
+import { permissionGroupForCode } from "@/lib/permission-groups.mjs";
 
 import { requireAdmin } from "@/lib/admin";
 
@@ -41,6 +42,14 @@ export default async function RolesPage({ searchParams }: RolesPageProps) {
 
   const permissions = permissionResult.data ?? [];
   const mappings = mappingResult.data ?? [];
+  type PermissionRow = (typeof permissions)[number];
+  const permissionsByGroup = new Map<string, PermissionRow[]>();
+  for (const permission of permissions) {
+    const group = permissionGroupForCode(permission.ma_quyen);
+    const rows = permissionsByGroup.get(group) ?? [];
+    rows.push(permission);
+    permissionsByGroup.set(group, rows);
+  }
 
   return (
     <main>
@@ -137,13 +146,20 @@ export default async function RolesPage({ searchParams }: RolesPageProps) {
             <p className="secondary-text">Chưa có quyền được định nghĩa trong migration.</p>
           ) : (
             <div className="stack">
-              {permissions.map((permission) => (
-                <article className="record-row" key={permission.id}>
-                  <p>
-                    <strong>{permission.ma_quyen}</strong> — {permission.ten_quyen}
-                  </p>
-                  <p className="secondary-text">{permission.mo_ta ?? "Không có mô tả."}</p>
-                </article>
+              {Array.from(permissionsByGroup.entries()).map(([group, groupedPermissions]) => (
+                <section aria-label={group} className="permission-catalog-group" key={group}>
+                  <h3>{group}</h3>
+                  <div className="stack">
+                    {groupedPermissions.map((permission) => (
+                      <article className="record-row" key={permission.id}>
+                        <p>
+                          <strong>{permission.ma_quyen}</strong> — {permission.ten_quyen}
+                        </p>
+                        <p className="secondary-text">{permission.mo_ta ?? "Không có mô tả."}</p>
+                      </article>
+                    ))}
+                  </div>
+                </section>
               ))}
             </div>
           )}
