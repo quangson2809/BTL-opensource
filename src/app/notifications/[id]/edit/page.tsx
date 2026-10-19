@@ -69,12 +69,9 @@ export default async function EditNotificationPage({
           title="Sửa bản nháp thông báo"
           description="Chỉ bản nháp của bạn có thể được chỉnh sửa. Thông báo đã gửi được giữ nguyên."
           actions={
-            <Link
-              className="button-link button-secondary"
-              href="/notifications"
-            >
+            <DraftCancelLink className="button-link button-secondary" href="/notifications" scopeKey={accountId} persistKeys={["notification-edit-" + notification.id]}>
               Quay lại thông báo
-            </Link>
+            </DraftCancelLink>
           }
         />
         {query.error ? <ActionFeedback error={query.error} /> : null}
