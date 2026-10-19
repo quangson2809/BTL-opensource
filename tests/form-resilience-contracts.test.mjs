@@ -71,3 +71,24 @@ test("draft clearing is gated on confirmed success or explicit cancellation", as
   assert.match(login, /clearOn=\{Boolean\(statusMessage\)\}/);
   assert.match(verify, /clearOn=\{otpSent\}/);
 });
+
+
+test("persisted business forms clear their matching draft when the user exits the form", async () => {
+  const cases = [
+    ["../src/app/activities/[id]/edit/page.tsx", "activity-edit-"],
+    ["../src/app/activities/new/page.tsx", "activity-create"],
+    ["../src/app/customers/[id]/edit/page.tsx", "customer-edit-"],
+    ["../src/app/customers/new/page.tsx", "customer-create"],
+    ["../src/app/notifications/[id]/edit/page.tsx", "notification-edit-"],
+    ["../src/app/notifications/new/page.tsx", "notification-draft"],
+    ["../src/app/admin/roles/[id]/edit/page.tsx", "role-edit-"],
+    ["../src/app/admin/roles/new/page.tsx", "role-create"],
+  ];
+
+  for (const [path, persistKey] of cases) {
+    const source = await readSource(path);
+    assert.match(source, /<DraftCancelLink\b/);
+    assert.match(source, /scopeKey=\{accountId\}/);
+    assert.ok(source.includes(persistKey), `${path} must clear its matching draft`);
+  }
+});
