@@ -2,6 +2,7 @@ import Link from "next/link";
 
 import { logout } from "@/app/auth/actions";
 import { PageHeader } from "@/components/page-header";
+import { EmptyState } from "@/components/empty-state";
 import { StatusBadge } from "@/components/status-badge";
 import { requireBusinessAccount } from "@/lib/business";
 
@@ -124,7 +125,7 @@ export default async function DashboardPage() {
             <p>5 hoạt động mới nhất mà tài khoản này được phép xem.</p>
           </div>
           {recentActivities.length === 0 ? (
-            <div className="empty-state"><h3>Chưa có hoạt động</h3><p>Các hoạt động mới sẽ xuất hiện tại đây sau khi được ghi nhận.</p></div>
+            <EmptyState title="Chưa có hoạt động" description="Các hoạt động mới sẽ xuất hiện tại đây sau khi được ghi nhận." />
           ) : (
             <div className="recent-activity-list">
               {recentActivities.map((activity) => (

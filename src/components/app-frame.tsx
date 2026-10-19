@@ -104,6 +104,8 @@ export function AppFrame({ children }: Readonly<{ children: ReactNode }>) {
   const [accountName, setAccountName] = useState("Tài khoản");
   const [accountEmail, setAccountEmail] = useState("");
   const [accountLoaded, setAccountLoaded] = useState(false);
+  const [accountContextError, setAccountContextError] = useState(false);
+  const [accountLoadAttempt, setAccountLoadAttempt] = useState(0);
   const sidebarRef = useRef<HTMLElement>(null);
   const menuToggleRef = useRef<HTMLButtonElement>(null);
   const accountMenuRef = useRef<HTMLDetailsElement>(null);
@@ -127,42 +129,70 @@ export function AppFrame({ children }: Readonly<{ children: ReactNode }>) {
 
     let cancelled = false;
     async function loadAccountContext() {
-      const supabase = createClient();
-      const { data: userData } = await supabase.auth.getUser();
-      const user = userData.user;
+      setAccountLoaded(false);
+      setRoles(new Set());
 
-      if (!user) {
-        if (!cancelled) setAccountLoaded(true);
-        return;
-      }
+      try {
+        const supabase = createClient();
+        const { data: userData, error: userError } = await supabase.auth.getUser();
+        if (userError) throw userError;
 
-      const [accountResult, adminResult, dmResult, umResult, saResult] =
-        await Promise.all([
-          supabase
-            .from("tai_khoan")
-            .select("ho_ten,email")
-            .eq("id", user.id)
-            .maybeSingle(),
-          supabase.rpc("has_role", { role_code: "ADMIN" }),
-          supabase.rpc("has_role", { role_code: "DM" }),
-          supabase.rpc("has_role", { role_code: "UM" }),
-          supabase.rpc("has_role", { role_code: "SA" }),
-        ]);
+        const user = userData.user;
+        if (!user) {
+          if (!cancelled) {
+            setAccountName("Tài khoản");
+            setAccountEmail("");
+            setAccountContextError(false);
+          }
+          return;
+        }
 
-      if (cancelled) return;
+        const [accountResult, adminResult, dmResult, umResult, saResult] =
+          await Promise.all([
+            supabase
+              .from("tai_khoan")
+              .select("ho_ten,email")
+              .eq("id", user.id)
+              .maybeSingle(),
+            supabase.rpc("has_role", { role_code: "ADMIN" }),
+            supabase.rpc("has_role", { role_code: "DM" }),
+            supabase.rpc("has_role", { role_code: "UM" }),
+            supabase.rpc("has_role", { role_code: "SA" }),
+          ]);
 
-      if (accountResult.data) {
+        if (cancelled) return;
+
+        if (
+          accountResult.error ||
+          !accountResult.data ||
+          adminResult.error ||
+          dmResult.error ||
+          umResult.error ||
+          saResult.error
+        ) {
+          throw new Error("Account context unavailable");
+        }
+
+        const nextRoles = new Set<string>();
+        if (adminResult.data === true) nextRoles.add("ADMIN");
+        if (dmResult.data === true) nextRoles.add("DM");
+        if (umResult.data === true) nextRoles.add("UM");
+        if (saResult.data === true) nextRoles.add("SA");
+
         setAccountName(accountResult.data.ho_ten);
         setAccountEmail(accountResult.data.email);
+        setRoles(nextRoles);
+        setAccountContextError(false);
+      } catch {
+        if (!cancelled) {
+          setAccountName("Tài khoản");
+          setAccountEmail("");
+          setRoles(new Set());
+          setAccountContextError(true);
+        }
+      } finally {
+        if (!cancelled) setAccountLoaded(true);
       }
-
-      const nextRoles = new Set<string>();
-      if (adminResult.data === true) nextRoles.add("ADMIN");
-      if (dmResult.data === true) nextRoles.add("DM");
-      if (umResult.data === true) nextRoles.add("UM");
-      if (saResult.data === true) nextRoles.add("SA");
-      setRoles(nextRoles);
-      setAccountLoaded(true);
     }
 
     void loadAccountContext();
@@ -170,7 +200,7 @@ export function AppFrame({ children }: Readonly<{ children: ReactNode }>) {
     return () => {
       cancelled = true;
     };
-  }, [showWorkspace]);
+  }, [showWorkspace, accountLoadAttempt]);
 
   useEffect(() => {
     if (!drawerActive) return;
@@ -303,10 +333,30 @@ export function AppFrame({ children }: Readonly<{ children: ReactNode }>) {
           <span className="account-initial" aria-hidden="true">
             {accountName.trim().charAt(0).toLocaleUpperCase("vi-VN") || "T"}
           </span>
-          <span className="account-summary">
+          <div className="account-summary" aria-busy={!accountLoaded}>
             <strong>{accountName}</strong>
-            <span>{accountLoaded ? accountEmail : "Đang tải tài khoản…"}</span>
-          </span>
+            <span
+              aria-live={!accountLoaded ? "polite" : accountContextError ? "assertive" : undefined}
+              className={accountContextError ? "account-context-error" : undefined}
+              role={!accountLoaded ? "status" : accountContextError ? "alert" : undefined}
+            >
+              {!accountLoaded
+                ? "Đang tải thông tin tài khoản…"
+                : accountContextError
+                  ? "Không thể tải thông tin tài khoản hoặc quyền truy cập."
+                  : accountEmail}
+            </span>
+            {accountContextError ? (
+              <button
+                className="account-context-retry"
+                disabled={!accountLoaded}
+                onClick={() => setAccountLoadAttempt((attempt) => attempt + 1)}
+                type="button"
+              >
+                {!accountLoaded ? "Đang thử lại…" : "Thử lại"}
+              </button>
+            ) : null}
+          </div>
         </div>
       </aside>
 
@@ -365,7 +415,7 @@ export function AppFrame({ children }: Readonly<{ children: ReactNode }>) {
               <div className="workspace-account-menu-panel">
                 <div className="account-menu-profile">
                   <strong>{accountName}</strong>
-                  <span>{accountLoaded ? accountEmail : "Đang tải tài khoản…"}</span>
+                  <span>{!accountLoaded ? "Đang tải thông tin tài khoản…" : accountContextError ? "Không thể tải thông tin tài khoản." : accountEmail}</span>
                 </div>
                 <Link href="/password/change" onClick={closeAccountMenu}>
                   Đổi mật khẩu

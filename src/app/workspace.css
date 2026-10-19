@@ -101,6 +101,23 @@
 }
 .account-summary strong { font-size: 0.84rem; }
 .account-summary span { color: var(--color-muted); font-size: 0.74rem; }
+.account-summary .account-context-error {
+  color: var(--color-danger);
+  overflow-wrap: anywhere;
+  white-space: normal;
+}
+.account-context-retry {
+  justify-self: start;
+  border: 0;
+  padding: 0;
+  background: transparent;
+  color: var(--color-brand);
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.74rem;
+  text-decoration: underline;
+}
+.account-context-retry:disabled { cursor: wait; opacity: 0.65; }
 
 .workspace-main-column { display: flex; min-width: 0; flex-direction: column; }
 .workspace-topbar {

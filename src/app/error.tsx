@@ -12,7 +12,7 @@ export default function AppError({ reset }: AppErrorProps) {
     <main>
       <section className="card">
         <ErrorState
-          description="Hệ thống chưa thể hoàn tất yêu cầu. Dữ liệu kỹ thuật được giữ lại trong log, không hiển thị trong giao diện."
+          description="Hệ thống chưa thể hoàn tất yêu cầu. Hãy thử lại; nếu lỗi tiếp tục, quay về trang trước và thử lại sau."
           onRetry={reset}
           title="Có lỗi xảy ra"
         />

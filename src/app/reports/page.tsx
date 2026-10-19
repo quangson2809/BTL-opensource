@@ -1,5 +1,7 @@
 import Link from "next/link";
 
+import { EmptyState } from "@/components/empty-state";
+
 import { requireBusinessAccount } from "@/lib/business";
 import { resolveReportRange } from "@/lib/reporting";
 import { rankReportRows } from "@/lib/report-leaderboard.mjs";
@@ -143,7 +145,12 @@ export default async function ReportsPage({ searchParams }: ReportsPageProps) {
               </table>
             </div>
           </section>
-        ) : null}
+        ) : (
+          <EmptyState
+            title="Chưa có dữ liệu xếp hạng"
+            description="Bảng xếp hạng sẽ xuất hiện khi có hoạt động được ghi nhận trong kỳ báo cáo."
+          />
+        )}
 
         <h2>So sánh cá nhân / nhóm</h2>
         <div className="table-scroll">
