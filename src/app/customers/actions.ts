@@ -70,8 +70,11 @@ export async function createCustomer(formData: FormData) {
 export async function updateCustomer(formData: FormData) {
   const customerId = field(formData, "customer_id");
   const payload = customerPayload(formData);
-  if (!isUuid(customerId) || !payload) {
+  if (!isUuid(customerId)) {
     redirect("/customers?error=invalid");
+  }
+  if (!payload) {
+    redirect("/customers/" + encodeURIComponent(customerId) + "/edit?error=invalid");
   }
 
   const { supabase } = await requireBusinessAccount();
