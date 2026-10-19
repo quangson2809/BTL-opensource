@@ -7,7 +7,7 @@ const readSource = (path) => readFile(new URL(path, import.meta.url), "utf8");
 test("draft persistence excludes credential-like names and sensitive input types", async () => {
   const source = await readSource("../src/components/form-draft-persistence.tsx");
 
-  assert.match(source, /SENSITIVE_NAME\s*=\s*\/password\|passwd\|otp\|token\|secret\|recovery\|credential\|authorization\|cookie\|csrf\|nonce\/i);
+  assert.ok(source.includes("const SENSITIVE_NAME = /password|passwd|otp|token|secret|recovery|credential|authorization|cookie|csrf|nonce/i;"));
   assert.match(source, /SENSITIVE_TYPE\s*=\s*new Set\(\["password", "hidden", "file", "submit", "button", "reset"\]\)/);
   assert.match(source, /if \(!control\.name \|\| SENSITIVE_NAME\.test\(control\.name\)\) return false/);
   assert.match(source, /SENSITIVE_TYPE\.has\(control\.type\)/);
