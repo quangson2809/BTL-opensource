@@ -1,5 +1,6 @@
 import Link from "next/link";
 
+import { FormDraftClear } from "@/components/form-draft-clear";
 import { ActionFeedback } from "@/components/action-feedback";
 import { EmptyState } from "@/components/empty-state";
 import { PageHeader } from "@/components/page-header";
@@ -14,7 +15,7 @@ import { parsePositivePage } from "@/lib/list-query.mjs";
 export const dynamic = "force-dynamic";
 
 type ActivitiesPageProps = {
-  searchParams: Promise<{ loai?: string; status?: string; error?: string; page?: string }>;
+  searchParams: Promise<{ loai?: string; status?: string; error?: string; page?: string; id?: string }>;
 };
 
 const activityTypes = new Set(["KHẢO_SÁT", "GẶP_GỠ", "TƯ_VẤN"]);
@@ -89,6 +90,7 @@ export default async function ActivitiesPage({
           description="Theo dõi lịch sử hoạt động theo phạm vi dữ liệu được cấp quyền."
           title="Hoạt động kinh doanh"
         />
+        <FormDraftClear scopeKey={accountId} persistKeys={["activity-create", ...(query.id ? ["activity-edit-" + query.id] : [])]} clearOn={query.status === "created" || query.status === "updated"} />
         {query.status ? <ActionFeedback status={query.status} /> : null}
         {query.error ? <ActionFeedback error={query.error} /> : null}
 
