@@ -68,6 +68,9 @@ test("draft clearing is gated on confirmed success or explicit cancellation", as
   assert.match(clear, /if \(!clearOn\) return/);
   assert.match(clear, /sessionStorage\.removeItem/);
   assert.match(cancel, /sessionStorage\.removeItem/);
+  assert.match(cancel, /event\.defaultPrevented/);
+  assert.match(cancel, /event\.metaKey/);
+  assert.match(cancel, /event\.currentTarget\.target === "_blank"/);
   assert.match(login, /clearOn=\{Boolean\(statusMessage\)\}/);
   assert.match(verify, /clearOn=\{otpSent\}/);
 });
