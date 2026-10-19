@@ -1,5 +1,7 @@
 import Link from "next/link";
 import { PublicHeader } from "@/components/public-header";
+import { GuardedForm } from "@/components/guarded-form";
+import { PendingSubmitButton } from "@/components/pending-submit-button";
 
 import { login } from "@/app/auth/actions";
 import { LOGIN_ERROR_MESSAGES } from "@/lib/auth-login-errors.mjs";
@@ -30,7 +32,7 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
         {errorMessage ? <p role="alert" aria-live="assertive" className="message error">{errorMessage}</p> : null}
 
         <p className="form-required-note"><span aria-hidden="true">*</span> Trường bắt buộc</p>
-        <form action={login} className="stack">
+        <GuardedForm action={login} className="stack">
           <label>
             Email
             <input name="email" type="email" autoComplete="email" required />
@@ -39,8 +41,8 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
             Mật khẩu
             <input name="password" type="password" autoComplete="current-password" required />
           </label>
-          <button type="submit">Đăng nhập</button>
-        </form>
+          <PendingSubmitButton pendingLabel="Đang đăng nhập…">Đăng nhập</PendingSubmitButton>
+        </GuardedForm>
 
         <p className="secondary-text">
           <Link href="/password/recovery">Quên mật khẩu?</Link>
