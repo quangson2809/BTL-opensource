@@ -114,5 +114,5 @@ export async function updateRole(formData: FormData) {
 
   refreshRolePages();
   revalidatePath("/admin/roles/" + roleId + "/edit");
-  redirect("/admin/roles?status=updated");
+  redirect("/admin/roles?status=updated&id=" + encodeURIComponent(roleId));
 }
