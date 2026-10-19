@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
+import { FormDraftPersistence } from "@/components/form-draft-persistence";
+import { GuardedForm } from "@/components/guarded-form";
 import { PageHeader } from "@/components/page-header";
 import { PendingSubmitButton } from "@/components/pending-submit-button";
 
@@ -30,7 +32,7 @@ export default async function EditRolePage({
   const [{ id }, query] = await Promise.all([params, searchParams]);
   if (!isUuid(id)) notFound();
 
-  const { supabase } = await requireAdmin();
+  const { supabase, accountId } = await requireAdmin();
   const [roleResult, permissionsResult, mappingResult] = await Promise.all([
     supabase
       .from("vai_tro")
@@ -79,7 +81,8 @@ export default async function EditRolePage({
           </p>
         ) : null}
 
-        <form action={updateRole} className="stack">
+        <FormDraftPersistence persistKey={"role-edit-" + roleResult.data.id} scopeKey={accountId} hasError={Boolean(query.error)} />
+        <GuardedForm action={updateRole} className="stack" data-persist-key={"role-edit-" + roleResult.data.id}>
           <input name="role_id" type="hidden" value={roleResult.data.id} />
           <fieldset className="form-section">
             <legend>Thông tin vai trò</legend>
@@ -144,7 +147,7 @@ export default async function EditRolePage({
               Hủy
             </Link>
           </div>
-        </form>
+        </GuardedForm>
       </section>
     </main>
   );
