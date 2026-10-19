@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { GuardedForm } from "@/components/guarded-form";
 
 import { ActionFeedback } from "@/components/action-feedback";
 import { PendingSubmitButton } from "@/components/pending-submit-button";
@@ -38,7 +39,7 @@ export default async function NewNotificationPage({
         ) : null}
         <FormDraftPersistence persistKey="notification-draft" hasError={Boolean(query.error)} />
         <p className="form-required-note"><span aria-hidden="true">*</span> Trường bắt buộc</p>
-        <form action={createNotification} className="stack notification-composer" data-persist-key="notification-draft">
+        <GuardedForm action={createNotification} className="stack notification-composer" data-persist-key="notification-draft">
           <fieldset className="form-section">
             <legend>Nội dung thông báo</legend>
             <div className="form-grid">
@@ -77,7 +78,7 @@ export default async function NewNotificationPage({
             <PendingSubmitButton pendingLabel="Đang tạo bản nháp…">Tạo bản nháp</PendingSubmitButton>
             <Link className="button-link button-secondary" href="/notifications">Hủy</Link>
           </div>
-        </form>
+        </GuardedForm>
       </section>
     </main>
   );
