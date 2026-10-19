@@ -140,9 +140,9 @@ export default async function EditNotificationPage({
             <PendingSubmitButton pendingLabel="Đang lưu bản nháp…">
               Lưu thay đổi
             </PendingSubmitButton>
-            <Link className="button-link button-secondary" href="/notifications">
+            <DraftCancelLink className="button-link button-secondary" href="/notifications" scopeKey={accountId} persistKeys={["notification-edit-" + notification.id]}>
               Hủy
-            </Link>
+            </DraftCancelLink>
           </div>
         </GuardedForm>
       </section>
