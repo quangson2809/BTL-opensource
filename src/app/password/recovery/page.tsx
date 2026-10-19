@@ -28,7 +28,8 @@ export default async function RecoveryPage({ searchParams }: RecoveryPageProps) 
         </p>
         {errorMessage ? <p role="alert" aria-live="assertive" className="message error">{errorMessage}</p> : null}
 
-        <GuardedForm action={requestPasswordRecovery} className="stack">
+        <FormDraftPersistence persistKey="password-recovery" scopeKey="public-auth" hasError={Boolean(errorMessage)} />
+        <GuardedForm action={requestPasswordRecovery} className="stack" data-persist-key="password-recovery">
           <label>
             Email
             <input name="email" type="email" autoComplete="email" required />
