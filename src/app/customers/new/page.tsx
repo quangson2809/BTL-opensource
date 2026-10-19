@@ -16,7 +16,7 @@ type NewCustomerPageProps = {
 
 export default async function NewCustomerPage({ searchParams }: NewCustomerPageProps) {
   const query = await searchParams;
-  await requireBusinessAccount();
+  const { accountId } = await requireBusinessAccount();
 
   return (
     <main>
@@ -27,7 +27,7 @@ export default async function NewCustomerPage({ searchParams }: NewCustomerPageP
           actions={<Link className="button-link button-secondary" href="/customers">Quay lại danh sách</Link>}
         />
         {query.error ? <ActionFeedback error={query.error} /> : null}
-        <FormDraftPersistence persistKey="customer-create" hasError={Boolean(query.error)} />
+        <FormDraftPersistence scopeKey={accountId} persistKey="customer-create" hasError={Boolean(query.error)} />
         <p className="form-required-note"><span aria-hidden="true">*</span> Các trường trong biểu mẫu đều bắt buộc.</p>
         <GuardedForm action={createCustomer} className="stack form-layout" data-persist-key="customer-create">
           <fieldset className="form-section">
