@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
+import { FormDraftClear } from "@/components/form-draft-clear";
 import { ActionFeedback } from "@/components/action-feedback";
 import { PageHeader } from "@/components/page-header";
 import { PendingSubmitButton } from "@/components/pending-submit-button";
@@ -17,7 +18,7 @@ type CustomerDetailPageProps = {
 
 export default async function CustomerDetailPage({ params, searchParams }: CustomerDetailPageProps) {
   const [{ id }, query] = await Promise.all([params, searchParams]);
-  const { supabase } = await requireBusinessAccount();
+  const { supabase, accountId } = await requireBusinessAccount();
   const { data: customer, error } = await supabase.from("khach_hang").select("*").eq("id", id).maybeSingle();
 
   if (error) throw new Error("Không thể tải khách hàng.");
@@ -36,6 +37,7 @@ export default async function CustomerDetailPage({ params, searchParams }: Custo
             </>
           }
         />
+        <FormDraftClear scopeKey={accountId} persistKeys={["customer-create", "customer-edit-" + customer.id]} clearOn={query.status === "created" || query.status === "updated"} />
         {query.status ? <ActionFeedback status={query.status} /> : null}
         {query.error ? <ActionFeedback error={query.error} /> : null}
         <section className="detail-section" aria-labelledby="customer-primary-title">
