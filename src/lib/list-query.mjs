@@ -8,3 +8,13 @@ export function parsePositivePage(value) {
   const parsed = Number(value);
   return Number.isSafeInteger(parsed) && parsed > 0 ? parsed : 1;
 }
+
+
+export function buildFilterHref(basePath, params, removedKey) {
+  const next = new URLSearchParams();
+  for (const [key, value] of Object.entries(params)) {
+    if (key !== removedKey && key !== "page" && value) next.set(key, value);
+  }
+  const query = next.toString();
+  return query ? basePath + "?" + query : basePath;
+}
