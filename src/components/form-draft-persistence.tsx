@@ -12,7 +12,7 @@ type DraftValue = string | string[];
 type DraftValues = Record<string, DraftValue>;
 
 const DRAFT_VERSION = 2;
-const MAX_DRAFT_BYTES = 32_768;
+const MAX_DRAFT_LENGTH = 32_768;
 const SENSITIVE_NAME = /password|passwd|otp|token|secret|recovery|credential|authorization|cookie|csrf|nonce/i;
 const SENSITIVE_TYPE = new Set(["password", "hidden", "file", "submit", "button", "reset"]);
 
@@ -76,7 +76,7 @@ function restoreDraft(form: HTMLFormElement, values: DraftValues) {
 function readDraft(storageKey: string): DraftValues | null {
   try {
     const stored = sessionStorage.getItem(storageKey);
-    if (!stored || stored.length > MAX_DRAFT_BYTES) return null;
+    if (!stored || stored.length > MAX_DRAFT_LENGTH) return null;
 
     const parsed: unknown = JSON.parse(stored);
     if (
@@ -94,7 +94,13 @@ function readDraft(storageKey: string): DraftValues | null {
 
     const values: DraftValues = {};
     for (const [name, value] of Object.entries(parsed.values)) {
-      if (!SENSITIVE_NAME.test(name) && isDraftValue(value)) {
+      if (
+        name !== "__proto__" &&
+        name !== "constructor" &&
+        name !== "prototype" &&
+        !SENSITIVE_NAME.test(name) &&
+        isDraftValue(value)
+      ) {
         values[name] = value;
       }
     }
@@ -162,7 +168,7 @@ export function FormDraftPersistence({
 
       try {
         const serialized = JSON.stringify({ version: DRAFT_VERSION, values });
-        if (serialized.length <= MAX_DRAFT_BYTES) {
+        if (serialized.length <= MAX_DRAFT_LENGTH) {
           sessionStorage.setItem(storageKey, serialized);
         }
       } catch {
