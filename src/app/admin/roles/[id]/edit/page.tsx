@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { DraftCancelLink } from "@/components/draft-cancel-link";
