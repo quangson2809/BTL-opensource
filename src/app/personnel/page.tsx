@@ -66,7 +66,9 @@ export default async function PersonnelPage({ searchParams }: PersonnelPageProps
   const visibleRows = search
     ? (() => {
         const term = search.toLocaleLowerCase("vi-VN");
-        const accountsById = new Map(accounts.map((account) => [account.id, account]));
+        const accountsById = new Map<string, AccountRow>(
+          accounts.map((account) => [account.id, account] as const),
+        );
         const visibleIds = new Set<string>();
 
         for (const account of accounts) {
