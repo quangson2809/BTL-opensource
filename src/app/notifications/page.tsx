@@ -1,5 +1,6 @@
 import Link from "next/link";
 
+import { FormDraftClear } from "@/components/form-draft-clear";
 import { ActionFeedback } from "@/components/action-feedback";
 import { EmptyState } from "@/components/empty-state";
 import { PageHeader } from "@/components/page-header";
@@ -25,6 +26,7 @@ type NotificationsPageProps = {
     loai?: string;
     trang_thai?: string;
     page?: string;
+    id?: string;
   }>;
 };
 
@@ -125,6 +127,7 @@ export default async function NotificationsPage({
           title="Thông báo"
         />
 
+        <FormDraftClear scopeKey={accountId} persistKeys={["notification-draft", ...(query.id ? ["notification-edit-" + query.id] : [])]} clearOn={query.status === "created" || query.status === "updated"} />
         {query.status ? <ActionFeedback status={query.status} /> : null}
         {query.error ? <ActionFeedback error={query.error} /> : null}
 
