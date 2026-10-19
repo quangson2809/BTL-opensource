@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { GuardedForm } from "@/components/guarded-form";
+import { FormDraftPersistence } from "@/components/form-draft-persistence";
 import { PendingSubmitButton } from "@/components/pending-submit-button";
 
 import { requestPasswordRecovery } from "@/app/auth/actions";
