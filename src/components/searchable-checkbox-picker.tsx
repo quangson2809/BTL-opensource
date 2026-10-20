@@ -130,7 +130,18 @@ export function SearchableCheckboxPicker({
       {options.length === 0 ? (
         <p className="searchable-picker-empty" role="status">{emptyMessage}</p>
       ) : (
-        <div aria-label={searchLabel} className="searchable-picker-list" role="group" aria-required={required}>
+        <>
+          {required ? (
+            <p className="field-help" id={id + "-required-help"}>
+              Bắt buộc chọn ít nhất một mục.
+            </p>
+          ) : null}
+          <div
+            aria-describedby={required ? id + "-required-help" : undefined}
+            aria-label={searchLabel}
+            className="searchable-picker-list"
+            role="group"
+          >
           {groupedOptions.map(({ groupName, options: groupOptions }) => {
             const visibleGroup = groupOptions.some(matches);
             return (
@@ -170,7 +181,8 @@ export function SearchableCheckboxPicker({
           {matchedCount === 0 ? (
             <p className="searchable-picker-empty" role="status">{noResultsMessage}</p>
           ) : null}
-        </div>
+          </div>
+        </>
       )}
 
       {required && selectionError ? (
