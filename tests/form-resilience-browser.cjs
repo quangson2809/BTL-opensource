@@ -38,6 +38,69 @@ async function readDraft(page, key) {
   });
 
   try {
+    const responsiveRoutes = [
+      { path: "/", hasForm: false },
+      { path: "/login", hasForm: true },
+      { path: "/register", hasForm: true },
+      { path: "/password/recovery", hasForm: true },
+      { path: "/password/recovery/verify?email=qa%40example.test&status=otp-sent", hasForm: true },
+    ];
+    const requiredViewports = [375, 768, 1024, 1440];
+
+    for (const width of requiredViewports) {
+      await page.setViewportSize({ width, height: 900 });
+      for (const route of responsiveRoutes) {
+        await page.goto(baseURL + route.path);
+        await page.locator("body").waitFor();
+        const layout = await page.evaluate(() => ({
+          viewportWidth: document.documentElement.clientWidth,
+          documentScrollWidth: document.documentElement.scrollWidth,
+          bodyScrollWidth: document.body.scrollWidth,
+        }));
+        assert.ok(
+          layout.documentScrollWidth <= layout.viewportWidth + 1 &&
+            layout.bodyScrollWidth <= layout.viewportWidth + 1,
+          route.path + " has page-level horizontal overflow at " + width + "px: " + JSON.stringify(layout),
+        );
+
+        if (route.hasForm) {
+          const unlabeledControls = await page.locator("input:not([type='hidden']), select, textarea").evaluateAll((elements) =>
+            elements
+              .filter((element) => {
+                const control = element;
+                return !control.labels?.length &&
+                  !control.getAttribute("aria-label") &&
+                  !control.getAttribute("aria-labelledby");
+              })
+              .map((element) => element.outerHTML.slice(0, 160)),
+          );
+          assert.deepEqual(
+            unlabeledControls,
+            [],
+            route.path + " has input controls without an accessible name at " + width + "px",
+          );
+        }
+      }
+
+      await page.goto(baseURL + "/login");
+      await page.keyboard.press("Tab");
+      const focusIndicator = await page.evaluate(() => {
+        const element = document.activeElement;
+        const style = element ? getComputedStyle(element) : null;
+        return {
+          tagName: element?.tagName,
+          outlineStyle: style?.outlineStyle,
+          outlineWidth: style?.outlineWidth,
+        };
+      });
+      assert.ok(
+        focusIndicator.outlineStyle !== "none" && Number.parseFloat(focusIndicator.outlineWidth ?? "0") >= 2,
+        "Keyboard focus indicator must be visible at " + width + "px: " + JSON.stringify(focusIndicator),
+      );
+    }
+    console.log("Responsive browser checks passed at 375/768/1024/1440px: public-route overflow, form accessible names, and keyboard focus.");
+
+    await page.setViewportSize({ width: 1280, height: 720 });
     const loginKey = draftPrefix + "login";
     await page.goto(baseURL + "/login");
     await page.locator('form[data-persist-key="login"][data-draft-persistence-ready="true"]').waitFor();
