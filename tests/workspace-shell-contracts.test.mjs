@@ -34,7 +34,8 @@ test("account details menu closes on Escape, outside pointer interaction, and na
 test("breadcrumbs include existing role and notification detail routes without inventing links", () => {
   assert.match(appFrame, /"\/admin\/roles"/);
   assert.match(appFrame, /customers\|activities\|personnel\|notifications/);
-  assert.match(appFrame, /accounts\|roles/);
+  assert.ok(appFrame.includes('if (/^\\/admin\\/accounts\\/[0-9a-f-]{36}$/i.test(path)) return path;'));
+  assert.equal(appFrame.includes("(accounts|roles)"), false);
   assert.match(appFrame, /return undefined/);
 });
 
