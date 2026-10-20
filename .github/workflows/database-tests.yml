@@ -137,8 +137,37 @@ jobs:
             exit 1
           fi
 
-          if ! npm exec --yes --package=playwright -- sh -c 'NODE_PATH="$(dirname "$(dirname "$(command -v playwright)")")" node tests/phase6-visual-screenshots.cjs'; then
+          cp tests/phase6-visual-screenshots.cjs /tmp/phase6-visual-screenshots.cjs
+          if ! PHASE6_SCREENSHOT_PREFIX=after- PHASE6_SOURCE_SHA="$GITHUB_SHA" npm exec --yes --package=playwright -- sh -c 'NODE_PATH="$(dirname "$(dirname "$(command -v playwright)")")" node tests/phase6-visual-screenshots.cjs'; then
             cat /tmp/idaily-browser.log
+            exit 1
+          fi
+          kill "$APP_PID"
+          wait "$APP_PID" 2>/dev/null || true
+          trap - EXIT
+
+          # Re-run the same route/viewport matrix on the pre-fix baseline.
+          # Baseline overflow is recorded but is not allowed to fail the post-fix gate.
+          git checkout --detach 1aeb11802438c53583a587b9fb25c7d62daa6223
+          npm ci
+          cp /tmp/phase6-visual-screenshots.cjs tests/phase6-visual-screenshots.cjs
+          ./node_modules/.bin/next dev -p 3000 > /tmp/idaily-browser-baseline.log 2>&1 &
+          APP_PID=$!
+          trap 'kill "$APP_PID" 2>/dev/null || true' EXIT
+
+          for attempt in {1..60}; do
+            if curl -fsS http://127.0.0.1:3000/login >/dev/null; then
+              break
+            fi
+            if [ "$attempt" -eq 60 ]; then
+              cat /tmp/idaily-browser-baseline.log
+              exit 1
+            fi
+            sleep 1
+          done
+
+          if ! PHASE6_SCREENSHOT_PREFIX=before- PHASE6_SOURCE_SHA=1aeb11802438c53583a587b9fb25c7d62daa6223 PHASE6_CAPTURE_ONLY=true npm exec --yes --package=playwright -- sh -c 'NODE_PATH="$(dirname "$(dirname "$(command -v playwright)")")" node tests/phase6-visual-screenshots.cjs'; then
+            cat /tmp/idaily-browser-baseline.log
             exit 1
           fi
           kill "$APP_PID"

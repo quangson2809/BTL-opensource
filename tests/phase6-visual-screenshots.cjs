@@ -6,6 +6,8 @@ const { createClient } = require("@supabase/supabase-js");
 const { chromium } = require("playwright");
 
 const baseURL = process.env.E2E_BASE_URL || "http://localhost:3000";
+const screenshotPrefix = process.env.PHASE6_SCREENSHOT_PREFIX || "";
+const captureOnly = process.env.PHASE6_CAPTURE_ONLY === "true";
 const apiURL = process.env.API_URL;
 const serviceRoleKey = process.env.SERVICE_ROLE_KEY;
 const anonKey = process.env.ANON_KEY;
@@ -155,15 +157,25 @@ async function main() {
           documentScrollWidth: document.documentElement.scrollWidth,
           bodyScrollWidth: document.body.scrollWidth,
         }));
-        assert.ok(
-          layout.documentScrollWidth <= layout.viewportWidth + 1 &&
-            layout.bodyScrollWidth <= layout.viewportWidth + 1,
-          route.name + " horizontal overflow at " + viewport.label + ": " + JSON.stringify(layout),
-        );
-        layouts.push({ page: route.name, viewport: viewport.label, heading });
+        const hasHorizontalOverflow =
+          layout.documentScrollWidth > layout.viewportWidth + 1 ||
+          layout.bodyScrollWidth > layout.viewportWidth + 1;
+        if (hasHorizontalOverflow && captureOnly) {
+          console.warn(
+            "PHASE6_BASELINE_HORIZONTAL_OVERFLOW",
+            JSON.stringify({ page: route.name, viewport: viewport.label, ...layout }),
+          );
+        } else {
+          assert.equal(
+            hasHorizontalOverflow,
+            false,
+            route.name + " horizontal overflow at " + viewport.label + ": " + JSON.stringify(layout),
+          );
+        }
+        layouts.push({ page: route.name, viewport: viewport.label, heading, horizontalOverflow: hasHorizontalOverflow });
 
         await page.screenshot({
-          path: path.join("artifacts", "phase6", route.name + "-" + viewport.label + ".png"),
+          path: path.join("artifacts", "phase6", screenshotPrefix + route.name + "-" + viewport.label + ".png"),
           fullPage: true,
           animations: "disabled",
         });
@@ -172,7 +184,7 @@ async function main() {
 
     console.log(JSON.stringify({
       event: "phase6_visual_acceptance_screenshots_captured",
-      sourceSha: process.env.GITHUB_SHA || "provided by CI run",
+      sourceSha: process.env.PHASE6_SOURCE_SHA || process.env.GITHUB_SHA || "provided by CI run",
       viewports: ["1440x900", "375x812"],
       pages: layouts,
       screenshotDirectory: "artifacts/phase6",
