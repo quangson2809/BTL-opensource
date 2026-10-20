@@ -787,16 +787,6 @@ tbody tr:hover {
   box-shadow: none;
 }
 .page-content { display: grid; gap: 1.5rem; }
-.page-header {
-  display: flex; align-items: flex-start; justify-content: space-between;
-  gap: 1.25rem; margin-bottom: 0.25rem;
-}
-.page-header h1 { margin: 0; }
-.page-header-copy { min-width: 0; }
-.page-header-description { max-width: 48rem; margin-top: 0.55rem; color: var(--color-ink-soft); }
-.page-header-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 0.65rem; }
-.page-header-actions form { margin: 0; }
-.page-header-actions form button { margin-top: 0; }
 .button-secondary, .button-link.button-secondary {
   border-color: var(--color-border); background: #fff; color: var(--color-brand-strong); box-shadow: none;
 }
@@ -892,8 +882,6 @@ tbody tr:hover {
 @media (max-width: 64rem) { .metric-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 @media (max-width: 46rem) {
   .workspace-content > main { padding: 1rem; }
-  .page-header { flex-direction: column; }
-  .page-header-actions, .page-header-actions > a, .page-header-actions > form, .page-header-actions > form > button { width: 100%; }
   .metric-grid, .form-grid { grid-template-columns: minmax(0, 1fr); }
   .form-grid .field-full { grid-column: auto; }
   .record-row, .action-needed-row { align-items: stretch; flex-direction: column; }
@@ -957,21 +945,10 @@ tbody tr:hover {
   background: #fff;
   color: var(--color-ink-soft);
 }
-.loading-indicator {
-  width: 1.8rem;
-  height: 1.8rem;
-  border: 3px solid var(--color-border);
-  border-top-color: var(--color-brand);
-  border-radius: 50%;
-  animation: idaily-loading-spin 750ms linear infinite;
-}
-@keyframes idaily-loading-spin { to { transform: rotate(360deg); } }
 @media (max-width: 46rem) {
   .recent-activity-list .record-row { align-items: flex-start; flex-direction: column; }
 }
-@media (prefers-reduced-motion: reduce) {
-  .loading-indicator { animation: none; }
-}
+
 
 
 /* Phase 4: make active list filters visible and individually removable. */

@@ -50,9 +50,18 @@ test("workspace shell keeps drawer and account panel within mobile viewport", ()
   assert.match(workspaceCss, /\.table-scroll\s*\{[^}]*max-width: 100%/s);
 });
 
-test("keyboard focus remains high contrast and reduced motion is supported", () => {
-  assert.match(globalCss, /input:focus-visible,\s*select:focus-visible,\s*textarea:focus-visible\s*\{[^}]*outline: 3px solid #805700/s);
-  assert.match(globalCss, /a:focus-visible,[\s\S]*?outline: 3px solid #805700/);
+test("authenticated page header styling is owned by workspace.css", () => {
+  assert.doesNotMatch(globalCss, /\.page-header(?:\s|\{|,|\.)/);
+  assert.match(workspaceCss, /\.page-header-description\s*\{[^}]*max-width:\s*48rem;[^}]*margin-top:\s*0\.55rem/s);
+  assert.match(workspaceCss, /\.page-header-actions\s*\{[^}]*align-items:\s*center/s);
+  assert.match(workspaceCss, /\.page-header-actions form button\s*\{\s*margin-top:\s*0;/);
+  assert.match(workspaceCss, /@media \(max-width: 46rem\)[\s\S]*?\.page-header-actions > form > button \{ width: 100%; \}/);
+});
+
+test("keyboard focus uses the shared semantic focus token and reduced motion is supported", () => {
+  assert.match(globalCss, /--color-focus:\s*#805700;/);
+  assert.match(globalCss, /input:focus-visible,\s*select:focus-visible,\s*textarea:focus-visible\s*\{[^}]*outline: 3px solid var\(--color-focus\);/s);
+  assert.match(globalCss, /a:focus-visible,[\s\S]*?outline: 3px solid var\(--color-focus\);/);
   assert.match(globalCss, /prefers-reduced-motion: reduce/);
   assert.match(workspaceCss, /prefers-reduced-motion: reduce/);
 });
@@ -65,10 +74,11 @@ test("navigation maintains current-page semantics and icon-only controls have na
 });
 
 
-test("secondary text and form controls use high-contrast tokens", () => {
-  assert.match(globalCss, /--color-muted: #5e6e63/);
-  assert.match(globalCss, /border: 1px solid #7d8f83/);
-  assert.match(globalCss, /input::placeholder,[\s\S]*?color: #5e6e63/);
+test("secondary text and form controls consume semantic contrast tokens", () => {
+  assert.match(globalCss, /--color-muted:\s*#5e6e63;/);
+  assert.match(globalCss, /--color-border-control:\s*#7d8f83;/);
+  assert.match(globalCss, /border:\s*1px solid var\(--color-border-control\);/);
+  assert.match(globalCss, /input::placeholder,[\s\S]*?color: var\(--color-muted\);/);
 });
 
 test("required checkbox groups use supported descriptions instead of invalid aria-required", () => {
