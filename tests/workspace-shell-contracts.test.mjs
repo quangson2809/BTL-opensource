@@ -57,9 +57,10 @@ test("authenticated page header styling is owned by workspace.css", () => {
   assert.match(workspaceCss, /\.page-header-actions form button\s*\{\s*margin-top:\s*0;/);
   assert.match(workspaceCss, /@media \(max-width: 46rem\)[\s\S]*?\.page-header-actions > form > button \{ width: 100%; \}/);
   assert.equal([...globalCss.matchAll(/\.loading-indicator\s*\{/g)].length, 0);
-  assert.equal([...workspaceCss.matchAll(/\.loading-indicator\s*\{/g)].length, 1);
+  assert.match(workspaceCss, /\.loading-indicator\s*\{\s*width: 1\.5rem;\s*height: 1\.5rem;/s);
   assert.equal([...globalCss.matchAll(/@keyframes\s+idaily-loading-spin/g)].length, 0);
   assert.equal([...workspaceCss.matchAll(/@keyframes\s+workspace-loading/g)].length, 1);
+  assert.match(workspaceCss, /\.workspace-sidebar,\s*\.loading-indicator\s*\{[^}]*animation: none/s);
 });
 
 test("keyboard focus uses the shared semantic focus token and reduced motion is supported", () => {
