@@ -5,6 +5,7 @@ import { test } from "node:test";
 const appFrame = await readFile(new URL("../src/components/app-frame.tsx", import.meta.url), "utf8");
 const workspaceCss = await readFile(new URL("../src/app/workspace.css", import.meta.url), "utf8");
 const globalCss = await readFile(new URL("../src/app/globals.css", import.meta.url), "utf8");
+const picker = await readFile(new URL("../src/components/searchable-checkbox-picker.tsx", import.meta.url), "utf8");
 
 test("mobile navigation drawer exposes a dismiss control and modal semantics", () => {
   assert.match(appFrame, /className="workspace-sidebar-close"/);
@@ -64,4 +65,11 @@ test("secondary text and form controls use high-contrast tokens", () => {
   assert.match(globalCss, /--color-muted: #5e6e63/);
   assert.match(globalCss, /border: 1px solid #7d8f83/);
   assert.match(globalCss, /input::placeholder,[\s\S]*?color: #5e6e63/);
+});
+
+test("required checkbox groups use supported descriptions instead of invalid aria-required", () => {
+  assert.doesNotMatch(picker, /aria-required=/);
+  assert.match(picker, /aria-describedby=\{required \? id \+ "-required-help" : undefined\}/);
+  assert.match(picker, /id=\{id \+ "-required-help"\}/);
+  assert.match(picker, /Bắt buộc chọn ít nhất một mục/);
 });
