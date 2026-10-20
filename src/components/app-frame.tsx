@@ -286,13 +286,21 @@ export function AppFrame({ children }: Readonly<{ children: ReactNode }>) {
     (item) => !item.roles || item.roles.some((role) => roles.has(role)),
   );
   const segments = pathname.split("/").filter(Boolean);
-  const breadcrumbs = segments.map((segment, index) => ({
-    href: breadcrumbHref(segments, index),
-    key: "/" + segments.slice(0, index + 1).join("/"),
+  const breadcrumbSegments = segments.filter((segment, index) => {
+    const isRoleEditIdentifier =
+      segments[index - 2] === "admin" &&
+      segments[index - 1] === "roles" &&
+      isIdentifierSegment(segment) &&
+      segments[index + 1] === "edit";
+    return !isRoleEditIdentifier;
+  });
+  const breadcrumbs = breadcrumbSegments.map((segment, index) => ({
+    href: breadcrumbHref(breadcrumbSegments, index),
+    key: "/" + breadcrumbSegments.slice(0, index + 1).join("/"),
     label: isIdentifierSegment(segment)
       ? "Chi tiết"
       : routeLabels[segment] ?? segment,
-    current: index === segments.length - 1,
+    current: index === breadcrumbSegments.length - 1,
   }));
 
   function closeAccountMenu() {
