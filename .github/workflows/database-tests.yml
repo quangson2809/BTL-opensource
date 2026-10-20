@@ -148,6 +148,7 @@ jobs:
 
           # Re-run the same route/viewport matrix on the pre-fix baseline.
           # Baseline overflow is recorded but is not allowed to fail the post-fix gate.
+          git fetch --no-tags --depth=1 origin 1aeb11802438c53583a587b9fb25c7d62daa6223
           git checkout --detach 1aeb11802438c53583a587b9fb25c7d62daa6223
           npm ci
           cp /tmp/phase6-visual-screenshots.cjs tests/phase6-visual-screenshots.cjs

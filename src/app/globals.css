@@ -813,9 +813,16 @@ tbody tr:hover {
 .pagination a:hover { border-color: #a8c8b1; background: var(--color-brand-soft); }
 .pagination-disabled { color: #929c95; background: #f5f7f5; }
 .record-row {
-  display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem; min-width: 0;
-  border: 1px solid var(--color-border); border-radius: var(--radius-md); padding: 1.1rem 1.2rem;
-  background: var(--color-surface); box-shadow: 0 5px 18px rgb(24 55 38 / 4%);
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  align-items: flex-start;
+  gap: 0.35rem;
+  min-width: 0;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: 1.1rem 1.2rem;
+  background: var(--color-surface);
+  box-shadow: 0 5px 18px rgb(24 55 38 / 4%);
 }
 .record-row > :first-child, .record-row-main { min-width: 0; }
 .record-row p + p { margin-top: 0.25rem; }
@@ -884,7 +891,8 @@ tbody tr:hover {
   .workspace-content > main { padding: 1rem; }
   .metric-grid, .form-grid { grid-template-columns: minmax(0, 1fr); }
   .form-grid .field-full { grid-column: auto; }
-  .record-row, .action-needed-row { align-items: stretch; flex-direction: column; }
+  .record-row, .action-needed-row { align-items: stretch; }
+  .action-needed-row { flex-direction: column; }
   .record-row .actions { flex-direction: column; }
   .pagination { align-items: flex-start; flex-direction: column; }
   .pagination-actions { width: 100%; }
@@ -922,11 +930,6 @@ tbody tr:hover {
 
 
 /* Final responsive refinements */
-.record-row {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr);
-  gap: 0.35rem;
-}
 .recent-activity-list .record-row {
   display: flex;
   align-items: flex-start;
