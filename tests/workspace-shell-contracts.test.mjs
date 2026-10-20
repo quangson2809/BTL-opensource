@@ -36,6 +36,9 @@ test("breadcrumbs include existing role and notification detail routes without i
   assert.match(appFrame, /customers\|activities\|personnel\|notifications/);
   assert.ok(appFrame.includes('if (/^\\/admin\\/accounts\\/[0-9a-f-]{36}$/i.test(path)) return path;'));
   assert.equal(appFrame.includes("(accounts|roles)"), false);
+  assert.match(appFrame, /segments\[index - 2\] === "admin"/);
+  assert.match(appFrame, /segments\[index - 1\] === "roles"/);
+  assert.match(appFrame, /segments\[index \+ 1\] === "edit"/);
   assert.match(appFrame, /return undefined/);
 });
 
