@@ -135,9 +135,23 @@ jobs:
             cat /tmp/idaily-browser.log
             exit 1
           fi
+
+          if ! npm exec --yes --package=playwright -- sh -c 'NODE_PATH="$(dirname "$(dirname "$(command -v playwright)")")" node tests/phase6-visual-screenshots.cjs'; then
+            cat /tmp/idaily-browser.log
+            exit 1
+          fi
           kill "$APP_PID"
           wait "$APP_PID" 2>/dev/null || true
           trap - EXIT
+
+      - name: Upload Phase 6 visual acceptance screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: phase6-visual-acceptance-${{ github.sha }}
+          path: artifacts/phase6/**
+          if-no-files-found: warn
+          retention-days: 14
 
       - name: Stop local Supabase
         if: always()
