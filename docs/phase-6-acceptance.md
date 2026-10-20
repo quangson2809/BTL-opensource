@@ -3,14 +3,15 @@
 **Branch:** `feature/phase-6-design-system`  
 **PR:** [#32](https://github.com/quangson2809/BTL-opensource/pull/32)  
 **Latest implementation branch:** `feature/phase-6-design-system`  
-**Acceptance state:** **CI verification is tied to the latest PR head; visual acceptance remains open. Do not mark the entire phase PASS yet.**
+**Acceptance state:** **CI and automated authenticated visual capture PASS on `ef066c1f8ea1321bdb30b2af53784f71f760f073`; manual visual/accessibility review and development-only dependency risk remain open. Do not mark the entire phase PASS yet.**
 
 ## 1. CI and test evidence
 
 - [x] Historical GitHub Actions CI and Database Tests passed together on code commit `2306a096`: [CI run](https://github.com/quangson2809/BTL-opensource/actions/runs/39411914717), [Database Tests run](https://github.com/quangson2809/BTL-opensource/actions/runs/39411914816).
 - [x] Independent verification of the UI/state-contract source: `npm ci`, `npm run lint`, `npm run type-check`, `npm run test:contracts` (84/84), `npm run security-check`, and `npm run build` passed locally with Next.js `16.4.2`.
 - [x] Stabilized the browser focus check so it waits for the hydrated login form before sending Tab; this addresses the observed BODY-focused timing failure in the browser-resilience workflow.
-- **Final-SHA gate:** use the live [PR #32 checks](https://github.com/quangson2809/BTL-opensource/pull/32) and verify both workflows report success for the same current head SHA. Historical green runs are not evidence for a later commit.
+- [x] Final-SHA gate verified on `ef066c1f8ea1321bdb30b2af53784f71f760f073`: [CI](https://github.com/quangson2809/BTL-opensource/actions/runs/39451393481) and [Database Tests](https://github.com/quangson2809/BTL-opensource/actions/runs/39451393238) both succeeded for the same SHA.
+- [x] Authenticated browser screenshot job succeeded in Database Tests and uploaded [Phase 6 visual screenshots (24 files, 14-day retention)](https://github.com/quangson2809/BTL-opensource/actions/runs/39451393238/artifacts/12278542645).
 
 ## 2. CSS and shared-component audit
 
@@ -33,7 +34,7 @@
 
 ## 4. Actual-browser screenshots
 
-The screenshots below were captured with Playwright from the **local production build** at the recorded source SHAs; they are not AI-generated. They cover the public login form only. Placeholder public Supabase configuration was used to allow the app shell to render; these images are not evidence of live authentication or backend behavior.
+The screenshots below were captured by Playwright from the **local production build**, with a temporary SA account and customer/activity fixtures created in the **ephemeral local Supabase database inside GitHub Actions**. They are real rendered app screenshots, not AI-generated or manually composed. The latest run captured six routes at 1440 × 900 and 375 × 812 (12 route/viewport combinations) and asserted each page heading plus document/body horizontal overflow. The fixture is CI-only and does not use production credentials or production data. The artifact contains 24 files and expires on 2026-11-03.
 
 ### Baseline — commit `1aeb11802438c53583a587b9fb25c7d62daa6223`
 
@@ -45,11 +46,13 @@ The screenshots below were captured with Playwright from the **local production 
 - [After — 1440 × 900](https://d2ol7oe51mr4n9.cloudfront.net/user_3JdfKvR07KrtCXkHeuZWp7KcS8e/7b910605-e499-40e5-b5c1-854c38ac49fd.jpg)
 - [After — 375 × 812](https://d2ol7oe51mr4n9.cloudfront.net/user_3JdfKvR07KrtCXkHeuZWp7KcS8e/3a9804d7-c8fe-425e-a408-8b4e4ba6d3ab.jpg)
 
-- [ ] Capture and inspect authenticated dashboard, customer list, customer detail, customer form and reports at both 1440 × 900 and 375 × 812 using a valid test account/session.
-- [ ] Capture loading/error/empty state examples from real application state, not hand-built approximations.
-- [ ] Complete keyboard-only and screen-reader smoke testing in a real browser.
+- [x] Capture authenticated dashboard, customer list, customer detail, customer form, reports, and filtered empty list at both viewports using a temporary authenticated SA account. Evidence: [download actual Playwright screenshots](https://github.com/quangson2809/BTL-opensource/actions/runs/39451393238/artifacts/12278542645).
+- [x] Assert route heading and document/body horizontal overflow for all 12 route/viewport combinations; CI reported no horizontal overflow at 1440 × 900 or 375 × 812.
+- [ ] Inspect all screenshot images visually for spacing, clipping, contrast, hierarchy and card/wrapper behavior. Automated assertions do not prove aesthetic quality.
+- [ ] Capture loading and error boundaries from deliberately induced real application states. The empty-list screenshot is backed by an actual filtered query; loading/error screenshot coverage is not yet complete.
+- [ ] Complete keyboard-only and screen-reader smoke testing in a real browser. Existing browser tests cover focus and form accessible names, but do not replace a full manual assistive-technology review.
 
-**Why these items remain open:** the Vercel preview deployment is marked READY, but the available preview URL is SSO-protected in this session and redirected the capture browser to Vercel login. The independent sandbox has no Docker runtime to start a local Supabase instance or mint a legitimate authenticated test session. The repository's CI browser test passed, but does not produce visual evidence for authenticated workspace routes. These limitations are recorded rather than treated as PASS.
+**Remaining limitations:** screenshots are genuine authenticated CI browser captures, but automated checks only validate page headings and horizontal overflow, not full visual correctness or screen-reader output. Do not remove wrappers/cards without evidence about layout, responsive behavior, and accessibility.
 
 ## 5. Security/dependency follow-up
 
