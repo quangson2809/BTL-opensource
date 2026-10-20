@@ -2,7 +2,7 @@
   color-scheme: light;
   --color-ink: #18231f;
   --color-ink-soft: #53625b;
-  --color-muted: #738078;
+  --color-muted: #5e6e63;
   --color-brand: #176b4d;
   --color-brand-strong: #10543b;
   --color-brand-soft: #e8f4ed;
@@ -66,7 +66,7 @@ button:focus-visible,
 input:focus-visible,
 select:focus-visible,
 textarea:focus-visible {
-  outline: 3px solid rgb(216 169 58 / 75%);
+  outline: 3px solid #805700;
   outline-offset: 3px;
 }
 
@@ -150,7 +150,7 @@ select,
 textarea {
   width: 100%;
   min-height: 2.85rem;
-  border: 1px solid #c7d4ca;
+  border: 1px solid #7d8f83;
   border-radius: var(--radius-sm);
   padding: 0.72rem 0.85rem;
   background: var(--color-surface);
@@ -162,13 +162,13 @@ textarea {
 
 input::placeholder,
 textarea::placeholder {
-  color: #87938b;
+  color: #5e6e63;
 }
 
 input:hover,
 select:hover,
 textarea:hover {
-  border-color: #8eaa97;
+  border-color: #6f8b78;
 }
 
 input:focus,
@@ -176,7 +176,13 @@ select:focus,
 textarea:focus {
   border-color: var(--color-brand);
   box-shadow: 0 0 0 3px rgb(23 107 77 / 12%);
-  outline: none;
+}
+
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline: 3px solid #805700;
+  outline-offset: 2px;
 }
 
 input:disabled,

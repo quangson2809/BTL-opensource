@@ -88,10 +88,11 @@ function breadcrumbHref(segments: string[], index: number) {
     "/notifications",
     "/reports",
     "/admin/accounts",
+    "/admin/roles",
   ];
 
   if (navigableRoots.includes(path)) return path;
-  if (/^\/(customers|activities|personnel)\/[0-9a-f-]{36}$/i.test(path)) return path;
+  if (/^\/(customers|activities|personnel|notifications)\/[0-9a-f-]{36}$/i.test(path)) return path;
   if (/^\/admin\/accounts\/[0-9a-f-]{36}$/i.test(path)) return path;
   return undefined;
 }
@@ -122,6 +123,23 @@ export function AppFrame({ children }: Readonly<{ children: ReactNode }>) {
     updateViewport();
     mediaQuery.addEventListener("change", updateViewport);
     return () => mediaQuery.removeEventListener("change", updateViewport);
+  }, []);
+
+  useEffect(() => {
+    const closeAccountMenuOutside = (event: PointerEvent) => {
+      const menu = accountMenuRef.current;
+      if (
+        !menu?.open ||
+        !(event.target instanceof Node) ||
+        menu.contains(event.target)
+      ) {
+        return;
+      }
+      menu.open = false;
+    };
+
+    document.addEventListener("pointerdown", closeAccountMenuOutside);
+    return () => document.removeEventListener("pointerdown", closeAccountMenuOutside);
   }, []);
 
   useEffect(() => {
@@ -207,10 +225,10 @@ export function AppFrame({ children }: Readonly<{ children: ReactNode }>) {
 
     const sidebar = sidebarRef.current;
     const menuToggle = menuToggleRef.current;
-    const firstNavigationLink = sidebar?.querySelector<HTMLElement>(
-      ".workspace-navigation a[href]",
+    const firstFocusable = sidebar?.querySelector<HTMLElement>(
+      ".workspace-sidebar-close, .workspace-navigation a[href]",
     );
-    firstNavigationLink?.focus();
+    firstFocusable?.focus();
 
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
@@ -247,12 +265,13 @@ export function AppFrame({ children }: Readonly<{ children: ReactNode }>) {
       }
     };
 
+    const previousBodyOverflow = document.body.style.overflow;
     document.addEventListener("keydown", onKeyDown);
     document.body.style.overflow = "hidden";
 
     return () => {
       document.removeEventListener("keydown", onKeyDown);
-      document.body.style.overflow = "";
+      document.body.style.overflow = previousBodyOverflow;
       if (window.matchMedia("(max-width: 46rem)").matches) {
         menuToggle?.focus();
       } else {
@@ -267,13 +286,21 @@ export function AppFrame({ children }: Readonly<{ children: ReactNode }>) {
     (item) => !item.roles || item.roles.some((role) => roles.has(role)),
   );
   const segments = pathname.split("/").filter(Boolean);
-  const breadcrumbs = segments.map((segment, index) => ({
-    href: breadcrumbHref(segments, index),
-    key: "/" + segments.slice(0, index + 1).join("/"),
+  const breadcrumbSegments = segments.filter((segment, index) => {
+    const isRoleEditIdentifier =
+      segments[index - 2] === "admin" &&
+      segments[index - 1] === "roles" &&
+      isIdentifierSegment(segment) &&
+      segments[index + 1] === "edit";
+    return !isRoleEditIdentifier;
+  });
+  const breadcrumbs = breadcrumbSegments.map((segment, index) => ({
+    href: breadcrumbHref(breadcrumbSegments, index),
+    key: "/" + breadcrumbSegments.slice(0, index + 1).join("/"),
     label: isIdentifierSegment(segment)
       ? "Chi tiết"
       : routeLabels[segment] ?? segment,
-    current: index === segments.length - 1,
+    current: index === breadcrumbSegments.length - 1,
   }));
 
   function closeAccountMenu() {
@@ -297,6 +324,16 @@ export function AppFrame({ children }: Readonly<{ children: ReactNode }>) {
         inert={isMobileViewport && !mobileNavigationOpen}
         role={drawerActive ? "dialog" : "complementary"}
       >
+        <button
+          aria-label="Đóng điều hướng"
+          className="workspace-sidebar-close"
+          onClick={() => setMobileNavigationOpen(false)}
+          type="button"
+        >
+          <span aria-hidden="true">×</span>
+          <span>Đóng menu</span>
+        </button>
+
         <Link
           aria-label="IDAILY - Tổng quan"
           className="workspace-brand"
@@ -376,7 +413,10 @@ export function AppFrame({ children }: Readonly<{ children: ReactNode }>) {
             aria-expanded={drawerActive}
             aria-label={drawerActive ? "Đóng menu" : "Mở menu"}
             className="workspace-menu-toggle"
-            onClick={() => setMobileNavigationOpen((open) => !open)}
+            onClick={() => {
+              setMobileNavigationOpen((open) => !open);
+              if (accountMenuRef.current) accountMenuRef.current.open = false;
+            }}
             ref={menuToggleRef}
             type="button"
           >
@@ -404,7 +444,17 @@ export function AppFrame({ children }: Readonly<{ children: ReactNode }>) {
           </nav>
 
           <div className="workspace-account-actions">
-            <details className="workspace-account-menu" ref={accountMenuRef}>
+            <details
+              className="workspace-account-menu"
+              onKeyDown={(event) => {
+                const menu = accountMenuRef.current;
+                if (event.key !== "Escape" || !menu?.open) return;
+                event.preventDefault();
+                menu.open = false;
+                menu.querySelector<HTMLElement>("summary")?.focus();
+              }}
+              ref={accountMenuRef}
+            >
               <summary aria-label={"Tài khoản: " + accountName}>
                 <span className="account-menu-initial" aria-hidden="true">
                   {accountName.trim().charAt(0).toLocaleUpperCase("vi-VN") || "T"}

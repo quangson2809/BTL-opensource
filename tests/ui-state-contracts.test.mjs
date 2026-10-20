@@ -77,9 +77,9 @@ test("dashboard, personnel, reports, and role catalogue show meaningful empty st
   ]);
 
   assert.ok(dashboard.includes('EmptyState title="Chưa có hoạt động"'));
-  assert.ok(personnel.includes("rows.length === 0") && personnel.includes("Chưa có nhân sự trong phạm vi"));
+  assert.ok(personnel.includes("visibleRows.length === 0") && personnel.includes("Chưa có nhân sự trong phạm vi"));
   assert.ok(reports.includes("leaderboard.length > 0") && reports.includes("Chưa có dữ liệu xếp hạng"));
-  assert.ok(roles.includes("(roleResult.data ?? []).length === 0") && roles.includes("Chưa có vai trò"));
+  assert.ok(roles.includes("visibleRoles.length === 0") && roles.includes("Chưa có vai trò"));
 });
 
 test("Phase 1 duplicate-submit protection and sensitive draft exclusions remain in place", async () => {
