@@ -94,3 +94,44 @@ test("Phase 1 duplicate-submit protection and sensitive draft exclusions remain 
   assert.ok(persistence.includes("SENSITIVE_TYPE"));
   assert.ok(persistence.includes("sessionStorage.setItem"));
 });
+
+
+test("representative workspace pages preserve error, detail, and form contracts", async () => {
+  const [dashboard, customers, detail, createForm, reports] = await Promise.all([
+    readSource("../src/app/dashboard/page.tsx"),
+    readSource("../src/app/customers/page.tsx"),
+    readSource("../src/app/customers/[id]/page.tsx"),
+    readSource("../src/app/customers/new/page.tsx"),
+    readSource("../src/app/reports/page.tsx"),
+  ]);
+
+  assert.ok(dashboard.includes("customerCountResult.error"));
+  assert.ok(dashboard.includes("recentActivityResult.error"));
+  assert.ok(dashboard.includes('className="page-content dashboard-content"'));
+  assert.ok(dashboard.includes('aria-labelledby="dashboard-recent-title"'));
+
+  for (const guard of ["if (countError)", "if (error)"]) {
+    assert.ok(customers.includes(guard), "Customer list must surface remote query failures");
+  }
+  assert.ok(customers.indexOf("if (error)") < customers.indexOf("return ("));
+  assert.ok(customers.includes("PageHeader") && customers.includes("EmptyState"));
+
+  assert.ok(detail.includes('if (error) throw new Error("Không thể tải khách hàng.")'));
+  assert.ok(detail.includes("if (!customer) notFound()"));
+  assert.ok(detail.indexOf("if (error)") < detail.indexOf("return ("));
+  assert.ok(detail.includes('aria-labelledby="customer-primary-title"'));
+  assert.ok(detail.includes("details-grid"));
+
+  assert.ok(createForm.includes("GuardedForm"));
+  assert.ok(createForm.includes("FormDraftPersistence"));
+  assert.ok(createForm.includes("<fieldset") && createForm.includes("<legend>"));
+  assert.ok(createForm.includes('name="ho_ten" required'));
+  assert.ok(createForm.includes('name="so_dien_thoai" required'));
+
+  assert.ok(reports.includes('supabase.rpc("report_scope"'));
+  assert.ok(reports.includes("if (error)"));
+  assert.ok(reports.indexOf("if (error)") < reports.indexOf("return ("));
+  assert.ok(reports.includes("<PageHeader"));
+  assert.ok(reports.includes('className="table-scroll"'));
+  assert.ok(reports.includes("Chưa có dữ liệu xếp hạng"));
+});

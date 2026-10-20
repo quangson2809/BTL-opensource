@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import { EmptyState } from "@/components/empty-state";
+import { PageHeader } from "@/components/page-header";
 
 import { requireBusinessAccount } from "@/lib/business";
 import { resolveReportRange } from "@/lib/reporting";
@@ -61,16 +62,20 @@ export default async function ReportsPage({ searchParams }: ReportsPageProps) {
   return (
     <main>
       <section className="card wide-card">
-        <h1>Báo cáo & thống kê</h1>
-        <div className="actions">
-          <Link href="/dashboard">Dashboard</Link>
-          <Link
-            className="button-link"
-            href={`/reports/export?${exportQuery}`}
-          >
-            Xuất Excel (.csv)
-          </Link>
-        </div>
+        <PageHeader
+          title="Báo cáo & thống kê"
+          description="Theo dõi kết quả cá nhân và nhóm trong phạm vi dữ liệu được cấp quyền."
+          actions={
+            <>
+              <Link className="button-link button-secondary" href="/dashboard">
+                Dashboard
+              </Link>
+              <Link className="button-link" href={`/reports/export?${exportQuery}`}>
+                Xuất Excel (.csv)
+              </Link>
+            </>
+          }
+        />
 
         <form className="filter-grid" method="get">
           <label>
