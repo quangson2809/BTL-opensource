@@ -10,6 +10,10 @@
   --color-surface: #ffffff;
   --color-canvas: #f4f7f4;
   --color-border: #dce5de;
+  --color-border-control: #7d8f83;
+  --color-focus: #805700;
+  --color-surface-muted: #f0f6f1;
+  --color-table-foreground: #344d3d;
   --color-danger: #a62c32;
   --color-danger-soft: #fff0f0;
   --color-success: #17613e;
@@ -66,7 +70,7 @@ button:focus-visible,
 input:focus-visible,
 select:focus-visible,
 textarea:focus-visible {
-  outline: 3px solid #805700;
+  outline: 3px solid var(--color-focus);
   outline-offset: 3px;
 }
 
@@ -150,7 +154,7 @@ select,
 textarea {
   width: 100%;
   min-height: 2.85rem;
-  border: 1px solid #7d8f83;
+  border: 1px solid var(--color-border-control);
   border-radius: var(--radius-sm);
   padding: 0.72rem 0.85rem;
   background: var(--color-surface);
@@ -162,7 +166,7 @@ textarea {
 
 input::placeholder,
 textarea::placeholder {
-  color: #5e6e63;
+  color: var(--color-muted);
 }
 
 input:hover,
@@ -181,7 +185,7 @@ textarea:focus {
 input:focus-visible,
 select:focus-visible,
 textarea:focus-visible {
-  outline: 3px solid #805700;
+  outline: 3px solid var(--color-focus);
   outline-offset: 2px;
 }
 
@@ -349,8 +353,8 @@ td {
 }
 
 th {
-  background: #f0f6f1;
-  color: #344d3d;
+  background: var(--color-surface-muted);
+  color: var(--color-table-foreground);
   font-size: 0.8rem;
   font-weight: 800;
   letter-spacing: 0.035em;
