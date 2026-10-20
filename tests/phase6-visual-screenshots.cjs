@@ -179,6 +179,36 @@ async function main() {
           fullPage: true,
           animations: "disabled",
         });
+
+        // Exercise the authenticated mobile drawer with actual keyboard input.
+        // Skip the baseline so this remains a post-fix accessibility gate.
+        if (!captureOnly && route.name === "dashboard" && viewport.label === "375x812") {
+          const toggle = page.locator(".workspace-menu-toggle");
+          await toggle.focus();
+          await page.keyboard.press("Enter");
+          const sidebar = page.locator("#workspace-sidebar");
+          await page.waitForFunction(
+            () => document.querySelector("#workspace-sidebar")?.getAttribute("aria-hidden") === "false",
+          );
+          assert.ok(
+            await sidebar.evaluate((element) => element.contains(document.activeElement)),
+            "opening the mobile navigation must move focus into the drawer",
+          );
+          await page.keyboard.press("Escape");
+          await page.waitForFunction(
+            () => document.querySelector(".workspace-menu-toggle")?.getAttribute("aria-expanded") === "false",
+          );
+          assert.equal(
+            await toggle.evaluate((element) => document.activeElement === element),
+            true,
+            "closing the mobile navigation with Escape must restore focus to its toggle",
+          );
+          assert.equal(
+            await page.evaluate(() => document.body.style.overflow),
+            "",
+            "closing the mobile navigation must restore body scrolling",
+          );
+        }
       }
     }
 

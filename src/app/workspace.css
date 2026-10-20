@@ -321,8 +321,7 @@
 .page-header-actions form { margin: 0; }
 .page-header-actions form button { margin-top: 0; }
 .empty-state,
-.error-state,
-.loading-state {
+.error-state {
   display: grid;
   justify-items: start;
   gap: 0.65rem;
@@ -336,7 +335,7 @@
 .empty-state p,
 .error-state p { color: var(--color-ink-soft); }
 .empty-state-action { margin-top: 0.45rem; }
-.loading-state { min-height: 10rem; align-content: center; justify-items: center; border-style: solid; }
+.workspace-content .loading-state { min-height: 10rem; align-content: center; }
 .loading-indicator {
   width: 1.5rem;
   height: 1.5rem;

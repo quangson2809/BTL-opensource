@@ -63,6 +63,12 @@ test("authenticated page header styling is owned by workspace.css", () => {
   assert.match(workspaceCss, /\.workspace-sidebar,\s*\.loading-indicator\s*\{[^}]*animation: none/s);
 });
 
+test("shared loading state has one base owner and a workspace-only layout modifier", () => {
+  assert.match(globalCss, /\.loading-state\s*\{[^}]*padding: clamp\(1\.15rem, 3vw, 2rem\);/s);
+  assert.doesNotMatch(workspaceCss, /(^|\n)\.loading-state\s*\{/);
+  assert.match(workspaceCss, /\.workspace-content \.loading-state\s*\{\s*min-height: 10rem; align-content: center;\s*\}/);
+});
+
 test("record row has one authoritative grid layout while recent activity retains its flex variant", () => {
   assert.equal([...globalCss.matchAll(/^\.record-row\s*\{/gm)].length, 1);
   assert.match(globalCss, /^\.record-row\s*\{\s*display:\s*grid;\s*grid-template-columns:\s*minmax\(0, 1fr\);/m);

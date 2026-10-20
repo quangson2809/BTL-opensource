@@ -137,49 +137,82 @@ jobs:
             exit 1
           fi
 
+          # Stop the development server used by form-resilience testing, then capture
+          # production-rendered pages so the Next.js dev indicator cannot pollute evidence.
           cp tests/phase6-visual-screenshots.cjs /tmp/phase6-visual-screenshots.cjs
-          if ! PHASE6_SCREENSHOT_PREFIX=after- PHASE6_SOURCE_SHA="$GITHUB_SHA" npm exec --yes --package=playwright -- sh -c 'NODE_PATH="$(dirname "$(dirname "$(command -v playwright)")")" node tests/phase6-visual-screenshots.cjs'; then
-            cat /tmp/idaily-browser.log
-            exit 1
-          fi
           kill "$APP_PID"
           wait "$APP_PID" 2>/dev/null || true
           trap - EXIT
-
-          # Re-run the same route/viewport matrix on the pre-fix baseline.
-          # Baseline overflow is recorded but is not allowed to fail the post-fix gate.
-          git fetch --no-tags --depth=1 origin 1aeb11802438c53583a587b9fb25c7d62daa6223
-          git checkout --detach 1aeb11802438c53583a587b9fb25c7d62daa6223
-          npm ci
-          cp /tmp/phase6-visual-screenshots.cjs tests/phase6-visual-screenshots.cjs
-          ./node_modules/.bin/next dev -p 3000 > /tmp/idaily-browser-baseline.log 2>&1 &
+          if ! npm run build > /tmp/idaily-visual-build.log 2>&1; then
+            cat /tmp/idaily-visual-build.log
+            exit 1
+          fi
+          ./node_modules/.bin/next start -p 3000 > /tmp/idaily-visual.log 2>&1 &
           APP_PID=$!
           trap 'kill "$APP_PID" 2>/dev/null || true' EXIT
-
           for attempt in {1..60}; do
             if curl -fsS http://127.0.0.1:3000/login >/dev/null; then
               break
             fi
             if [ "$attempt" -eq 60 ]; then
-              cat /tmp/idaily-browser-baseline.log
+              cat /tmp/idaily-visual.log
               exit 1
             fi
             sleep 1
           done
-
-          if ! PHASE6_SCREENSHOT_PREFIX=before- PHASE6_SOURCE_SHA=1aeb11802438c53583a587b9fb25c7d62daa6223 PHASE6_CAPTURE_ONLY=true npm exec --yes --package=playwright -- sh -c 'NODE_PATH="$(dirname "$(dirname "$(command -v playwright)")")" node tests/phase6-visual-screenshots.cjs'; then
-            cat /tmp/idaily-browser-baseline.log
+          if ! PHASE6_SCREENSHOT_PREFIX=after- PHASE6_SOURCE_SHA="${{ github.event.pull_request.head.sha || github.sha }}" npm exec --yes --package=playwright -- sh -c 'NODE_PATH="$(dirname "$(dirname "$(command -v playwright)")")" node tests/phase6-visual-screenshots.cjs'; then
+            cat /tmp/idaily-visual.log
             exit 1
           fi
+          mkdir -p /tmp/phase6-capture-after
+          cp artifacts/phase6/after-*.png /tmp/phase6-capture-after/
+          rm -rf artifacts/phase6
           kill "$APP_PID"
           wait "$APP_PID" 2>/dev/null || true
           trap - EXIT
+          git restore next-env.d.ts tsconfig.json
+
+          # Capture the pre-fix source in the same local Supabase database and viewport matrix.
+          git fetch --no-tags --depth=1 origin 1aeb11802438c53583a587b9fb25c7d62daa6223
+          git checkout --detach 1aeb11802438c53583a587b9fb25c7d62daa6223
+          npm ci
+          cp /tmp/phase6-visual-screenshots.cjs tests/phase6-visual-screenshots.cjs
+          if ! npm run build > /tmp/idaily-visual-baseline-build.log 2>&1; then
+            cat /tmp/idaily-visual-baseline-build.log
+            exit 1
+          fi
+          ./node_modules/.bin/next start -p 3000 > /tmp/idaily-visual-baseline.log 2>&1 &
+          APP_PID=$!
+          trap 'kill "$APP_PID" 2>/dev/null || true' EXIT
+          for attempt in {1..60}; do
+            if curl -fsS http://127.0.0.1:3000/login >/dev/null; then
+              break
+            fi
+            if [ "$attempt" -eq 60 ]; then
+              cat /tmp/idaily-visual-baseline.log
+              exit 1
+            fi
+            sleep 1
+          done
+          if ! PHASE6_SCREENSHOT_PREFIX=before- PHASE6_SOURCE_SHA=1aeb11802438c53583a587b9fb25c7d62daa6223 PHASE6_CAPTURE_ONLY=true npm exec --yes --package=playwright -- sh -c 'NODE_PATH="$(dirname "$(dirname "$(command -v playwright)")")" node tests/phase6-visual-screenshots.cjs'; then
+            cat /tmp/idaily-visual-baseline.log
+            exit 1
+          fi
+          mkdir -p /tmp/phase6-capture-before
+          cp artifacts/phase6/before-*.png /tmp/phase6-capture-before/
+          rm -rf artifacts/phase6
+          mkdir -p artifacts/phase6
+          cp /tmp/phase6-capture-after/*.png /tmp/phase6-capture-before/*.png artifacts/phase6/
+          kill "$APP_PID"
+          wait "$APP_PID" 2>/dev/null || true
+          trap - EXIT
+          git restore next-env.d.ts tsconfig.json
 
       - name: Upload Phase 6 visual acceptance screenshots
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: phase6-visual-acceptance-${{ github.sha }}
+          name: phase6-visual-acceptance-${{ github.event.pull_request.head.sha || github.sha }}
           path: artifacts/phase6/**
           if-no-files-found: warn
           retention-days: 14
