@@ -93,7 +93,7 @@ function breadcrumbHref(segments: string[], index: number) {
 
   if (navigableRoots.includes(path)) return path;
   if (/^\/(customers|activities|personnel|notifications)\/[0-9a-f-]{36}$/i.test(path)) return path;
-  if (/^\/admin\/(accounts|roles)\/[0-9a-f-]{36}$/i.test(path)) return path;
+  if (/^\/admin\/accounts\/[0-9a-f-]{36}$/i.test(path)) return path;
   return undefined;
 }
 
