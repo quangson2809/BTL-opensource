@@ -58,3 +58,10 @@ test("navigation maintains current-page semantics and icon-only controls have na
   assert.match(appFrame, /aria-label="Đóng điều hướng"/);
   assert.match(appFrame, /aria-hidden="true">☰/);
 });
+
+
+test("secondary text and form controls use high-contrast tokens", () => {
+  assert.match(globalCss, /--color-muted: #5e6e63/);
+  assert.match(globalCss, /border: 1px solid #7d8f83/);
+  assert.match(globalCss, /input::placeholder,[\s\S]*?color: #5e6e63/);
+});
