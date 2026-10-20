@@ -83,7 +83,10 @@ async function readDraft(page, key) {
       }
 
       await page.goto(baseURL + "/login");
+      // Do not send Tab before the client has hydrated the login form.
+      await page.locator('form[data-persist-key="login"][data-draft-persistence-ready="true"]').waitFor();
       await page.keyboard.press("Tab");
+      await page.waitForFunction(() => document.activeElement && document.activeElement !== document.body);
       const focusIndicator = await page.evaluate(() => {
         const element = document.activeElement;
         const style = element ? getComputedStyle(element) : null;

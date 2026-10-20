@@ -2,15 +2,15 @@
 
 **Branch:** `feature/phase-6-design-system`  
 **PR:** [#32](https://github.com/quangson2809/BTL-opensource/pull/32)  
-**Code fix under review:** [`2306a096`](https://github.com/quangson2809/BTL-opensource/commit/2306a096da0b1cbb04934a08bd6e224fce461c30)  
-**Acceptance state:** **CI PASS; visual acceptance remains open. Do not mark the entire phase PASS yet.**
+**Latest implementation branch:** `feature/phase-6-design-system`  
+**Acceptance state:** **CI verification is tied to the latest PR head; visual acceptance remains open. Do not mark the entire phase PASS yet.**
 
 ## 1. CI and test evidence
 
-- [x] GitHub Actions CI for code commit `2306a096`: [run #39411914717](https://github.com/quangson2809/BTL-opensource/actions/runs/39411914717) — lint, type-check, interaction/input contract tests, security-boundary check, and production build passed.
-- [x] Database workflow for code commit `2306a096`: [run #39411914816](https://github.com/quangson2809/BTL-opensource/actions/runs/39411914816) — local Supabase startup, migrations/seed, database/RLS, Auth integration, MVP route smoke and form-resilience browser checks passed.
-- [x] Independent verification at the same SHA: `npm ci`, `npm run lint`, `npm run type-check`, `npm run test:contracts`, `npm run security-check`, and `npm run build` exited successfully.
-- [ ] Re-check both GitHub Actions workflows for the final commit after this checklist/test update. A previous green run does not certify a later SHA.
+- [x] Historical GitHub Actions CI and Database Tests passed together on code commit `2306a096`: [CI run](https://github.com/quangson2809/BTL-opensource/actions/runs/39411914717), [Database Tests run](https://github.com/quangson2809/BTL-opensource/actions/runs/39411914816).
+- [x] Independent verification of the UI/state-contract source: `npm ci`, `npm run lint`, `npm run type-check`, `npm run test:contracts` (84/84), `npm run security-check`, and `npm run build` passed locally with Next.js `16.4.2`.
+- [x] Stabilized the browser focus check so it waits for the hydrated login form before sending Tab; this addresses the observed BODY-focused timing failure in the browser-resilience workflow.
+- **Final-SHA gate:** use the live [PR #32 checks](https://github.com/quangson2809/BTL-opensource/pull/32) and verify both workflows report success for the same current head SHA. Historical green runs are not evidence for a later commit.
 
 ## 2. CSS and shared-component audit
 
@@ -53,8 +53,9 @@ The screenshots below were captured with Playwright from the **local production 
 
 ## 5. Security/dependency follow-up
 
-- [ ] `npm audit` currently reports **8 High, 0 Critical** findings. The direct dependency `next@16.3.6` is in the reported vulnerable range; audit identifies `next@16.4.2` as a fix candidate. The report also lists transitive issues in `sharp`, `source-map-js`, and the ESLint dependency chain.
-- [ ] Resolve the dependency advisories in a focused dependency update, then rerun lint, type-check, contract tests, build, database workflow and `npm audit`. Do not use `npm audit fix --force`: its reported ESLint-config fix includes an inappropriate major-version downgrade.
+- [x] Upgraded the direct runtime `next` dependency and `eslint-config-next` to `16.4.2`, regenerated `package-lock.json`, and ran `npm audit fix` without `--force`.
+- [x] `npm audit --omit=dev` now reports **0 High, 0 Critical, 0 total** vulnerabilities in the production dependency graph.
+- [ ] Full `npm audit` still reports **5 High, 0 Critical**, isolated to the development ESLint chain `eslint-config-next → @next/eslint-plugin-next → fast-glob → micromatch → braces@3.0.3`. The [official advisory](https://github.com/advisories/GHSA-vfj7-8cjw-p6xm) currently lists **no patched version** of `braces`. Do not invent an override for a nonexistent fixed release or use `npm audit fix --force`: npm proposes downgrading `eslint-config-next` to `14.2.35`, incompatible with this Next 16 application. Reassess the development-only advisory when upstream publishes a fix; this remains an explicitly open risk.
 
 ## Final acceptance rule
 
