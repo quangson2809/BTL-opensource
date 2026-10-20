@@ -64,12 +64,11 @@ test("authenticated page header styling is owned by workspace.css", () => {
 });
 
 test("record row has one authoritative grid layout while recent activity retains its flex variant", () => {
-  assert.equal([...globalCss.matchAll(/^\\.record-row\\s*\\{/gm)].length, 1);
-  assert.match(globalCss, /^\\.record-row\\s*\\{\\s*display:\\s*grid;\\s*grid-template-columns:\\s*minmax\\(0, 1fr\\);/m);
-  assert.match(globalCss, /\\.recent-activity-list \\.record-row\\s*\\{\\s*display:\\s*flex;/);
-  assert.match(globalCss, /@media \\(max-width: 46rem\\)[\\s\\S]*?\\.record-row, \\.action-needed-row \\{ align-items: stretch; \\}\\s*\\.action-needed-row \\{ flex-direction: column; \\}/);
+  assert.equal([...globalCss.matchAll(/^\.record-row\s*\{/gm)].length, 1);
+  assert.match(globalCss, /^\.record-row\s*\{\s*display:\s*grid;\s*grid-template-columns:\s*minmax\(0, 1fr\);/m);
+  assert.match(globalCss, /\.recent-activity-list \.record-row\s*\{\s*display:\s*flex;/);
+  assert.match(globalCss, /@media \(max-width: 46rem\)[\s\S]*?\.record-row, \.action-needed-row \{ align-items: stretch; \}\s*\.action-needed-row \{ flex-direction: column; \}/);
 });
-
 test("keyboard focus uses the shared semantic focus token and reduced motion is supported", () => {
   assert.match(globalCss, /--color-focus:\s*#805700;/);
   assert.match(globalCss, /input:focus-visible,\s*select:focus-visible,\s*textarea:focus-visible\s*\{[^}]*outline: 3px solid var\(--color-focus\);/s);
