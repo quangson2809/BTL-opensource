@@ -158,15 +158,18 @@ export default async function ReportsPage({ searchParams }: ReportsPageProps) {
         )}
 
         <h2>So sánh cá nhân / nhóm</h2>
-        <div className="table-scroll">
-          <table>
+        <p className="table-scroll-hint secondary-text">
+          Trên màn hình nhỏ, vuốt ngang bảng để xem đủ các cột.
+        </p>
+        <div className="table-scroll report-comparison-scroll">
+          <table aria-label="So sánh cá nhân và nhóm" className="report-comparison-table">
             <thead>
               <tr>
-                <th>Nhân sự</th>
-                <th>Phạm vi</th>
-                <th>Khách hàng mới</th>
-                <th>Hoạt động</th>
-                <th>Lượt khách kết nối</th>
+                <th scope="col">Nhân sự</th>
+                <th scope="col">Phạm vi</th>
+                <th scope="col">Khách hàng mới</th>
+                <th scope="col">Hoạt động</th>
+                <th scope="col">Lượt khách kết nối</th>
               </tr>
             </thead>
             <tbody>
