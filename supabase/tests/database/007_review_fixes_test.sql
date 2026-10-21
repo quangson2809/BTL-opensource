@@ -198,7 +198,7 @@ select set_config(
 );
 
 select is(
-  public.can_creator_read_notification_recipient(
+  app_private.can_creator_read_notification_recipient(
     'c8300000-0000-4000-8000-000000000001'
   ),
   false,
@@ -206,7 +206,7 @@ select is(
 );
 
 select is(
-  public.can_recipient_read_sent_notification(
+  app_private.can_recipient_read_sent_notification(
     'c8300000-0000-4000-8000-000000000001',
     'c8000000-0000-4000-8000-000000000002'
   ),
