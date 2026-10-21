@@ -232,34 +232,38 @@ async function main() {
       }
     }
 
+    if (!captureOnly) {
     // Capture genuine route-boundary states, not hand-composed placeholders.
-    await page.setViewportSize({ width: 375, height: 812 });
-    await page.goto(baseURL + "/__phase6_acceptance_loading", { waitUntil: "domcontentloaded" });
-    const loadingState = page.getByRole("status");
-    await loadingState.waitFor();
-    assert.equal(await loadingState.getAttribute("aria-busy"), "true");
-    assert.ok((await loadingState.innerText()).includes("Đang tải trang"));
-    await page.screenshot({
-      path: path.join("artifacts", "phase6", screenshotPrefix + "loading-state-375x812.png"),
-      fullPage: true,
-      animations: "disabled",
-    });
-
-    for (const viewport of [
-      { width: 1440, height: 900, label: "1440x900" },
-      { width: 375, height: 812, label: "375x812" },
-    ]) {
-      await page.setViewportSize({ width: viewport.width, height: viewport.height });
-      await page.goto(baseURL + "/__phase6_acceptance_error", { waitUntil: "domcontentloaded" });
-      const errorState = page.getByRole("alert");
-      await errorState.waitFor();
-      await page.getByRole("heading", { name: "Có lỗi xảy ra" }).waitFor();
-      await page.getByRole("button", { name: "Thử lại", exact: true }).waitFor();
+      await page.setViewportSize({ width: 375, height: 812 });
+      await page.goto(baseURL + "/__phase6_acceptance_loading", { waitUntil: "domcontentloaded" });
+      const loadingState = page.getByRole("status");
+      await loadingState.waitFor();
+      assert.equal(await loadingState.getAttribute("aria-busy"), "true");
+      assert.ok((await loadingState.innerText()).includes("Đang tải trang"));
       await page.screenshot({
-        path: path.join("artifacts", "phase6", screenshotPrefix + "error-state-" + viewport.label + ".png"),
+        path: path.join("artifacts", "phase6", screenshotPrefix + "loading-state-375x812.png"),
         fullPage: true,
         animations: "disabled",
       });
+  
+      for (const viewport of [
+        { width: 1440, height: 900, label: "1440x900" },
+        { width: 375, height: 812, label: "375x812" },
+      ]) {
+        await page.setViewportSize({ width: viewport.width, height: viewport.height });
+        await page.goto(baseURL + "/__phase6_acceptance_error", { waitUntil: "domcontentloaded" });
+        const errorState = page.getByRole("alert");
+        await errorState.waitFor();
+        await page.getByRole("heading", { name: "Có lỗi xảy ra" }).waitFor();
+        await page.getByRole("button", { name: "Thử lại", exact: true }).waitFor();
+        await page.screenshot({
+          path: path.join("artifacts", "phase6", screenshotPrefix + "error-state-" + viewport.label + ".png"),
+          fullPage: true,
+          animations: "disabled",
+        });
+      }
+  
+  
     }
 
     console.log(JSON.stringify({
