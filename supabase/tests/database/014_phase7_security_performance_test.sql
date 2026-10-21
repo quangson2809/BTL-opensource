@@ -30,8 +30,8 @@ select ok(
   'authenticated can query activity visibility only inside its own active scope'
 );
 select ok(
-  not has_function_privilege('authenticated', 'public.current_account_has_application_access()', 'EXECUTE'),
-  'application-access helper is policy-internal'
+  has_function_privilege('authenticated', 'public.current_account_has_application_access()', 'EXECUTE'),
+  'authenticated can query active access for its own session only'
 );
 select ok(
   not has_function_privilege('authenticated', 'public.can_creator_read_notification_recipient(uuid)', 'EXECUTE'),
