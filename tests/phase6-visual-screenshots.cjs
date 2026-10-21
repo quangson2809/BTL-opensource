@@ -253,7 +253,7 @@ async function main() {
       ]) {
         await page.setViewportSize({ width: viewport.width, height: viewport.height });
         await page.goto(baseURL + "/phase6-acceptance-error", { waitUntil: "domcontentloaded" });
-        const errorState = page.getByRole("alert");
+        const errorState = page.getByRole("alert", { name: "Có lỗi xảy ra" });
         await errorState.waitFor();
         await page.getByRole("heading", { name: "Có lỗi xảy ra" }).waitFor();
         await page.getByRole("button", { name: "Thử lại", exact: true }).waitFor();
