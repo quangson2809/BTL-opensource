@@ -24,6 +24,11 @@ select ok(
   not has_function_privilege('authenticated', 'public.is_in_subtree(uuid)', 'EXECUTE'),
   'authenticated cannot probe arbitrary account scope through the public helper'
 );
+
+select ok(
+  not has_function_privilege('authenticated', 'public.can_view_activity(uuid)', 'EXECUTE'),
+  'activity visibility helper is policy-internal'
+);
 select ok(
   not has_function_privilege('authenticated', 'public.current_account_has_application_access()', 'EXECUTE'),
   'application-access helper is policy-internal'
