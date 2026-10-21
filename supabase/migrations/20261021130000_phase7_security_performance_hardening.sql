@@ -100,79 +100,79 @@ grant execute on function app_private.can_recipient_read_sent_notification(uuid,
 -- remain for compatibility with SECURITY DEFINER business RPC bodies, which execute
 -- as their owner; direct client execution is revoked below.
 alter policy tai_khoan_application_access_gate on public.tai_khoan
-  using (app_private.current_account_has_application_access())
-  with check (app_private.current_account_has_application_access());
+  using ((select app_private.current_account_has_application_access()))
+  with check ((select app_private.current_account_has_application_access()));
 alter policy vai_tro_application_access_gate on public.vai_tro
-  using (app_private.current_account_has_application_access())
-  with check (app_private.current_account_has_application_access());
+  using ((select app_private.current_account_has_application_access()))
+  with check ((select app_private.current_account_has_application_access()));
 alter policy quyen_application_access_gate on public.quyen
-  using (app_private.current_account_has_application_access())
-  with check (app_private.current_account_has_application_access());
+  using ((select app_private.current_account_has_application_access()))
+  with check ((select app_private.current_account_has_application_access()));
 alter policy phan_cong_vai_tro_application_access_gate on public.phan_cong_vai_tro
-  using (app_private.current_account_has_application_access())
-  with check (app_private.current_account_has_application_access());
+  using ((select app_private.current_account_has_application_access()))
+  with check ((select app_private.current_account_has_application_access()));
 alter policy phan_quyen_vai_tro_application_access_gate on public.phan_quyen_vai_tro
-  using (app_private.current_account_has_application_access())
-  with check (app_private.current_account_has_application_access());
+  using ((select app_private.current_account_has_application_access()))
+  with check ((select app_private.current_account_has_application_access()));
 alter policy khach_hang_application_access_gate on public.khach_hang
-  using (app_private.current_account_has_application_access())
-  with check (app_private.current_account_has_application_access());
+  using ((select app_private.current_account_has_application_access()))
+  with check ((select app_private.current_account_has_application_access()));
 alter policy hoat_dong_application_access_gate on public.hoat_dong
-  using (app_private.current_account_has_application_access())
-  with check (app_private.current_account_has_application_access());
+  using ((select app_private.current_account_has_application_access()))
+  with check ((select app_private.current_account_has_application_access()));
 alter policy thong_bao_application_access_gate on public.thong_bao
-  using (app_private.current_account_has_application_access())
-  with check (app_private.current_account_has_application_access());
+  using ((select app_private.current_account_has_application_access()))
+  with check ((select app_private.current_account_has_application_access()));
 alter policy thong_bao_nguoi_nhan_application_access_gate on public.thong_bao_nguoi_nhan
-  using (app_private.current_account_has_application_access())
-  with check (app_private.current_account_has_application_access());
+  using ((select app_private.current_account_has_application_access()))
+  with check ((select app_private.current_account_has_application_access()));
 
 alter policy tai_khoan_select_scope on public.tai_khoan
   using (
     id = (select auth.uid())
-    or app_private.has_role('ADMIN')
+    or (select app_private.has_role('ADMIN'))
     or (
-      (app_private.has_role('DM') or app_private.has_role('UM'))
+      ((select app_private.has_role('DM')) or (select app_private.has_role('UM')))
       and app_private.is_in_subtree(id)
     )
   );
 
 alter policy vai_tro_insert_admin on public.vai_tro
-  with check (app_private.has_role('ADMIN'));
+  with check ((select app_private.has_role('ADMIN')));
 alter policy vai_tro_update_admin on public.vai_tro
-  using (app_private.has_role('ADMIN'))
-  with check (app_private.has_role('ADMIN'));
+  using ((select app_private.has_role('ADMIN')))
+  with check ((select app_private.has_role('ADMIN')));
 alter policy vai_tro_delete_admin on public.vai_tro
-  using (app_private.has_role('ADMIN'));
+  using ((select app_private.has_role('ADMIN')));
 
 alter policy quyen_insert_admin on public.quyen
-  with check (app_private.has_role('ADMIN'));
+  with check ((select app_private.has_role('ADMIN')));
 alter policy quyen_update_admin on public.quyen
-  using (app_private.has_role('ADMIN'))
-  with check (app_private.has_role('ADMIN'));
+  using ((select app_private.has_role('ADMIN')))
+  with check ((select app_private.has_role('ADMIN')));
 alter policy quyen_delete_admin on public.quyen
-  using (app_private.has_role('ADMIN'));
+  using ((select app_private.has_role('ADMIN')));
 
 alter policy phan_cong_vai_tro_select_scope on public.phan_cong_vai_tro
   using (
     tai_khoan_id = (select auth.uid())
-    or app_private.has_role('ADMIN')
+    or (select app_private.has_role('ADMIN'))
   );
 alter policy phan_cong_vai_tro_insert_admin on public.phan_cong_vai_tro
-  with check (app_private.has_role('ADMIN'));
+  with check ((select app_private.has_role('ADMIN')));
 alter policy phan_cong_vai_tro_update_admin on public.phan_cong_vai_tro
-  using (app_private.has_role('ADMIN'))
-  with check (app_private.has_role('ADMIN'));
+  using ((select app_private.has_role('ADMIN')))
+  with check ((select app_private.has_role('ADMIN')));
 alter policy phan_cong_vai_tro_delete_admin on public.phan_cong_vai_tro
-  using (app_private.has_role('ADMIN'));
+  using ((select app_private.has_role('ADMIN')));
 
 alter policy phan_quyen_vai_tro_insert_admin on public.phan_quyen_vai_tro
-  with check (app_private.has_role('ADMIN'));
+  with check ((select app_private.has_role('ADMIN')));
 alter policy phan_quyen_vai_tro_update_admin on public.phan_quyen_vai_tro
-  using (app_private.has_role('ADMIN'))
-  with check (app_private.has_role('ADMIN'));
+  using ((select app_private.has_role('ADMIN')))
+  with check ((select app_private.has_role('ADMIN')));
 alter policy phan_quyen_vai_tro_delete_admin on public.phan_quyen_vai_tro
-  using (app_private.has_role('ADMIN'));
+  using ((select app_private.has_role('ADMIN')));
 
 alter policy khach_hang_select_owner on public.khach_hang
   using (chu_so_huu_id = (select auth.uid()));
