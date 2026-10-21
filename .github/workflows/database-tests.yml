@@ -140,6 +140,22 @@ jobs:
           # Stop the development server used by form-resilience testing, then capture
           # production-rendered pages so the Next.js dev indicator cannot pollute evidence.
           cp tests/phase6-visual-screenshots.cjs /tmp/phase6-visual-screenshots.cjs
+          mkdir -p src/app/__phase6_acceptance_loading src/app/__phase6_acceptance_error
+          cat > src/app/__phase6_acceptance_loading/page.tsx <<'EOF'
+          export const dynamic = "force-dynamic";
+
+          export default async function Phase6LoadingCheck() {
+            await new Promise<void>((resolve) => setTimeout(resolve, 3000));
+            return <main><h1>Loading fixture finished</h1></main>;
+          }
+          EOF
+          cat > src/app/__phase6_acceptance_error/page.tsx <<'EOF'
+          export const dynamic = "force-dynamic";
+
+          export default function Phase6ErrorCheck() {
+            throw new Error("Phase 6 acceptance injected error");
+          }
+          EOF
           kill "$APP_PID"
           wait "$APP_PID" 2>/dev/null || true
           trap - EXIT
@@ -171,12 +187,29 @@ jobs:
           wait "$APP_PID" 2>/dev/null || true
           trap - EXIT
           git restore next-env.d.ts tsconfig.json
+          rm -rf src/app/__phase6_acceptance_loading src/app/__phase6_acceptance_error
 
           # Capture the pre-fix source in the same local Supabase database and viewport matrix.
           git fetch --no-tags --depth=1 origin 1aeb11802438c53583a587b9fb25c7d62daa6223
           git checkout --detach 1aeb11802438c53583a587b9fb25c7d62daa6223
           npm ci
           cp /tmp/phase6-visual-screenshots.cjs tests/phase6-visual-screenshots.cjs
+          mkdir -p src/app/__phase6_acceptance_loading src/app/__phase6_acceptance_error
+          cat > src/app/__phase6_acceptance_loading/page.tsx <<'EOF'
+          export const dynamic = "force-dynamic";
+
+          export default async function Phase6LoadingCheck() {
+            await new Promise<void>((resolve) => setTimeout(resolve, 3000));
+            return <main><h1>Loading fixture finished</h1></main>;
+          }
+          EOF
+          cat > src/app/__phase6_acceptance_error/page.tsx <<'EOF'
+          export const dynamic = "force-dynamic";
+
+          export default function Phase6ErrorCheck() {
+            throw new Error("Phase 6 acceptance injected error");
+          }
+          EOF
           if ! npm run build > /tmp/idaily-visual-baseline-build.log 2>&1; then
             cat /tmp/idaily-visual-baseline-build.log
             exit 1
@@ -207,6 +240,7 @@ jobs:
           wait "$APP_PID" 2>/dev/null || true
           trap - EXIT
           git restore next-env.d.ts tsconfig.json
+          rm -rf src/app/__phase6_acceptance_loading src/app/__phase6_acceptance_error
 
       - name: Upload Phase 6 visual acceptance screenshots
         if: always()
