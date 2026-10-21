@@ -339,6 +339,33 @@ form button {
   -webkit-overflow-scrolling: touch;
 }
 
+.table-scroll-hint {
+  display: none;
+  margin: 0.45rem 0 0;
+  font-size: 0.875rem;
+}
+
+@media (max-width: 48rem) {
+  .report-comparison-table {
+    min-width: 42rem;
+  }
+
+  .report-comparison-table th,
+  .report-comparison-table td {
+    white-space: nowrap;
+  }
+
+  .report-comparison-table td:first-child {
+    min-width: 13rem;
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+
+  .table-scroll-hint {
+    display: block;
+  }
+}
+
 table {
   width: 100%;
   border-collapse: collapse;
