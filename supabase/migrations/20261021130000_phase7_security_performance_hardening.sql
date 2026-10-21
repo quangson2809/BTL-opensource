@@ -3,6 +3,30 @@
 -- The wrappers deliberately preserve existing authorization predicates while preventing
 -- direct /rest/v1/rpc access to generic helpers that accept arbitrary role/account IDs.
 
+-- Do not expose the arbitrary-target hierarchy oracle over the Data API.
+-- RLS still calls the internal helper; direct user-facing activity checks go through
+-- this guarded SECURITY DEFINER function.
+create or replace function public.can_view_activity(activity_owner_id uuid)
+returns boolean
+language sql
+stable
+security definer
+set search_path = pg_catalog, public
+as $
+  select public.current_account_has_application_access()
+    and (
+      activity_owner_id = auth.uid()
+      or (
+        public.has_permission('ACTIVITY_VIEW_SUBTREE')
+        and public.is_in_subtree(activity_owner_id)
+      )
+    );
+$;
+
+revoke all on function public.is_in_subtree(uuid) from public, anon, authenticated;
+revoke all on function public.can_view_activity(uuid) from public, anon;
+grant execute on function public.can_view_activity(uuid) to authenticated;
+
 create schema if not exists app_private;
 revoke all on schema app_private from public, anon;
 grant usage on schema app_private to authenticated, service_role;
@@ -226,8 +250,7 @@ revoke all on function public.has_role(text) from public, anon;
 grant execute on function public.has_role(text) to authenticated;
 revoke all on function public.has_permission(text) from public, anon;
 grant execute on function public.has_permission(text) to authenticated;
-revoke all on function public.is_in_subtree(uuid) from public, anon;
-grant execute on function public.is_in_subtree(uuid) to authenticated;
+revoke all on function public.is_in_subtree(uuid) from public, anon, authenticated;
 revoke all on function public.can_view_activity(uuid) from public, anon;
 grant execute on function public.can_view_activity(uuid) to authenticated;
 revoke all on function public.can_creator_read_notification_recipient(uuid) from public, anon, authenticated;
