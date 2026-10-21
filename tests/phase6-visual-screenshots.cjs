@@ -235,7 +235,7 @@ async function main() {
     if (!captureOnly) {
       // Trigger the real root loading.tsx boundary through a client-side route transition.
       await page.setViewportSize({ width: 375, height: 812 });
-      await page.goto(baseURL + "/__phase6_acceptance_loading/start", { waitUntil: "domcontentloaded" });
+      await page.goto(baseURL + "/phase6-acceptance-loading/start", { waitUntil: "domcontentloaded" });
       await page.getByRole("link", { name: "Open delayed route" }).click();
       const loadingState = page.getByRole("status");
       await loadingState.waitFor();
@@ -252,7 +252,7 @@ async function main() {
         { width: 375, height: 812, label: "375x812" },
       ]) {
         await page.setViewportSize({ width: viewport.width, height: viewport.height });
-        await page.goto(baseURL + "/__phase6_acceptance_error", { waitUntil: "domcontentloaded" });
+        await page.goto(baseURL + "/phase6-acceptance-error", { waitUntil: "domcontentloaded" });
         const errorState = page.getByRole("alert");
         await errorState.waitFor();
         await page.getByRole("heading", { name: "Có lỗi xảy ra" }).waitFor();
