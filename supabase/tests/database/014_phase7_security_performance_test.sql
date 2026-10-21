@@ -13,12 +13,12 @@ select ok(
   'RLS can invoke the non-exposed role helper'
 );
 select ok(
-  not has_function_privilege('authenticated', 'public.has_role(text)', 'EXECUTE'),
-  'authenticated cannot call the generic public role helper through the Data API'
+  has_function_privilege('authenticated', 'public.has_role(text)', 'EXECUTE'),
+  'authenticated can query only its own guarded role assignments through the role helper'
 );
 select ok(
-  not has_function_privilege('authenticated', 'public.has_permission(text)', 'EXECUTE'),
-  'authenticated cannot call the generic public permission helper through the Data API'
+  has_function_privilege('authenticated', 'public.has_permission(text)', 'EXECUTE'),
+  'authenticated can query only its own guarded permissions through the permission helper'
 );
 select ok(
   not has_function_privilege('authenticated', 'public.is_in_subtree(uuid)', 'EXECUTE'),
