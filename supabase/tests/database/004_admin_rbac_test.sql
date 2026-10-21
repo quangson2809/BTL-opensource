@@ -81,7 +81,7 @@ select set_config(
   true
 );
 
-select is(public.has_role('SA'), true, 'approved SA has normal role access');
+select is(app_private.has_role('SA'), true, 'approved SA has normal role access');
 
 select is(
   (select count(*)::bigint from public.tai_khoan),
@@ -123,7 +123,7 @@ select is(
   0::bigint,
   'locked account existing JWT cannot read protected business data'
 );
-select is(public.has_role('SA'), false, 'locked account role helper is disabled');
+select is(app_private.has_role('SA'), false, 'locked account role helper is disabled');
 
 -- Admin unlocks the account.
 select set_config('request.jwt.claim.sub', 'a3000000-0000-4000-8000-000000000001', true);
@@ -163,7 +163,7 @@ select set_config(
   true
 );
 
-select is(public.has_role('UM'), true, 'role helper reflects Admin assignment');
+select is(app_private.has_role('UM'), true, 'role helper reflects Admin assignment');
 
 select set_config('request.jwt.claim.sub', 'a3000000-0000-4000-8000-000000000001', true);
 select set_config(
@@ -197,7 +197,7 @@ select set_config(
   true
 );
 
-select is(public.has_role('UM'), false, 'role helper reflects Admin revoke');
+select is(app_private.has_role('UM'), false, 'role helper reflects Admin revoke');
 
 select throws_ok(
   $$
