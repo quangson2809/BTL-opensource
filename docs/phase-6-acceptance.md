@@ -48,11 +48,12 @@ The screenshots below were captured by Playwright from the **local production bu
 
 - [x] Capture authenticated dashboard, customer list, customer detail, customer form, reports, and filtered empty list at both viewports using a temporary authenticated SA account. Evidence: [download actual Playwright screenshots](https://github.com/quangson2809/BTL-opensource/actions/runs/39451393238/artifacts/12278542645).
 - [x] Assert route heading and document/body horizontal overflow for all 12 route/viewport combinations; CI reported no horizontal overflow at 1440 × 900 or 375 × 812.
-- [ ] Inspect all screenshot images visually for spacing, clipping, contrast, hierarchy and card/wrapper behavior. Automated assertions do not prove aesthetic quality.
+- [x] Visually inspected all 12 `after-*` screenshots from artifact `12278542645` (6 routes × 1440 × 900 / 375 × 812). Desktop layouts have consistent green/ivory tokens, clear page hierarchy, and no obvious clipping in the inspected captures. Mobile dashboard, list, detail, and form are legible and stack into a single column. No card/wrapper removal is justified by these captures.
+- [x] Visual review finding (P2): the 375px report comparison table is cramped; multi-word headers wrap into several short lines and the long staff identifier occupies many lines. It remains readable and has no document-level horizontal overflow, but should be improved if the table is expected to be scanned on mobile. This is a usability observation, not a confirmed data or layout defect.
 - [ ] Capture loading and error boundaries from deliberately induced real application states. The empty-list screenshot is backed by an actual filtered query; loading/error screenshot coverage is not yet complete.
-- [ ] Complete keyboard-only and screen-reader smoke testing in a real browser. Existing browser tests cover focus and form accessible names, but do not replace a full manual assistive-technology review.
+- [ ] Complete keyboard-only and screen-reader smoke testing in a real browser. Screenshot inspection is complete, but no manual Tab/Shift+Tab/Enter/Escape or screen-reader interaction was performed in this turn; existing browser tests cover focus and form accessible names but do not replace this review.
 
-**Remaining limitations:** screenshots are genuine authenticated CI browser captures, but automated checks only validate page headings and horizontal overflow, not full visual correctness or screen-reader output. Do not remove wrappers/cards without evidence about layout, responsive behavior, and accessibility.
+**Remaining limitations:** the 12 authenticated screenshots were visually inspected; the report comparison table has a mobile-readability improvement opportunity. Keyboard-only and screen-reader interaction remain unverified because no interactive browser session was available. Automated checks validate page headings and horizontal overflow, not screen-reader output. Do not remove wrappers/cards without evidence about layout, responsive behavior, and accessibility.
 
 ## 5. Security/dependency follow-up
 
