@@ -1,64 +1,111 @@
 import Link from "next/link";
 
+import { GuardedForm } from "@/components/guarded-form";
+import { FormDraftClear } from "@/components/form-draft-clear";
+import { ActionFeedback } from "@/components/action-feedback";
+import { EmptyState } from "@/components/empty-state";
+import { PageHeader } from "@/components/page-header";
+import { StatusBadge } from "@/components/status-badge";
+import { ListPagination, ResultSummary } from "@/components/list-controls";
+import { PendingSubmitButton } from "@/components/pending-submit-button";
+
 import { deleteActivity } from "@/app/activities/actions";
 import { requireBusinessAccount } from "@/lib/business";
+import { parsePositivePage, sanitizePostgrestOrSearch } from "@/lib/list-query.mjs";
 
 export const dynamic = "force-dynamic";
 
 type ActivitiesPageProps = {
-  searchParams: Promise<{ loai?: string; status?: string; error?: string }>;
+  searchParams: Promise<{ q?: string; loai?: string; status?: string; error?: string; page?: string; id?: string }>;
 };
+
+const activityTypes = new Set(["KHẢO_SÁT", "GẶP_GỠ", "TƯ_VẤN"]);
 
 export default async function ActivitiesPage({
   searchParams,
 }: ActivitiesPageProps) {
   const query = await searchParams;
+  const search = sanitizePostgrestOrSearch(query.q);
   const { supabase, accountId } = await requireBusinessAccount();
-  const [activityResult, accountResult] = await Promise.all([
-    supabase
-      .from("hoat_dong")
-      .select(
-        "id,tai_khoan_id,loai_hoat_dong,dia_diem,thoi_gian,so_khach_hang_ket_noi",
-      )
-      .order("thoi_gian", { ascending: false }),
-    supabase.from("tai_khoan").select("id,ho_ten,ma_dai_ly"),
-  ]);
+  const type = query.loai && activityTypes.has(query.loai) ? query.loai : "";
 
-  if (activityResult.error || accountResult.error) {
+  let countQuery = supabase
+    .from("hoat_dong")
+    .select("id", { count: "exact", head: true });
+  if (type) countQuery = countQuery.eq("loai_hoat_dong", type);
+  if (search) countQuery = countQuery.ilike("dia_diem", "%" + search + "%");
+
+  const { count, error: countError } = await countQuery;
+  if (countError) {
+    throw new Error("Không thể đếm hoạt động trong phạm vi được cấp quyền.");
+  }
+
+  const total = count ?? 0;
+  const pageSize = 8;
+  const pageCount = Math.max(1, Math.ceil(total / pageSize));
+  const currentPage = Math.min(parsePositivePage(query.page), pageCount);
+  const firstRow = (currentPage - 1) * pageSize;
+
+  let activityQuery = supabase
+    .from("hoat_dong")
+    .select("id,tai_khoan_id,loai_hoat_dong,dia_diem,thoi_gian,so_khach_hang_ket_noi")
+    .order("thoi_gian", { ascending: false })
+    .order("id", { ascending: true })
+    .range(firstRow, firstRow + pageSize - 1);
+  if (type) activityQuery = activityQuery.eq("loai_hoat_dong", type);
+  if (search) activityQuery = activityQuery.ilike("dia_diem", "%" + search + "%");
+
+  const { data: activities, error } = await activityQuery;
+  if (error) {
     throw new Error("Không thể tải lịch sử hoạt động.");
+  }
+
+  const visibleActivities = activities ?? [];
+  const accountIds = [...new Set(visibleActivities.map((activity) => activity.tai_khoan_id))];
+  const accountResult = accountIds.length > 0
+    ? await supabase
+        .from("tai_khoan")
+        .select("id,ho_ten,ma_dai_ly")
+        .in("id", accountIds)
+    : { data: [], error: null };
+
+  if (accountResult.error) {
+    throw new Error("Không thể tải tên người thực hiện trong phạm vi được cấp quyền.");
   }
 
   const names = new Map(
     (accountResult.data ?? []).map((account) => [
       account.id,
-      `${account.ho_ten} (${account.ma_dai_ly})`,
+      account.ho_ten + " (" + account.ma_dai_ly + ")",
     ]),
   );
-  const activities = (activityResult.data ?? []).filter(
-    (activity) => !query.loai || activity.loai_hoat_dong === query.loai,
-  );
+  const filterParams = { q: search, loai: type };
+  const hasFilters = Boolean(search || type);
 
   return (
     <main>
       <section className="card wide-card">
-        <h1>Hoạt động kinh doanh</h1>
-        <div className="actions">
-          <Link href="/dashboard">Dashboard</Link>
-          <Link className="button-link" href="/activities/new">
-            Tạo hoạt động
-          </Link>
-        </div>
-        {query.status ? (
-          <p className="message success">Đã cập nhật hoạt động.</p>
-        ) : null}
-        {query.error ? (
-          <p className="message error">Không thể xử lý hoạt động.</p>
-        ) : null}
+        <PageHeader
+          actions={
+            <Link className="button-link" href="/activities/new">
+              Tạo hoạt động
+            </Link>
+          }
+          description="Theo dõi lịch sử hoạt động theo phạm vi dữ liệu được cấp quyền."
+          title="Hoạt động kinh doanh"
+        />
+        <FormDraftClear scopeKey={accountId} persistKeys={["activity-create", ...(query.id ? ["activity-edit-" + query.id] : [])]} clearOn={query.status === "created" || query.status === "updated"} />
+        {query.status ? <ActionFeedback status={query.status} /> : null}
+        {query.error ? <ActionFeedback error={query.error} /> : null}
 
         <form className="filter-grid" method="get">
           <label>
+            Tìm kiếm địa điểm
+            <input defaultValue={search} name="q" placeholder="Nhập địa điểm hoạt động" />
+          </label>
+          <label>
             Loại hoạt động
-            <select defaultValue={query.loai ?? ""} name="loai">
+            <select defaultValue={type} name="loai">
               <option value="">Tất cả</option>
               <option value="KHẢO_SÁT">Khảo sát</option>
               <option value="GẶP_GỠ">Gặp gỡ</option>
@@ -68,15 +115,40 @@ export default async function ActivitiesPage({
           <button type="submit">Lọc</button>
         </form>
 
+        <ResultSummary
+          label="hoạt động"
+          total={total}
+          currentPage={currentPage}
+          pageSize={pageSize}
+          hasFilters={hasFilters}
+          clearHref="/activities"
+          filterParams={filterParams}
+          activeFilters={[
+            ...(search ? [{ key: "q", label: "Địa điểm", value: search }] : []),
+            ...(type ? [{ key: "loai", label: "Loại hoạt động", value: type === "KHẢO_SÁT" ? "Khảo sát" : type === "GẶP_GỠ" ? "Gặp gỡ" : "Tư vấn" }] : []),
+          ]}
+        />
+
         <div className="stack">
-          {activities.length === 0 ? <p>Chưa có hoạt động phù hợp.</p> : null}
-          {activities.map((activity) => {
+          {total === 0 ? (
+            <EmptyState
+              actionHref={!hasFilters ? "/activities/new" : undefined}
+              actionLabel={!hasFilters ? "Tạo hoạt động đầu tiên" : undefined}
+              description={
+                !hasFilters
+                  ? "Tạo một bản ghi hoạt động để bắt đầu lưu lịch sử."
+                  : "Thử chọn loại hoạt động khác để mở rộng kết quả."
+              }
+              title={!hasFilters ? "Chưa có hoạt động" : "Không tìm thấy kết quả"}
+            />
+          ) : null}
+          {visibleActivities.map((activity) => {
             const owned = activity.tai_khoan_id === accountId;
             return (
-              <article className="card" key={activity.id}>
+              <article className="record-row" key={activity.id}>
                 <p>
-                  <strong>{activity.loai_hoat_dong}</strong> —{" "}
-                  {names.get(activity.tai_khoan_id) ?? activity.tai_khoan_id}
+                  <strong>{activity.loai_hoat_dong}</strong> <StatusBadge value={activity.loai_hoat_dong} /> —{" "}
+                  {names.get(activity.tai_khoan_id) ?? "Người thực hiện trong scope"}
                 </p>
                 <p>{activity.dia_diem}</p>
                 <p className="secondary-text">
@@ -85,17 +157,16 @@ export default async function ActivitiesPage({
                 </p>
                 {owned ? (
                   <div className="actions">
-                    <Link href={`/activities/${activity.id}/edit`}>
-                      Chỉnh sửa
-                    </Link>
-                    <form action={deleteActivity}>
-                      <input
-                        name="activity_id"
-                        type="hidden"
-                        value={activity.id}
-                      />
-                      <button type="submit">Xóa</button>
-                    </form>
+                    <Link href={"/activities/" + activity.id + "/edit"}>Chỉnh sửa</Link>
+                    <GuardedForm action={deleteActivity}>
+                      <input name="activity_id" type="hidden" value={activity.id} />
+                      <PendingSubmitButton
+                        confirmMessage="Bạn có chắc muốn xóa hoạt động này?"
+                        pendingLabel="Đang xóa…"
+                      >
+                        Xóa
+                      </PendingSubmitButton>
+                    </GuardedForm>
                   </div>
                 ) : (
                   <p className="secondary-text">Chỉ xem hoạt động cấp dưới.</p>
@@ -104,6 +175,7 @@ export default async function ActivitiesPage({
             );
           })}
         </div>
+        <ListPagination basePath="/activities" currentPage={currentPage} pageCount={pageCount} params={filterParams} />
       </section>
     </main>
   );

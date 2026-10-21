@@ -1,4 +1,8 @@
 import Link from "next/link";
+import { GuardedForm } from "@/components/guarded-form";
+import { FormDraftClear } from "@/components/form-draft-clear";
+import { FormDraftPersistence } from "@/components/form-draft-persistence";
+import { PendingSubmitButton } from "@/components/pending-submit-button";
 
 import { verifyRecoveryOtp } from "@/app/auth/actions";
 
@@ -28,13 +32,15 @@ export default async function VerifyRecoveryPage({
       <section className="card auth-card">
         <h1>Xác minh OTP và đặt lại mật khẩu</h1>
         {otpSent ? (
-          <p className="message success">
+          <p role="status" aria-live="polite" className="message success">
             Nếu email tồn tại, OTP 8 số đã được gửi và có hiệu lực 10 phút.
           </p>
         ) : null}
-        {errorMessage ? <p className="message error">{errorMessage}</p> : null}
+        {errorMessage ? <p role="alert" aria-live="assertive" className="message error">{errorMessage}</p> : null}
+        <FormDraftClear scopeKey="public-auth" persistKeys={["password-recovery"]} clearOn={otpSent} />
+        <FormDraftPersistence persistKey="password-recovery-verify" scopeKey="public-auth" hasError={Boolean(errorMessage)} />
 
-        <form action={verifyRecoveryOtp} className="stack">
+        <GuardedForm action={verifyRecoveryOtp} className="stack" data-persist-key="password-recovery-verify">
           <label>
             Email
             <input
@@ -65,8 +71,8 @@ export default async function VerifyRecoveryPage({
           <p className="secondary-text">
             Tối thiểu 8 ký tự, có chữ thường, chữ hoa và số. Mật khẩu mới phải khác mật khẩu cũ.
           </p>
-          <button type="submit">Xác minh và đặt lại mật khẩu</button>
-        </form>
+          <PendingSubmitButton pendingLabel="Đang xác minh…">Xác minh và đặt lại mật khẩu</PendingSubmitButton>
+        </GuardedForm>
 
         <p className="secondary-text">
           <Link href="/password/recovery">Yêu cầu OTP mới</Link>

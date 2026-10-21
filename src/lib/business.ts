@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 
 import { createClient } from "@/lib/supabase/server";
+import { getCurrentRoleCodes } from "@/lib/role-access";
 
 export async function requireBusinessAccount() {
   const supabase = await createClient();
@@ -24,35 +25,42 @@ export async function requireBusinessAccount() {
   return { supabase, accountId, account };
 }
 
+export async function requireActiveBusinessAccount() {
+  const context = await requireBusinessAccount();
+
+  if (context.account.trang_thai === "CHO_PHE_DUYET") {
+    redirect("/login?error=pending");
+  }
+  if (context.account.trang_thai === "KHOA") {
+    redirect("/login?error=locked");
+  }
+  if (context.account.trang_thai !== "DANG_HOAT_DONG") {
+    redirect("/access-denied");
+  }
+
+  return context;
+}
+
 export async function requireManager() {
   const context = await requireBusinessAccount();
-  const [dmResult, umResult] = await Promise.all([
-    context.supabase.rpc("has_role", { role_code: "DM" }),
-    context.supabase.rpc("has_role", { role_code: "UM" }),
-  ]);
+  const roleCodes = await getCurrentRoleCodes(context.supabase, context.accountId);
 
-  if (
-    dmResult.error ||
-    umResult.error ||
-    (dmResult.data !== true && umResult.data !== true)
-  ) {
+  if (!roleCodes || (!roleCodes.includes("DM") && !roleCodes.includes("UM"))) {
     redirect("/access-denied");
   }
 
   return {
     ...context,
-    isDm: dmResult.data === true,
-    isUm: umResult.data === true,
+    isDm: roleCodes.includes("DM"),
+    isUm: roleCodes.includes("UM"),
   };
 }
 
 export async function requireDm() {
   const context = await requireBusinessAccount();
-  const { data: isDm, error } = await context.supabase.rpc("has_role", {
-    role_code: "DM",
-  });
+  const roleCodes = await getCurrentRoleCodes(context.supabase, context.accountId);
 
-  if (error || isDm !== true) {
+  if (!roleCodes?.includes("DM")) {
     redirect("/access-denied");
   }
 

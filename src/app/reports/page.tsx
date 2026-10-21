@@ -1,7 +1,11 @@
 import Link from "next/link";
 
+import { EmptyState } from "@/components/empty-state";
+import { PageHeader } from "@/components/page-header";
+
 import { requireBusinessAccount } from "@/lib/business";
 import { resolveReportRange } from "@/lib/reporting";
+import { rankReportRows } from "@/lib/report-leaderboard.mjs";
 
 export const dynamic = "force-dynamic";
 
@@ -47,6 +51,7 @@ export default async function ReportsPage({ searchParams }: ReportsPageProps) {
   const rows = (data ?? []) as ReportRow[];
   const personal = rows.find((row) => row.is_self);
   const teamRows = rows.filter((row) => !row.is_self);
+  const leaderboard = rankReportRows(teamRows);
   const team = totals(teamRows);
   const overview = totals(rows);
   const exportQuery = new URLSearchParams({
@@ -57,16 +62,20 @@ export default async function ReportsPage({ searchParams }: ReportsPageProps) {
   return (
     <main>
       <section className="card wide-card">
-        <h1>Báo cáo & thống kê</h1>
-        <div className="actions">
-          <Link href="/dashboard">Dashboard</Link>
-          <Link
-            className="button-link"
-            href={`/reports/export?${exportQuery}`}
-          >
-            Xuất Excel (.csv)
-          </Link>
-        </div>
+        <PageHeader
+          title="Báo cáo & thống kê"
+          description="Theo dõi kết quả cá nhân và nhóm trong phạm vi dữ liệu được cấp quyền."
+          actions={
+            <>
+              <Link className="button-link button-secondary" href="/dashboard">
+                Dashboard
+              </Link>
+              <Link className="button-link" href={`/reports/export?${exportQuery}`}>
+                Xuất Excel (.csv)
+              </Link>
+            </>
+          }
+        />
 
         <form className="filter-grid" method="get">
           <label>
@@ -109,16 +118,58 @@ export default async function ReportsPage({ searchParams }: ReportsPageProps) {
           </article>
         </div>
 
+        {leaderboard.length > 0 ? (
+          <section aria-labelledby="report-leaderboard-title">
+            <h2 id="report-leaderboard-title">Xếp hạng nhân sự theo số hoạt động</h2>
+            <p className="secondary-text">
+              Xếp hạng trong phạm vi cấp dưới mà tài khoản hiện tại được phép xem, theo {range.label.toLowerCase()}.
+              Nhân sự có cùng số hoạt động được đồng hạng; số khách hàng dùng để sắp xếp ổn định trong nhóm đồng hạng.
+            </p>
+            <div className="table-scroll">
+              <table>
+                <thead>
+                  <tr>
+                    <th scope="col">Hạng</th>
+                    <th scope="col">Nhân sự</th>
+                    <th scope="col">Mã đại lý</th>
+                    <th scope="col">Hoạt động</th>
+                    <th scope="col">Khách hàng mới</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {leaderboard.map((row) => (
+                    <tr key={row.account_id}>
+                      <td>{row.rank}</td>
+                      <td>{row.ho_ten}</td>
+                      <td>{row.ma_dai_ly}</td>
+                      <td>{row.activity_count}</td>
+                      <td>{row.customer_count}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </section>
+        ) : (
+          <EmptyState
+            title="Chưa có dữ liệu xếp hạng"
+            description="Bảng xếp hạng sẽ xuất hiện khi có hoạt động được ghi nhận trong kỳ báo cáo."
+          />
+        )}
+
         <h2>So sánh cá nhân / nhóm</h2>
-        <div className="table-scroll">
-          <table>
+        <p className="table-scroll-hint secondary-text">
+          Trên màn hình nhỏ, vuốt ngang bảng để xem đủ các cột.
+        </p>
+        <div className="table-scroll report-comparison-scroll">
+          <table aria-label="So sánh cá nhân và nhóm" className="report-comparison-table">
             <thead>
               <tr>
-                <th>Nhân sự</th>
-                <th>Phạm vi</th>
-                <th>Khách hàng mới</th>
-                <th>Hoạt động</th>
-                <th>Lượt khách kết nối</th>
+                <th scope="col">Nhân sự</th>
+                <th scope="col">Phạm vi</th>
+                <th scope="col">Khách hàng mới</th>
+                <th scope="col">Hoạt động</th>
+                <th scope="col">Lượt khách kết nối</th>
               </tr>
             </thead>
             <tbody>

@@ -32,6 +32,7 @@ const saEmail = `phase3-sa-${suffix}@example.test`;
 const saPassword = "Phase3SaPassword1";
 const adminPhone = `07${String(Date.now()).slice(-8)}`;
 const saPhone = `08${String(Date.now() + 1).slice(-8)}`;
+const managerCode = `DM-P3-${suffix}`;
 
 function assertNoError(error, context) {
   assert.equal(error, null, `${context}: ${error?.message ?? "unexpected error"}`);
@@ -75,6 +76,14 @@ const { error: adminRoleError } = await setup.from("phan_cong_vai_tro").insert({
 
 assertNoError(adminRoleError, "assign Admin fixture role");
 
+const managerEmail = `manager-p3-${suffix}@example.test`;
+const { data: managerIdentity, error: managerIdentityError } = await setup.auth.admin.createUser({ email: managerEmail, password: "ManagerPassword1", email_confirm: true });
+assertNoError(managerIdentityError, "create manager Auth fixture");
+const managerId = managerIdentity.user.id;
+const { error: managerAccountError } = await setup.from("tai_khoan").insert({ id: managerId, ho_ten: "Phase 3 DM Manager", email: managerEmail, so_dien_thoai: `06${String(Date.now()).slice(-8)}`, ma_dai_ly: managerCode, manager_id: null, trang_thai: "DANG_HOAT_DONG" });
+assertNoError(managerAccountError, "create manager business fixture");
+const { error: managerRoleError } = await setup.from("phan_cong_vai_tro").insert({ tai_khoan_id: managerId, vai_tro_id: DM_ROLE_ID });
+assertNoError(managerRoleError, "assign manager DM role");
 const saClient = createAnonClient();
 const { data: saRegistration, error: saRegistrationError } =
   await saClient.auth.signUp({
@@ -86,6 +95,7 @@ const { data: saRegistration, error: saRegistrationError } =
         ho_ten: "Phase 3 Integration SA",
         so_dien_thoai: saPhone,
         ma_dai_ly: `SA-P3-${suffix}`,
+        manager_code: managerCode,
       },
     },
   });

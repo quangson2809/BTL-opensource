@@ -3,6 +3,7 @@
 import { redirect } from "next/navigation";
 
 import { requireBusinessAccount } from "@/lib/business";
+import { isUuid, isValidDateOnly } from "@/lib/input-validation.mjs";
 
 const customerTypes = new Set(["MUC_TIEU", "NUOI_DUONG", "DOI_TAC"]);
 const customerStatuses = new Set(["BẠN", "BÀN", "BÁN", "BÁM"]);
@@ -28,7 +29,10 @@ function customerPayload(formData: FormData) {
     nhom_tinh_cach: field(formData, "nhom_tinh_cach"),
   };
 
-  if (Object.values(payload).some((value) => !value)) {
+  if (
+    Object.values(payload).some((value) => !value) ||
+    !isValidDateOnly(payload.ngay_sinh)
+  ) {
     return null;
   }
 
@@ -60,14 +64,17 @@ export async function createCustomer(formData: FormData) {
     redirect("/customers/new?error=create");
   }
 
-  redirect(`/customers/${data.id}?status=created`);
+  redirect("/customers/" + encodeURIComponent(data.id) + "?status=created");
 }
 
 export async function updateCustomer(formData: FormData) {
   const customerId = field(formData, "customer_id");
   const payload = customerPayload(formData);
-  if (!customerId || !payload) {
-    redirect(`/customers/${customerId || "unknown"}/edit?error=invalid`);
+  if (!isUuid(customerId)) {
+    redirect("/customers?error=invalid");
+  }
+  if (!payload) {
+    redirect("/customers/" + encodeURIComponent(customerId) + "/edit?error=invalid");
   }
 
   const { supabase } = await requireBusinessAccount();
@@ -79,15 +86,15 @@ export async function updateCustomer(formData: FormData) {
     .maybeSingle();
 
   if (error || !data) {
-    redirect(`/customers/${customerId}/edit?error=update`);
+    redirect("/customers/" + encodeURIComponent(customerId) + "/edit?error=update");
   }
 
-  redirect(`/customers/${customerId}?status=updated`);
+  redirect("/customers/" + encodeURIComponent(customerId) + "?status=updated");
 }
 
 export async function deleteCustomer(formData: FormData) {
   const customerId = field(formData, "customer_id");
-  if (!customerId) {
+  if (!isUuid(customerId)) {
     redirect("/customers?error=delete");
   }
 
@@ -100,7 +107,7 @@ export async function deleteCustomer(formData: FormData) {
     .maybeSingle();
 
   if (error || !data) {
-    redirect(`/customers/${customerId}?error=delete`);
+    redirect("/customers/" + encodeURIComponent(customerId) + "?error=delete");
   }
 
   redirect("/customers?status=deleted");

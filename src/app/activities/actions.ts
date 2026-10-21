@@ -3,6 +3,11 @@
 import { redirect } from "next/navigation";
 
 import { requireBusinessAccount } from "@/lib/business";
+import {
+  isUuid,
+  parseNonNegativeInt32,
+  parseVietnamLocalDateTime,
+} from "@/lib/input-validation.mjs";
 
 const activityTypes = new Set(["KHẢO_SÁT", "GẶP_GỠ", "TƯ_VẤN"]);
 
@@ -15,28 +20,22 @@ function activityPayload(formData: FormData) {
   const loaiHoatDong = field(formData, "loai_hoat_dong");
   const diaDiem = field(formData, "dia_diem");
   const thoiGian = field(formData, "thoi_gian");
-  const connectedRaw = field(formData, "so_khach_hang_ket_noi");
-  const connected = Number.parseInt(connectedRaw, 10);
+  const connected = parseNonNegativeInt32(field(formData, "so_khach_hang_ket_noi"));
+  const parsedTime = parseVietnamLocalDateTime(thoiGian);
 
   if (
     !activityTypes.has(loaiHoatDong) ||
     !diaDiem ||
-    !thoiGian ||
-    !Number.isInteger(connected) ||
-    connected < 0
+    !parsedTime ||
+    connected === null
   ) {
-    return null;
-  }
-
-  const parsedTime = new Date(`${thoiGian}:00+07:00`);
-  if (Number.isNaN(parsedTime.getTime())) {
     return null;
   }
 
   return {
     loai_hoat_dong: loaiHoatDong,
     dia_diem: diaDiem,
-    thoi_gian: parsedTime.toISOString(),
+    thoi_gian: parsedTime,
     so_khach_hang_ket_noi: connected,
   };
 }
@@ -63,8 +62,11 @@ export async function createActivity(formData: FormData) {
 export async function updateActivity(formData: FormData) {
   const activityId = field(formData, "activity_id");
   const payload = activityPayload(formData);
-  if (!activityId || !payload) {
-    redirect(`/activities/${activityId || "unknown"}/edit?error=invalid`);
+  if (!isUuid(activityId)) {
+    redirect("/activities?error=invalid");
+  }
+  if (!payload) {
+    redirect("/activities/" + encodeURIComponent(activityId) + "/edit?error=invalid");
   }
 
   const { supabase, accountId } = await requireBusinessAccount();
@@ -77,15 +79,15 @@ export async function updateActivity(formData: FormData) {
     .maybeSingle();
 
   if (error || !data) {
-    redirect(`/activities/${activityId}/edit?error=update`);
+    redirect("/activities/" + encodeURIComponent(activityId) + "/edit?error=update");
   }
 
-  redirect("/activities?status=updated");
+  redirect("/activities?status=updated&id=" + encodeURIComponent(activityId));
 }
 
 export async function deleteActivity(formData: FormData) {
   const activityId = field(formData, "activity_id");
-  if (!activityId) {
+  if (!isUuid(activityId)) {
     redirect("/activities?error=delete");
   }
 

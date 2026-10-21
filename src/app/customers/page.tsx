@@ -1,6 +1,13 @@
 import Link from "next/link";
 
+import { ActionFeedback } from "@/components/action-feedback";
+import { EmptyState } from "@/components/empty-state";
+import { PageHeader } from "@/components/page-header";
+import { StatusBadge } from "@/components/status-badge";
+import { ListPagination, ResultSummary } from "@/components/list-controls";
+
 import { requireBusinessAccount } from "@/lib/business";
+import { parsePositivePage, sanitizePostgrestOrSearch } from "@/lib/list-query.mjs";
 
 export const dynamic = "force-dynamic";
 
@@ -12,54 +19,86 @@ type CustomersPageProps = {
     nhom?: string;
     status?: string;
     error?: string;
+    page?: string;
   }>;
 };
+
+const customerTypes = new Set(["MUC_TIEU", "NUOI_DUONG", "DOI_TAC"]);
+const customerStatuses = new Set(["BẠN", "BÀN", "BÁN", "BÁM"]);
+const personalityGroups = new Set(["D", "I", "S", "C"]);
 
 export default async function CustomersPage({ searchParams }: CustomersPageProps) {
   const query = await searchParams;
   const { supabase } = await requireBusinessAccount();
-  const { data, error } = await supabase
+
+  const search = sanitizePostgrestOrSearch(query.q);
+  const type = query.loai && customerTypes.has(query.loai) ? query.loai : "";
+  const status = query.tinh_trang && customerStatuses.has(query.tinh_trang) ? query.tinh_trang : "";
+  const group = query.nhom && personalityGroups.has(query.nhom) ? query.nhom : "";
+
+  let countQuery = supabase
+    .from("khach_hang")
+    .select("id", { count: "exact", head: true });
+  if (search) {
+    countQuery = countQuery.or(
+      `ho_ten.ilike.%${search}%,ma_khach_hang.ilike.%${search}%,so_dien_thoai.ilike.%${search}%`,
+    );
+  }
+  if (type) countQuery = countQuery.eq("loai_khach_hang", type);
+  if (status) countQuery = countQuery.eq("tinh_trang", status);
+  if (group) countQuery = countQuery.eq("nhom_tinh_cach", group);
+
+  const { count, error: countError } = await countQuery;
+  if (countError) {
+    throw new Error("Không thể đếm khách hàng trong phạm vi được cấp quyền.");
+  }
+
+  const total = count ?? 0;
+  const pageSize = 8;
+  const pageCount = Math.max(1, Math.ceil(total / pageSize));
+  const currentPage = Math.min(parsePositivePage(query.page), pageCount);
+  const firstRow = (currentPage - 1) * pageSize;
+
+  let customersQuery = supabase
     .from("khach_hang")
     .select(
       "id,ma_khach_hang,ho_ten,so_dien_thoai,loai_khach_hang,tinh_trang,nhom_tinh_cach,updated_at",
     )
-    .order("updated_at", { ascending: false });
+    .order("updated_at", { ascending: false })
+    .order("id", { ascending: true })
+    .range(firstRow, firstRow + pageSize - 1);
+  if (search) {
+    customersQuery = customersQuery.or(
+      `ho_ten.ilike.%${search}%,ma_khach_hang.ilike.%${search}%,so_dien_thoai.ilike.%${search}%`,
+    );
+  }
+  if (type) customersQuery = customersQuery.eq("loai_khach_hang", type);
+  if (status) customersQuery = customersQuery.eq("tinh_trang", status);
+  if (group) customersQuery = customersQuery.eq("nhom_tinh_cach", group);
 
+  const { data: customers, error } = await customersQuery;
   if (error) {
     throw new Error("Không thể tải danh sách khách hàng.");
   }
 
-  const search = (query.q ?? "").trim().toLocaleLowerCase("vi");
-  const customers = (data ?? []).filter((customer) => {
-    const matchesSearch =
-      !search ||
-      customer.ho_ten.toLocaleLowerCase("vi").includes(search) ||
-      customer.ma_khach_hang.toLocaleLowerCase("vi").includes(search) ||
-      customer.so_dien_thoai.includes(search);
-    const matchesType = !query.loai || customer.loai_khach_hang === query.loai;
-    const matchesStatus =
-      !query.tinh_trang || customer.tinh_trang === query.tinh_trang;
-    const matchesGroup = !query.nhom || customer.nhom_tinh_cach === query.nhom;
-    return matchesSearch && matchesType && matchesStatus && matchesGroup;
-  });
+  const filterParams = { q: search, loai: type, tinh_trang: status, nhom: group };
+  const hasFilters = Boolean(search || type || status || group);
 
   return (
     <main>
       <section className="card wide-card">
-        <h1>Khách hàng của tôi</h1>
-        <div className="actions">
-          <Link href="/dashboard">Dashboard</Link>
-          <Link className="button-link" href="/customers/new">
-            Thêm khách hàng
-          </Link>
-        </div>
+        <PageHeader
+          actions={
+            <Link className="button-link" href="/customers/new">
+              Thêm khách hàng
+            </Link>
+          }
+          description="Tra cứu và cập nhật hồ sơ khách hàng thuộc phạm vi được cấp quyền."
+          title="Khách hàng của tôi"
+        />
 
-        {query.status === "deleted" ? (
-          <p className="message success">Đã xóa khách hàng.</p>
-        ) : null}
-        {query.error ? (
-          <p className="message error">Không thể xử lý yêu cầu.</p>
-        ) : null}
+        {query.status ? <ActionFeedback status={query.status} /> : null}
+        {query.error ? <ActionFeedback error={query.error} /> : null}
 
         <form className="filter-grid" method="get">
           <label>
@@ -72,7 +111,7 @@ export default async function CustomersPage({ searchParams }: CustomersPageProps
           </label>
           <label>
             Loại
-            <select defaultValue={query.loai ?? ""} name="loai">
+            <select defaultValue={type} name="loai">
               <option value="">Tất cả</option>
               <option value="MUC_TIEU">Mục tiêu</option>
               <option value="NUOI_DUONG">Nuôi dưỡng</option>
@@ -81,7 +120,7 @@ export default async function CustomersPage({ searchParams }: CustomersPageProps
           </label>
           <label>
             Tình trạng
-            <select defaultValue={query.tinh_trang ?? ""} name="tinh_trang">
+            <select defaultValue={status} name="tinh_trang">
               <option value="">Tất cả</option>
               <option value="BẠN">BẠN</option>
               <option value="BÀN">BÀN</option>
@@ -91,7 +130,7 @@ export default async function CustomersPage({ searchParams }: CustomersPageProps
           </label>
           <label>
             Nhóm tính cách
-            <select defaultValue={query.nhom ?? ""} name="nhom">
+            <select defaultValue={group} name="nhom">
               <option value="">Tất cả</option>
               <option value="D">D</option>
               <option value="I">I</option>
@@ -102,24 +141,51 @@ export default async function CustomersPage({ searchParams }: CustomersPageProps
           <button type="submit">Lọc</button>
         </form>
 
+        <ResultSummary
+          label="khách hàng"
+          total={total}
+          currentPage={currentPage}
+          pageSize={pageSize}
+          hasFilters={hasFilters}
+          clearHref="/customers"
+          filterParams={filterParams}
+          activeFilters={[
+            ...(search ? [{ key: "q", label: "Từ khóa", value: search }] : []),
+            ...(type ? [{ key: "loai", label: "Loại", value: type === "MUC_TIEU" ? "Mục tiêu" : type === "NUOI_DUONG" ? "Nuôi dưỡng" : "Đối tác" }] : []),
+            ...(status ? [{ key: "tinh_trang", label: "Tình trạng", value: status }] : []),
+            ...(group ? [{ key: "nhom", label: "Nhóm tính cách", value: group }] : []),
+          ]}
+        />
+
         <div className="stack">
-          {customers.length === 0 ? <p>Chưa có khách hàng phù hợp.</p> : null}
-          {customers.map((customer) => (
-            <article className="card" key={customer.id}>
+          {total === 0 ? (
+            <EmptyState
+              actionHref={!hasFilters ? "/customers/new" : undefined}
+              actionLabel={!hasFilters ? "Thêm khách hàng đầu tiên" : undefined}
+              description={
+                !hasFilters
+                  ? "Thêm hồ sơ đầu tiên để bắt đầu quản lý khách hàng."
+                  : "Thử thay đổi từ khóa hoặc bộ lọc để xem kết quả khác."
+              }
+              title={!hasFilters ? "Chưa có khách hàng" : "Không tìm thấy kết quả"}
+            />
+          ) : null}
+          {(customers ?? []).map((customer) => (
+            <article className="record-row" key={customer.id}>
               <p>
                 <strong>{customer.ho_ten}</strong> — {customer.ma_khach_hang}
               </p>
               <p>{customer.so_dien_thoai}</p>
               <p className="secondary-text">
-                {customer.loai_khach_hang} · {customer.tinh_trang} ·{" "}
-                {customer.nhom_tinh_cach}
+                {customer.loai_khach_hang} · <StatusBadge value={customer.tinh_trang} /> · {customer.nhom_tinh_cach}
               </p>
               <p className="secondary-text">
-                <Link href={`/customers/${customer.id}`}>Xem chi tiết</Link>
+                <Link href={"/customers/" + customer.id}>Xem chi tiết</Link>
               </p>
             </article>
           ))}
         </div>
+        <ListPagination basePath="/customers" currentPage={currentPage} pageCount={pageCount} params={filterParams} />
       </section>
     </main>
   );

@@ -2,8 +2,6 @@ name: Database Tests
 
 on:
   pull_request:
-    branches:
-      - main
   push:
     branches:
       - main
@@ -66,7 +64,7 @@ jobs:
           export NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY="$ANON_KEY"
           export SUPABASE_SECRET_KEY="$SERVICE_ROLE_KEY"
 
-          npm run dev > /tmp/idaily-next.log 2>&1 &
+          ./node_modules/.bin/next dev -p 3000 > /tmp/idaily-next.log 2>&1 &
           APP_PID=$!
           trap 'kill "$APP_PID" 2>/dev/null || true' EXIT
 
@@ -81,11 +79,11 @@ jobs:
             sleep 1
           done
 
-          for route in / /login /register /password/recovery /password/change; do
+          for route in / /login /register /password/recovery; do
             curl -fsS "http://127.0.0.1:3000$route" >/dev/null
           done
 
-          for route in /dashboard /customers /customers/new /activities /activities/new /notifications /notifications/new /reports /personnel /admin/accounts /admin/roles; do
+          for route in /dashboard /customers /customers/new /activities /activities/new /notifications /notifications/new /notifications/c5000000-0000-4000-8000-000000000001/edit /reports /personnel /admin/accounts /admin/roles /admin/roles/new /admin/roles/c6000000-0000-4000-8000-000000000001/edit /password/change; do
             status="$(curl -sS -o /dev/null -w '%{http_code}' "http://127.0.0.1:3000$route")"
             case "$status" in
               301|302|303|307|308) ;;
@@ -107,6 +105,152 @@ jobs:
           kill "$APP_PID"
           wait "$APP_PID" 2>/dev/null || true
           trap - EXIT
+
+      - name: Run form resilience browser checks
+        shell: bash
+        run: |
+          eval "$(supabase status -o env)"
+          export API_URL ANON_KEY SERVICE_ROLE_KEY DB_URL
+          export NEXT_PUBLIC_SUPABASE_URL="$API_URL"
+          export NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY="$ANON_KEY"
+          export SUPABASE_SECRET_KEY="$SERVICE_ROLE_KEY"
+
+          npm exec --yes --package=playwright -- playwright install --with-deps chromium
+
+          ./node_modules/.bin/next dev -p 3000 > /tmp/idaily-browser.log 2>&1 &
+          APP_PID=$!
+          trap 'kill "$APP_PID" 2>/dev/null || true' EXIT
+
+          for attempt in {1..60}; do
+            if curl -fsS http://127.0.0.1:3000/login >/dev/null; then
+              break
+            fi
+            if [ "$attempt" -eq 60 ]; then
+              cat /tmp/idaily-browser.log
+              exit 1
+            fi
+            sleep 1
+          done
+
+          if ! npm exec --yes --package=playwright -- sh -c 'NODE_PATH="$(dirname "$(dirname "$(command -v playwright)")")" node tests/form-resilience-browser.cjs'; then
+            cat /tmp/idaily-browser.log
+            exit 1
+          fi
+
+          # Stop the development server used by form-resilience testing, then capture
+          # production-rendered pages so the Next.js dev indicator cannot pollute evidence.
+          cp tests/phase6-visual-screenshots.cjs /tmp/phase6-visual-screenshots.cjs
+          mkdir -p src/app/phase6-acceptance-loading/start src/app/phase6-acceptance-loading/wait src/app/phase6-acceptance-error
+          cat > src/app/phase6-acceptance-loading/start/page.tsx <<'EOF'
+          import Link from "next/link";
+
+          export const dynamic = "force-dynamic";
+
+          export default function Phase6LoadingStart() {
+            return <main><h1>Loading boundary check</h1><Link href="/phase6-acceptance-loading/wait" prefetch={false}>Open delayed route</Link></main>;
+          }
+          EOF
+          cat > src/app/phase6-acceptance-loading/wait/loading.tsx <<'EOF'
+          import { LoadingState } from "@/components/loading-state";
+
+          export default function Phase6LoadingBoundary() {
+            return <main><section className="card wide-card"><LoadingState label="Đang tải trang…" /></section></main>;
+          }
+          EOF
+          cat > src/app/phase6-acceptance-loading/wait/page.tsx <<'EOF'
+          export const dynamic = "force-dynamic";
+
+          export default async function Phase6LoadingWait() {
+            await new Promise<void>((resolve) => setTimeout(resolve, 3000));
+            return <main><h1>Delayed route finished</h1></main>;
+          }
+          EOF
+          cat > src/app/phase6-acceptance-error/page.tsx <<'EOF'
+          export const dynamic = "force-dynamic";
+
+          export default function Phase6ErrorCheck() {
+            throw new Error("Phase 6 acceptance injected error");
+          }
+          EOF
+          kill "$APP_PID"
+          wait "$APP_PID" 2>/dev/null || true
+          trap - EXIT
+          if ! npm run build > /tmp/idaily-visual-build.log 2>&1; then
+            cat /tmp/idaily-visual-build.log
+            exit 1
+          fi
+          ./node_modules/.bin/next start -p 3000 > /tmp/idaily-visual.log 2>&1 &
+          APP_PID=$!
+          trap 'kill "$APP_PID" 2>/dev/null || true' EXIT
+          for attempt in {1..60}; do
+            if curl -fsS http://127.0.0.1:3000/login >/dev/null; then
+              break
+            fi
+            if [ "$attempt" -eq 60 ]; then
+              cat /tmp/idaily-visual.log
+              exit 1
+            fi
+            sleep 1
+          done
+          if ! PHASE6_SCREENSHOT_PREFIX=after- PHASE6_SOURCE_SHA="${{ github.event.pull_request.head.sha || github.sha }}" npm exec --yes --package=playwright -- sh -c 'NODE_PATH="$(dirname "$(dirname "$(command -v playwright)")")" node tests/phase6-visual-screenshots.cjs'; then
+            cat /tmp/idaily-visual.log
+            exit 1
+          fi
+          mkdir -p /tmp/phase6-capture-after
+          cp artifacts/phase6/after-*.png /tmp/phase6-capture-after/
+          rm -rf artifacts/phase6
+          kill "$APP_PID"
+          wait "$APP_PID" 2>/dev/null || true
+          trap - EXIT
+          git restore next-env.d.ts tsconfig.json
+          rm -rf src/app/phase6-acceptance-loading src/app/phase6-acceptance-error
+
+          # Capture the pre-fix source in the same local Supabase database and viewport matrix.
+          git fetch --no-tags --depth=1 origin 1aeb11802438c53583a587b9fb25c7d62daa6223
+          git checkout --detach 1aeb11802438c53583a587b9fb25c7d62daa6223
+          npm ci
+          cp /tmp/phase6-visual-screenshots.cjs tests/phase6-visual-screenshots.cjs
+
+          if ! npm run build > /tmp/idaily-visual-baseline-build.log 2>&1; then
+            cat /tmp/idaily-visual-baseline-build.log
+            exit 1
+          fi
+          ./node_modules/.bin/next start -p 3000 > /tmp/idaily-visual-baseline.log 2>&1 &
+          APP_PID=$!
+          trap 'kill "$APP_PID" 2>/dev/null || true' EXIT
+          for attempt in {1..60}; do
+            if curl -fsS http://127.0.0.1:3000/login >/dev/null; then
+              break
+            fi
+            if [ "$attempt" -eq 60 ]; then
+              cat /tmp/idaily-visual-baseline.log
+              exit 1
+            fi
+            sleep 1
+          done
+          if ! PHASE6_SCREENSHOT_PREFIX=before- PHASE6_SOURCE_SHA=1aeb11802438c53583a587b9fb25c7d62daa6223 PHASE6_CAPTURE_ONLY=true npm exec --yes --package=playwright -- sh -c 'NODE_PATH="$(dirname "$(dirname "$(command -v playwright)")")" node tests/phase6-visual-screenshots.cjs'; then
+            cat /tmp/idaily-visual-baseline.log
+            exit 1
+          fi
+          mkdir -p /tmp/phase6-capture-before
+          cp artifacts/phase6/before-*.png /tmp/phase6-capture-before/
+          rm -rf artifacts/phase6
+          mkdir -p artifacts/phase6
+          cp /tmp/phase6-capture-after/*.png /tmp/phase6-capture-before/*.png artifacts/phase6/
+          kill "$APP_PID"
+          wait "$APP_PID" 2>/dev/null || true
+          trap - EXIT
+          git restore next-env.d.ts tsconfig.json
+          rm -rf src/app/phase6-acceptance-loading src/app/phase6-acceptance-error
+
+      - name: Upload Phase 6 visual acceptance screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: phase6-visual-acceptance-${{ github.event.pull_request.head.sha || github.sha }}
+          path: artifacts/phase6/**
+          if-no-files-found: warn
+          retention-days: 14
 
       - name: Stop local Supabase
         if: always()

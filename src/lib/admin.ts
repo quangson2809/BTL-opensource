@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 
 import { createClient } from "@/lib/supabase/server";
+import { getCurrentRoleCodes } from "@/lib/role-access";
 
 export async function requireAdmin() {
   const supabase = await createClient();
@@ -11,11 +12,9 @@ export async function requireAdmin() {
     redirect("/login");
   }
 
-  const { data: isAdmin, error: roleError } = await supabase.rpc("has_role", {
-    role_code: "ADMIN",
-  });
+  const roleCodes = await getCurrentRoleCodes(supabase, accountId);
 
-  if (roleError || isAdmin !== true) {
+  if (!roleCodes?.includes("ADMIN")) {
     redirect("/access-denied");
   }
 

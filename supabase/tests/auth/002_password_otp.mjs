@@ -31,7 +31,16 @@ const email = `phase2-password-${suffix}@example.test`;
 const password = "InitialPass1";
 const changedPassword = "ChangedPass2";
 const recoveredPassword = "RecoveredPass3";
+const managerCode = `DM-PW-${suffix}`;
 
+const managerEmail = `manager-pw-${suffix}@example.test`;
+const { data: managerIdentity, error: managerIdentityError } = await admin.auth.admin.createUser({ email: managerEmail, password: "ManagerPassword1", email_confirm: true });
+assertNoError(managerIdentityError, "create password-test manager Auth fixture");
+const managerId = managerIdentity.user.id;
+const { error: managerAccountError } = await admin.from("tai_khoan").insert({ id: managerId, ho_ten: "Password Test DM", email: managerEmail, so_dien_thoai: `06${String(Date.now()).slice(-8)}`, ma_dai_ly: managerCode, manager_id: null, trang_thai: "DANG_HOAT_DONG" });
+assertNoError(managerAccountError, "create password-test manager account");
+const { error: managerRoleError } = await admin.from("phan_cong_vai_tro").insert({ tai_khoan_id: managerId, vai_tro_id: "10000000-0000-0000-0000-000000000002" });
+assertNoError(managerRoleError, "assign password-test DM role");
 function assertNoError(error, context) {
   assert.equal(error, null, `${context}: ${error?.message ?? "unexpected error"}`);
 }
@@ -270,12 +279,14 @@ async function assertNormalBusinessMatrix(client, fixture) {
     "password session: has_permission must have positive control",
   );
 
-  const { data: inSubtree, error: inSubtreeError } = await client.rpc(
-    "is_in_subtree",
-    { target_account_id: fixture.userId },
+  const { error: inSubtreeError } = await client.rpc("is_in_subtree", {
+    target_account_id: fixture.userId,
+  });
+  assert.equal(
+    inSubtreeError?.code,
+    "42501",
+    "password session: arbitrary-target hierarchy helper must not be exposed as an RPC",
   );
-  assertNoError(inSubtreeError, "password session: is_in_subtree");
-  assert.equal(inSubtree, true, "password session: self must be in subtree helper");
 
   const { data: canView, error: canViewError } = await client.rpc(
     "can_view_activity",
@@ -315,7 +326,6 @@ async function assertRecoveryBusinessMatrix(client, fixture) {
   const rpcCases = [
     ["has_role", { role_code: "SA" }],
     ["has_permission", { permission_code: "ACTIVITY_VIEW_SUBTREE" }],
-    ["is_in_subtree", { target_account_id: fixture.userId }],
     ["can_view_activity", { activity_owner_id: fixture.userId }],
   ];
 
@@ -324,6 +334,15 @@ async function assertRecoveryBusinessMatrix(client, fixture) {
     assertNoError(error, `recovery session: ${name}`);
     assert.equal(data, false, `recovery session: ${name} must not leak state`);
   }
+
+  const { error: inSubtreeError } = await client.rpc("is_in_subtree", {
+    target_account_id: fixture.userId,
+  });
+  assert.equal(
+    inSubtreeError?.code,
+    "42501",
+    "recovery session: arbitrary-target hierarchy helper must not be exposed as an RPC",
+  );
 }
 
 const config = await readFile("supabase/config.toml", "utf8");
@@ -343,6 +362,7 @@ const { data: weakSignup, error: weakSignupError } = await weakClient.auth.signU
       ho_ten: "Weak Password",
       so_dien_thoai: `07${String(Date.now()).slice(-8)}`,
       ma_dai_ly: `SA-WEAK-${suffix}`,
+      manager_code: managerCode,
     },
   },
 });
@@ -360,6 +380,7 @@ const { data: signup, error: signupError } = await registrationClient.auth.signU
       ho_ten: "Password OTP Integration",
       so_dien_thoai: `06${String(Date.now()).slice(-8)}`,
       ma_dai_ly: `SA-PW-${suffix}`,
+      manager_code: managerCode,
     },
   },
 });

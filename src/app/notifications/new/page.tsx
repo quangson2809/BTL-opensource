@@ -1,9 +1,22 @@
-import Link from "next/link";
+import { DraftCancelLink } from "@/components/draft-cancel-link";
+import { GuardedForm } from "@/components/guarded-form";
+
+import { ActionFeedback } from "@/components/action-feedback";
+import { PendingSubmitButton } from "@/components/pending-submit-button";
+import { PageHeader } from "@/components/page-header";
+import { FormDraftPersistence } from "@/components/form-draft-persistence";
+import { SearchableCheckboxPicker } from "@/components/searchable-checkbox-picker";
 
 import { createNotification } from "@/app/notifications/actions";
 import { requireDm } from "@/lib/business";
 
 export const dynamic = "force-dynamic";
+
+const accountStatusLabels: Record<string, string> = {
+  CHO_PHE_DUYET: "Chờ phê duyệt",
+  DANG_HOAT_DONG: "Đang hoạt động",
+  KHOA: "Đã khóa",
+};
 
 type NewNotificationPageProps = {
   searchParams: Promise<{ error?: string }>;
@@ -26,52 +39,60 @@ export default async function NewNotificationPage({
 
   return (
     <main>
-      <section className="card wide-card">
-        <h1>Tạo thông báo</h1>
-        <p>
-          <Link href="/notifications">Quay lại thông báo</Link>
-        </p>
+      <section className="page-content">
+        <PageHeader title="Tạo thông báo" description="Soạn nội dung, chọn người nhận trong scope và tạo bản nháp trước khi gửi." actions={<DraftCancelLink className="button-link button-secondary" href="/notifications" scopeKey={accountId} persistKeys={["notification-draft"]}>Quay lại thông báo</DraftCancelLink>} />
         {query.error ? (
-          <p className="message error">Không thể tạo thông báo.</p>
+          <ActionFeedback error={query.error} />
         ) : null}
-        <form action={createNotification} className="stack">
-          <label>
-            Tiêu đề
-            <input name="tieu_de" required />
-          </label>
-          <label>
-            Nội dung
-            <textarea name="noi_dung" required />
-          </label>
-          <label>
-            Loại
-            <select defaultValue="TIN_TỨC" name="loai" required>
-              <option value="TIN_TỨC">Tin tức</option>
-              <option value="TỰ_ĐỘNG_HỆ_THỐNG">Tự động hệ thống</option>
-            </select>
-          </label>
-          <label>
-            Người nhận trong scope
-            <select
-              multiple
+        <FormDraftPersistence scopeKey={accountId} persistKey="notification-draft" hasError={Boolean(query.error)} />
+        <p className="form-required-note"><span aria-hidden="true">*</span> Trường bắt buộc</p>
+        <GuardedForm action={createNotification} className="stack notification-composer" data-persist-key="notification-draft">
+          <fieldset className="form-section">
+            <legend>Nội dung thông báo</legend>
+            <div className="form-grid">
+              <label>
+                Tiêu đề <span aria-hidden="true" className="required-indicator">*</span>
+                <input autoComplete="off" name="tieu_de" required />
+              </label>
+              <label>
+                Loại thông báo <span aria-hidden="true" className="required-indicator">*</span>
+                <select defaultValue="TIN_TỨC" name="loai" required>
+                  <option value="TIN_TỨC">Tin tức</option>
+                  <option value="TỰ_ĐỘNG_HỆ_THỐNG">Tự động hệ thống</option>
+                </select>
+              </label>
+              <label className="field-full">
+                Nội dung <span aria-hidden="true" className="required-indicator">*</span>
+                <textarea name="noi_dung" required />
+              </label>
+            </div>
+          </fieldset>
+          <fieldset className="form-section">
+            <legend>Phạm vi nhận</legend>
+            <SearchableCheckboxPicker
               name="recipient_ids"
+              options={(recipients ?? []).map((recipient) => ({
+                id: recipient.id,
+                label: recipient.ho_ten,
+                detail: recipient.ma_dai_ly + " · " + (accountStatusLabels[recipient.trang_thai] ?? "Chưa xác định trạng thái"),
+                searchText: recipient.ho_ten + " " + recipient.ma_dai_ly + " " + recipient.trang_thai,
+                group: "Người nhận trong phạm vi",
+              }))}
+              searchLabel="Tìm người nhận"
+              searchPlaceholder="Tên hoặc mã đại lý"
+              selectedCountLabel="người nhận"
+              emptyMessage="Không có tài khoản nào khác trong phạm vi có thể chọn làm người nhận."
+              noResultsMessage="Không tìm thấy người nhận phù hợp. Thử tên hoặc mã đại lý khác."
               required
-              size={Math.min(Math.max((recipients ?? []).length, 3), 10)}
-            >
-              {(recipients ?? []).map((recipient) => (
-                <option key={recipient.id} value={recipient.id}>
-                  {recipient.ho_ten} — {recipient.ma_dai_ly} —{" "}
-                  {recipient.trang_thai}
-                </option>
-              ))}
-            </select>
-          </label>
-          <p className="secondary-text">
-            Giữ Ctrl/Cmd để chọn nhiều người nhận. Draft chưa hiển thị cho người
-            nhận cho đến khi DM bấm gửi.
-          </p>
-          <button type="submit">Tạo bản nháp</button>
-        </form>
+              requiredMessage="Chọn ít nhất một người nhận trước khi tạo bản nháp."
+            />
+            <p className="field-help">Bản nháp chưa hiển thị cho người nhận cho đến khi DM bấm gửi.</p>
+          </fieldset>
+          <div className="form-actions">
+            <PendingSubmitButton pendingLabel="Đang tạo bản nháp…">Tạo bản nháp</PendingSubmitButton>
+            <DraftCancelLink className="button-link button-secondary" href="/notifications" scopeKey={accountId} persistKeys={["notification-draft"]}>Hủy</DraftCancelLink>
+          </div>
+        </GuardedForm>
       </section>
     </main>
   );

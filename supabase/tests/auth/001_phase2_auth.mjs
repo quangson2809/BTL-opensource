@@ -1,6 +1,11 @@
 import assert from "node:assert/strict";
 
 import { createClient } from "@supabase/supabase-js";
+import {
+  classifyLoginAuthError,
+  LOGIN_FAILURE_CATEGORIES,
+  TEMPORARY_LOCK_HOOK_MESSAGE,
+} from "../../../src/lib/auth-login-errors.mjs";
 
 const url = process.env.API_URL;
 const anonKey = process.env.ANON_KEY;
@@ -27,6 +32,7 @@ const duplicateEmail = `phase2-duplicate-${suffix}@example.test`;
 const password = "Phase2Integration1";
 const phone = `09${String(Date.now()).slice(-8)}`;
 const agentCode = `SA-INT-${suffix}`;
+const managerCode = `DM-INT-${suffix}`;
 
 function assertNoError(error, context) {
   assert.equal(error, null, `${context}: ${error?.message ?? "unexpected error"}`);
@@ -83,6 +89,14 @@ async function assertBusinessDenied(client, label) {
 }
 
 const registrationClient = createAnonClient();
+const managerEmail = `manager-${suffix}@example.test`;
+const { data: managerIdentity, error: managerIdentityError } = await admin.auth.admin.createUser({ email: managerEmail, password: "ManagerPassword1", email_confirm: true });
+assertNoError(managerIdentityError, "create manager Auth fixture");
+const managerId = managerIdentity.user.id;
+const { error: managerAccountError } = await admin.from("tai_khoan").insert({ id: managerId, ho_ten: "Phase 2 DM Manager", email: managerEmail, so_dien_thoai: `06${String(Date.now()).slice(-8)}`, ma_dai_ly: managerCode, manager_id: null, trang_thai: "DANG_HOAT_DONG" });
+assertNoError(managerAccountError, "create manager business fixture");
+const { error: managerRoleError } = await admin.from("phan_cong_vai_tro").insert({ tai_khoan_id: managerId, vai_tro_id: "10000000-0000-0000-0000-000000000002" });
+assertNoError(managerRoleError, "assign DM manager fixture role");
 
 const {
   data: registration,
@@ -96,6 +110,7 @@ const {
       ho_ten: "Phase 2 Integration SA",
       so_dien_thoai: phone,
       ma_dai_ly: agentCode,
+      manager_code: managerCode,
     },
   },
 });
@@ -179,6 +194,7 @@ const {
       ho_ten: "Duplicate Business Identifier",
       so_dien_thoai: phone,
       ma_dai_ly: `SA-DUP-${suffix}`,
+      manager_code: managerCode,
     },
   },
 });
@@ -199,6 +215,63 @@ assert.equal(
   false,
   "duplicate business identifier must roll back Auth user creation",
 );
+
+
+const duplicateAgentEmail = `phase2-duplicate-agent-${suffix}@example.test`;
+const duplicateAgentClient = createAnonClient();
+const {
+  data: duplicateAgentRegistration,
+  error: duplicateAgentError,
+} = await duplicateAgentClient.auth.signUp({
+  email: duplicateAgentEmail,
+  password,
+  options: {
+    data: {
+      registration_type: "SA_SELF_REGISTRATION",
+      ho_ten: "Duplicate Agent Identifier",
+      so_dien_thoai: `07${String(Date.now()).slice(-8)}`,
+      ma_dai_ly: agentCode,
+      manager_code: managerCode,
+    },
+  },
+});
+
+assert.ok(duplicateAgentError, "duplicate agent code must reject sign-up");
+assert.equal(
+  duplicateAgentRegistration.user,
+  null,
+  "failed duplicate agent code must not leave an Auth user",
+);
+
+const missingMetadataEmail = `phase2-missing-metadata-${suffix}@example.test`;
+const missingMetadataClient = createAnonClient();
+const {
+  data: missingMetadataRegistration,
+  error: missingMetadataError,
+} = await missingMetadataClient.auth.signUp({
+  email: missingMetadataEmail,
+  password,
+  options: {
+    data: {
+      registration_type: "SA_SELF_REGISTRATION",
+      ho_ten: "Missing Required Metadata",
+      so_dien_thoai: `06${String(Date.now()).slice(-8)}`,
+      ma_dai_ly: "",
+      manager_code: managerCode,
+    },
+  },
+});
+
+assert.ok(
+  missingMetadataError,
+  "the provisioning trigger must reject incomplete required business metadata",
+);
+assert.equal(
+  missingMetadataRegistration.user,
+  null,
+  "provisioning failure must not leave a partially created Auth user",
+);
+
 
 await setAccountState(userId, {
   trang_thai: "DANG_HOAT_DONG",
@@ -229,6 +302,13 @@ for (let attempt = 1; attempt <= 6; attempt += 1) {
 
   assert.ok(error, `bad password attempt ${attempt} must fail`);
   assert.equal(data.session, null, `bad password attempt ${attempt} must not create a session`);
+  if (attempt === 1) {
+    assert.equal(
+      classifyLoginAuthError(error),
+      LOGIN_FAILURE_CATEGORIES.INVALID_CREDENTIALS,
+      "wrong password must be classified using the provider error contract",
+    );
+  }
 }
 
 account = await accountState(userId);
@@ -254,6 +334,16 @@ const {
 assert.ok(
   lockedCorrectError,
   "correct password must still be rejected while temporary lock is active",
+);
+assert.equal(
+  lockedCorrectError.message,
+  TEMPORARY_LOCK_HOOK_MESSAGE,
+  "Auth must preserve the exact message emitted by the password-verification hook",
+);
+assert.equal(
+  classifyLoginAuthError(lockedCorrectError),
+  LOGIN_FAILURE_CATEGORIES.TEMPORARY_LOCK,
+  "the real Auth hook error must map to the temporary-lock category",
 );
 assert.equal(
   lockedCorrectLogin.session,

@@ -60,15 +60,17 @@ select ok(
   'unmarked auth user is not silently provisioned as SA'
 );
 
-insert into auth.users (id, email, raw_user_meta_data)
-values (
-  '90000000-0000-4000-8000-000000000002',
+insert into auth.users (id, email) values ('90000000-0000-4000-8000-000000000003', 'dm-manager@example.test');
+insert into public.tai_khoan (id,ho_ten,email,so_dien_thoai,ma_dai_ly,manager_id,trang_thai) values ('90000000-0000-4000-8000-000000000003','DM Manager','dm-manager@example.test','0990000003','DM-MANAGER-001',null,'DANG_HOAT_DONG');
+insert into public.phan_cong_vai_tro (tai_khoan_id,vai_tro_id) select '90000000-0000-4000-8000-000000000003',id from public.vai_tro where ma_vai_tro='DM';
+insert into auth.users (id, email, raw_user_meta_data) values ('90000000-0000-4000-8000-000000000002',
   'new-sa@example.test',
   jsonb_build_object(
     'registration_type', 'SA_SELF_REGISTRATION',
     'ho_ten', 'SA Mới',
     'so_dien_thoai', '0990000001',
-    'ma_dai_ly', 'SA-NEW-001'
+    'ma_dai_ly', 'SA-NEW-001',
+    'manager_code', 'DM-MANAGER-001'
   )
 );
 
@@ -126,19 +128,19 @@ select is(
   'pending account cannot read protected business data'
 );
 
-select is(public.has_role('SA'), false, 'pending account cannot query role helper');
+select is(app_private.has_role('SA'), false, 'pending account cannot query role helper');
 select is(
-  public.has_permission('ACTIVITY_VIEW_SUBTREE'),
+  app_private.has_permission('ACTIVITY_VIEW_SUBTREE'),
   false,
   'pending account cannot query permission helper'
 );
 select is(
-  public.is_in_subtree('90000000-0000-4000-8000-000000000002'),
+  app_private.is_in_subtree('90000000-0000-4000-8000-000000000002'),
   false,
   'pending account cannot query hierarchy helper'
 );
 select is(
-  public.can_view_activity('90000000-0000-4000-8000-000000000002'),
+  app_private.can_view_activity('90000000-0000-4000-8000-000000000002'),
   false,
   'pending account cannot query activity authorization helper'
 );
@@ -166,19 +168,19 @@ select ok(
   (select count(*) from public.vai_tro) > 0,
   'active account can reach business data allowed by normal RLS'
 );
-select is(public.has_role('SA'), true, 'active account can query own role');
+select is(app_private.has_role('SA'), true, 'active account can query own role');
 select is(
-  public.has_permission('ACTIVITY_VIEW_SUBTREE'),
+  app_private.has_permission('ACTIVITY_VIEW_SUBTREE'),
   true,
   'active account can query granted permission'
 );
 select is(
-  public.is_in_subtree('90000000-0000-4000-8000-000000000002'),
+  app_private.is_in_subtree('90000000-0000-4000-8000-000000000002'),
   true,
   'active account hierarchy helper allows self'
 );
 select is(
-  public.can_view_activity('90000000-0000-4000-8000-000000000002'),
+  app_private.can_view_activity('90000000-0000-4000-8000-000000000002'),
   true,
   'active account activity helper allows self'
 );
@@ -207,14 +209,14 @@ select is(
   0::bigint,
   'administratively locked account cannot read protected business data'
 );
-select is(public.has_role('SA'), false, 'administratively locked account cannot query role helper');
+select is(app_private.has_role('SA'), false, 'administratively locked account cannot query role helper');
 select is(
-  public.is_in_subtree('90000000-0000-4000-8000-000000000002'),
+  app_private.is_in_subtree('90000000-0000-4000-8000-000000000002'),
   false,
   'administratively locked account cannot query hierarchy helper'
 );
 select is(
-  public.can_view_activity('90000000-0000-4000-8000-000000000002'),
+  app_private.can_view_activity('90000000-0000-4000-8000-000000000002'),
   false,
   'administratively locked account cannot query activity helper'
 );
@@ -313,9 +315,9 @@ select is(
   0::bigint,
   'temporarily locked account cannot use protected business data'
 );
-select is(public.has_role('SA'), false, 'temporarily locked account cannot query role helper');
+select is(app_private.has_role('SA'), false, 'temporarily locked account cannot query role helper');
 select is(
-  public.is_in_subtree('90000000-0000-4000-8000-000000000002'),
+  app_private.is_in_subtree('90000000-0000-4000-8000-000000000002'),
   false,
   'temporarily locked account cannot query hierarchy helper'
 );
