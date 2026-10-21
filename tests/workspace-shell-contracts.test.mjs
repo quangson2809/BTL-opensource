@@ -100,7 +100,11 @@ test("secondary text and form controls consume semantic contrast tokens", () => 
 
 test("required checkbox groups use supported descriptions instead of invalid aria-required", () => {
   assert.doesNotMatch(picker, /aria-required=/);
-  assert.match(picker, /aria-describedby=\{required \? id \+ "-required-help" : undefined\}/);
+  assert.match(picker, /required \? id \+ "-required-help" : null/);
+  assert.match(picker, /selectionError \? id \+ "-selection-error" : null/);
+  assert.match(picker, /aria-invalid=\{selectionError \|\| undefined\}/);
+  assert.match(picker, /aria-controls=\{id \+ "-list"\}/);
   assert.match(picker, /id=\{id \+ "-required-help"\}/);
+  assert.match(picker, /id=\{id \+ "-selection-error"\}/);
   assert.match(picker, /Bắt buộc chọn ít nhất một mục/);
 });
