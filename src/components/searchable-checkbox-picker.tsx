@@ -114,6 +114,7 @@ export function SearchableCheckboxPicker({
         <span>{searchLabel}</span>
         <input
           autoComplete="off"
+          aria-controls={id + "-list"}
           id={id + "-search"}
           onChange={(event) => setQuery(event.target.value)}
           placeholder={searchPlaceholder}
@@ -137,9 +138,14 @@ export function SearchableCheckboxPicker({
             </p>
           ) : null}
           <div
-            aria-describedby={required ? id + "-required-help" : undefined}
+            aria-describedby={[
+              required ? id + "-required-help" : null,
+              selectionError ? id + "-selection-error" : null,
+            ].filter(Boolean).join(" ") || undefined}
+            aria-invalid={selectionError || undefined}
             aria-label={searchLabel}
             className="searchable-picker-list"
+            id={id + "-list"}
             role="group"
           >
           {groupedOptions.map(({ groupName, options: groupOptions }) => {
@@ -186,7 +192,7 @@ export function SearchableCheckboxPicker({
       )}
 
       {required && selectionError ? (
-        <p className="message error" role="alert">{requiredMessage}</p>
+        <p className="message error" id={id + "-selection-error"} role="alert">{requiredMessage}</p>
       ) : null}
 
       {selectedOptions.length > 0 ? (
