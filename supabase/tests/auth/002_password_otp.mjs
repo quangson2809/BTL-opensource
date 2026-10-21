@@ -279,12 +279,14 @@ async function assertNormalBusinessMatrix(client, fixture) {
     "password session: has_permission must have positive control",
   );
 
-  const { data: inSubtree, error: inSubtreeError } = await client.rpc(
-    "is_in_subtree",
-    { target_account_id: fixture.userId },
+  const { error: inSubtreeError } = await client.rpc("is_in_subtree", {
+    target_account_id: fixture.userId,
+  });
+  assert.equal(
+    inSubtreeError?.code,
+    "42501",
+    "password session: arbitrary-target hierarchy helper must not be exposed as an RPC",
   );
-  assertNoError(inSubtreeError, "password session: is_in_subtree");
-  assert.equal(inSubtree, true, "password session: self must be in subtree helper");
 
   const { data: canView, error: canViewError } = await client.rpc(
     "can_view_activity",
@@ -324,7 +326,6 @@ async function assertRecoveryBusinessMatrix(client, fixture) {
   const rpcCases = [
     ["has_role", { role_code: "SA" }],
     ["has_permission", { permission_code: "ACTIVITY_VIEW_SUBTREE" }],
-    ["is_in_subtree", { target_account_id: fixture.userId }],
     ["can_view_activity", { activity_owner_id: fixture.userId }],
   ];
 
@@ -333,6 +334,15 @@ async function assertRecoveryBusinessMatrix(client, fixture) {
     assertNoError(error, `recovery session: ${name}`);
     assert.equal(data, false, `recovery session: ${name} must not leak state`);
   }
+
+  const { error: inSubtreeError } = await client.rpc("is_in_subtree", {
+    target_account_id: fixture.userId,
+  });
+  assert.equal(
+    inSubtreeError?.code,
+    "42501",
+    "recovery session: arbitrary-target hierarchy helper must not be exposed as an RPC",
+  );
 }
 
 const config = await readFile("supabase/config.toml", "utf8");
