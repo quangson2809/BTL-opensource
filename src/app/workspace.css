@@ -459,7 +459,33 @@
   cursor: pointer;
 }
 .searchable-picker-option:hover { background: var(--color-brand-soft); }
-.searchable-picker-option input { flex: 0 0 auto; margin-top: 0.25rem; }
+.searchable-picker-option input[type="checkbox"] {
+  width: 1.1rem;
+  height: 1.1rem;
+  min-height: 1.1rem;
+  flex: 0 0 1.1rem;
+  margin: 0.2rem 0 0;
+  border: 1px solid var(--color-border-control);
+  border-radius: 0.25rem;
+  padding: 0;
+  accent-color: var(--color-brand);
+  background: var(--color-surface);
+  cursor: pointer;
+  transition: none;
+}
+.searchable-picker-option:focus-within {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 2px;
+  background: var(--color-brand-soft);
+}
+.searchable-picker-option-copy {
+  flex: 1 1 auto;
+  line-height: 1.4;
+}
+.searchable-picker-option-copy strong,
+.searchable-picker-option-copy .secondary-text {
+  overflow-wrap: anywhere;
+}
 .searchable-picker-option[hidden],
 .searchable-picker-group[hidden] { display: none !important; }
 .searchable-picker-option-copy { display: grid; min-width: 0; gap: 0.15rem; overflow-wrap: anywhere; }
