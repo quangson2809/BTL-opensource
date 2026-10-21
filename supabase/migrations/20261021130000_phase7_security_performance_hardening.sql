@@ -225,8 +225,10 @@ revoke all on function public.has_role(text) from public, anon;
 grant execute on function public.has_role(text) to authenticated;
 revoke all on function public.has_permission(text) from public, anon;
 grant execute on function public.has_permission(text) to authenticated;
-revoke all on function public.is_in_subtree(uuid) from public, anon, authenticated;
-revoke all on function public.can_view_activity(uuid) from public, anon, authenticated;
+revoke all on function public.is_in_subtree(uuid) from public, anon;
+grant execute on function public.is_in_subtree(uuid) to authenticated;
+revoke all on function public.can_view_activity(uuid) from public, anon;
+grant execute on function public.can_view_activity(uuid) to authenticated;
 revoke all on function public.can_creator_read_notification_recipient(uuid) from public, anon, authenticated;
 revoke all on function public.can_recipient_read_sent_notification(uuid, uuid) from public, anon, authenticated;
 
