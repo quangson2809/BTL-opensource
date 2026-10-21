@@ -473,7 +473,7 @@ select set_config(
 );
 
 select is(
-  public.can_creator_read_notification_recipient(
+  app_private.can_creator_read_notification_recipient(
     '00000000-0000-0000-0000-000000000000'
   ),
   false,
