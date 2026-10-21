@@ -233,9 +233,10 @@ async function main() {
     }
 
     if (!captureOnly) {
-    // Capture genuine route-boundary states, not hand-composed placeholders.
+      // Trigger the real root loading.tsx boundary through a client-side route transition.
       await page.setViewportSize({ width: 375, height: 812 });
-      await page.goto(baseURL + "/__phase6_acceptance_loading", { waitUntil: "domcontentloaded" });
+      await page.goto(baseURL + "/__phase6_acceptance_loading/start", { waitUntil: "domcontentloaded" });
+      await page.getByRole("link", { name: "Open delayed route" }).click();
       const loadingState = page.getByRole("status");
       await loadingState.waitFor();
       assert.equal(await loadingState.getAttribute("aria-busy"), "true");
