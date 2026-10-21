@@ -12,7 +12,7 @@ language sql
 stable
 security definer
 set search_path = pg_catalog, public
-as $
+as $$
   select public.current_account_has_application_access()
     and (
       activity_owner_id = auth.uid()
@@ -21,7 +21,7 @@ as $
         and public.is_in_subtree(activity_owner_id)
       )
     );
-$;
+$$;
 
 revoke all on function public.is_in_subtree(uuid) from public, anon, authenticated;
 revoke all on function public.can_view_activity(uuid) from public, anon;
