@@ -140,17 +140,17 @@ jobs:
           # Stop the development server used by form-resilience testing, then capture
           # production-rendered pages so the Next.js dev indicator cannot pollute evidence.
           cp tests/phase6-visual-screenshots.cjs /tmp/phase6-visual-screenshots.cjs
-          mkdir -p src/app/__phase6_acceptance_loading/start src/app/__phase6_acceptance_loading/wait src/app/__phase6_acceptance_error
-          cat > src/app/__phase6_acceptance_loading/start/page.tsx <<'EOF'
+          mkdir -p src/app/phase6-acceptance-loading/start src/app/phase6-acceptance-loading/wait src/app/phase6-acceptance-error
+          cat > src/app/phase6-acceptance-loading/start/page.tsx <<'EOF'
           import Link from "next/link";
 
           export const dynamic = "force-dynamic";
 
           export default function Phase6LoadingStart() {
-            return <main><h1>Loading boundary check</h1><Link href="/__phase6_acceptance_loading/wait">Open delayed route</Link></main>;
+            return <main><h1>Loading boundary check</h1><Link href="/phase6-acceptance-loading/wait">Open delayed route</Link></main>;
           }
           EOF
-          cat > src/app/__phase6_acceptance_loading/wait/page.tsx <<'EOF'
+          cat > src/app/phase6-acceptance-loading/wait/page.tsx <<'EOF'
           export const dynamic = "force-dynamic";
 
           export default async function Phase6LoadingWait() {
@@ -158,7 +158,7 @@ jobs:
             return <main><h1>Delayed route finished</h1></main>;
           }
           EOF
-          cat > src/app/__phase6_acceptance_error/page.tsx <<'EOF'
+          cat > src/app/phase6-acceptance-error/page.tsx <<'EOF'
           export const dynamic = "force-dynamic";
 
           export default function Phase6ErrorCheck() {
@@ -196,7 +196,7 @@ jobs:
           wait "$APP_PID" 2>/dev/null || true
           trap - EXIT
           git restore next-env.d.ts tsconfig.json
-          rm -rf src/app/__phase6_acceptance_loading src/app/__phase6_acceptance_error
+          rm -rf src/app/phase6-acceptance-loading src/app/phase6-acceptance-error
 
           # Capture the pre-fix source in the same local Supabase database and viewport matrix.
           git fetch --no-tags --depth=1 origin 1aeb11802438c53583a587b9fb25c7d62daa6223
@@ -234,7 +234,7 @@ jobs:
           wait "$APP_PID" 2>/dev/null || true
           trap - EXIT
           git restore next-env.d.ts tsconfig.json
-          rm -rf src/app/__phase6_acceptance_loading src/app/__phase6_acceptance_error
+          rm -rf src/app/phase6-acceptance-loading src/app/phase6-acceptance-error
 
       - name: Upload Phase 6 visual acceptance screenshots
         if: always()
