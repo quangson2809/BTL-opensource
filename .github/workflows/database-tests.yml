@@ -147,7 +147,14 @@ jobs:
           export const dynamic = "force-dynamic";
 
           export default function Phase6LoadingStart() {
-            return <main><h1>Loading boundary check</h1><Link href="/phase6-acceptance-loading/wait">Open delayed route</Link></main>;
+            return <main><h1>Loading boundary check</h1><Link href="/phase6-acceptance-loading/wait" prefetch={false}>Open delayed route</Link></main>;
+          }
+          EOF
+          cat > src/app/phase6-acceptance-loading/wait/loading.tsx <<'EOF'
+          import { LoadingState } from "@/components/loading-state";
+
+          export default function Phase6LoadingBoundary() {
+            return <main><section className="card wide-card"><LoadingState label="Đang tải trang…" /></section></main>;
           }
           EOF
           cat > src/app/phase6-acceptance-loading/wait/page.tsx <<'EOF'
