@@ -21,13 +21,13 @@ select ok(
   'authenticated can query only its own guarded permissions through the permission helper'
 );
 select ok(
-  has_function_privilege('authenticated', 'public.is_in_subtree(uuid)', 'EXECUTE'),
-  'authenticated can query only its own guarded subtree membership'
+  not has_function_privilege('authenticated', 'public.is_in_subtree(uuid)', 'EXECUTE'),
+  'authenticated cannot query arbitrary account hierarchy membership through the public API'
 );
 
 select ok(
   has_function_privilege('authenticated', 'public.can_view_activity(uuid)', 'EXECUTE'),
-  'authenticated can query activity visibility only inside its own active scope'
+  'authenticated can query the guarded activity visibility helper'
 );
 select ok(
   has_function_privilege('authenticated', 'public.current_account_has_application_access()', 'EXECUTE'),
