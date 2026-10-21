@@ -135,7 +135,7 @@ select is(
   'permission mapping does not grant activity reads outside the caller subtree'
 );
 select is(
-  public.has_role('DM') or public.has_role('UM'),
+  app_private.has_role('DM') or app_private.has_role('UM'),
   false,
   'custom-role permission behavior does not depend on hard-coded DM/UM membership'
 );
