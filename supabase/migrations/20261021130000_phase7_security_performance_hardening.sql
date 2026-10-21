@@ -220,7 +220,8 @@ alter policy thong_bao_nguoi_nhan_update_sent_own on public.thong_bao_nguoi_nhan
 -- These generic helpers answer questions about arbitrary role codes, account IDs,
 -- or notification IDs. User-facing business RPCs remain authenticated-only and
 -- retain their own role/scope checks; these helpers are policy-internal.
-revoke all on function public.current_account_has_application_access() from public, anon, authenticated;
+revoke all on function public.current_account_has_application_access() from public, anon;
+grant execute on function public.current_account_has_application_access() to authenticated;
 revoke all on function public.has_role(text) from public, anon;
 grant execute on function public.has_role(text) to authenticated;
 revoke all on function public.has_permission(text) from public, anon;
