@@ -135,6 +135,8 @@ async function main() {
     const layouts = [];
     for (const viewport of [
       { width: 1440, height: 900, label: "1440x900" },
+      { width: 1024, height: 900, label: "1024x900" },
+      { width: 768, height: 900, label: "768x900" },
       { width: 375, height: 812, label: "375x812" },
     ]) {
       await page.setViewportSize({ width: viewport.width, height: viewport.height });
@@ -174,6 +176,24 @@ async function main() {
         }
         layouts.push({ page: route.name, viewport: viewport.label, heading, horizontalOverflow: hasHorizontalOverflow });
 
+        if (!captureOnly && route.name === "reports" && viewport.width <= 768) {
+          const comparison = page.locator(".report-comparison-scroll");
+          await comparison.waitFor();
+          const tableWidth = await comparison.evaluate((element) => ({
+            clientWidth: element.clientWidth,
+            scrollWidth: element.scrollWidth,
+          }));
+          assert.ok(
+            tableWidth.scrollWidth > tableWidth.clientWidth,
+            "report comparison table must scroll within its container at " + viewport.label + ": " + JSON.stringify(tableWidth),
+          );
+          assert.equal(
+            await page.locator(".table-scroll-hint").isVisible(),
+            true,
+            "mobile report table must display its horizontal-scroll hint at " + viewport.label,
+          );
+        }
+
         await page.screenshot({
           path: path.join("artifacts", "phase6", screenshotPrefix + route.name + "-" + viewport.label + ".png"),
           fullPage: true,
@@ -212,10 +232,41 @@ async function main() {
       }
     }
 
+    // Capture genuine route-boundary states, not hand-composed placeholders.
+    await page.setViewportSize({ width: 375, height: 812 });
+    await page.goto(baseURL + "/__phase6_acceptance_loading", { waitUntil: "domcontentloaded" });
+    const loadingState = page.getByRole("status");
+    await loadingState.waitFor();
+    assert.equal(await loadingState.getAttribute("aria-busy"), "true");
+    assert.ok((await loadingState.innerText()).includes("Đang tải trang"));
+    await page.screenshot({
+      path: path.join("artifacts", "phase6", screenshotPrefix + "loading-state-375x812.png"),
+      fullPage: true,
+      animations: "disabled",
+    });
+
+    for (const viewport of [
+      { width: 1440, height: 900, label: "1440x900" },
+      { width: 375, height: 812, label: "375x812" },
+    ]) {
+      await page.setViewportSize({ width: viewport.width, height: viewport.height });
+      await page.goto(baseURL + "/__phase6_acceptance_error", { waitUntil: "domcontentloaded" });
+      const errorState = page.getByRole("alert");
+      await errorState.waitFor();
+      await page.getByRole("heading", { name: "Có lỗi xảy ra" }).waitFor();
+      await page.getByRole("button", { name: "Thử lại", exact: true }).waitFor();
+      await page.screenshot({
+        path: path.join("artifacts", "phase6", screenshotPrefix + "error-state-" + viewport.label + ".png"),
+        fullPage: true,
+        animations: "disabled",
+      });
+    }
+
     console.log(JSON.stringify({
       event: "phase6_visual_acceptance_screenshots_captured",
       sourceSha: process.env.PHASE6_SOURCE_SHA || process.env.GITHUB_SHA || "provided by CI run",
-      viewports: ["1440x900", "375x812"],
+      viewports: ["1440x900", "1024x900", "768x900", "375x812"],
+      boundaryStates: ["loading 375x812", "error 1440x900", "error 375x812"],
       pages: layouts,
       screenshotDirectory: "artifacts/phase6",
     }, null, 2));
