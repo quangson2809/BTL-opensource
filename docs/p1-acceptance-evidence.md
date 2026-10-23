@@ -15,10 +15,10 @@
 
 ## Implementation and evidence
 
-- The source migration `supabase/migrations/20261017130000_registration_manager_validation.sql` contains the database-authoritative manager validation.
-- The matching migration was applied to hosted Supabase project `kulaguukpngkzpwforok` on 2026-10-23. Supabase recorded deployment version `20261023094118` (`registration_manager_validation`). The live function definition was read back and confirmed to validate active DM/UM and write the resolved `manager_id`.
-- Existing regression test `supabase/tests/database/013_registration_manager_validation_test.sql` covers valid DM/UM, invalid/missing manager, inactive manager, rejection of SA as manager, and ignoring client-supplied role/manager IDs.
-- Existing Auth integration tests `supabase/tests/auth/001_phase2_auth.mjs` and `002_password_otp.mjs` cover pending-state isolation, role assignment, failed registration rollback, temporary lockout, session refresh/logout, recovery OTP and password reauthentication.
+- The source migration is `supabase/migrations/20261023094118_registration_manager_validation.sql`. Its version matches the hosted migration ledger, avoiding a second migration entry when the repository is next applied to the same project.
+- The migration was applied to hosted Supabase project `kulaguukpngkzpwforok` on 2026-10-23. Supabase recorded deployment version `20261023094118` (`registration_manager_validation`). The live function definition was read back and confirmed to validate active DM/UM and write the resolved `manager_id`.
+- Regression test `supabase/tests/database/013_registration_manager_validation_test.sql` covers valid DM/UM, invalid/missing manager, inactive manager, rejection of SA as manager, and ignoring client-supplied role/manager IDs.
+- Auth integration tests `supabase/tests/auth/001_phase2_auth.mjs` and `002_password_otp.mjs` cover pending-state isolation, role assignment, failed registration rollback, temporary lockout, session refresh/logout, recovery OTP and password reauthentication.
 - CI on baseline SHA `4d150f54278ddf0cbd42e8eb59123068f9c6a0df` completed successfully:
   - CI run: https://github.com/quangson2809/BTL-opensource/actions/runs/39635514091
   - Database Tests run: https://github.com/quangson2809/BTL-opensource/actions/runs/39635513741
@@ -28,7 +28,7 @@
 | Criterion | Status | Evidence / remaining condition |
 |---|---|---|
 | Registration assigns SA and starts pending | PASS (code/test) | Auth integration and DB tests on baseline |
-| Direct manager is validated and persisted | PASS (source + hosted migration) | Live function read-back; migration `20261023094118` |
+| Direct manager is validated and persisted | PASS (source + hosted migration) | Live function read-back; matching migration version `20261023094118` |
 | Pending/locked account authorization | PASS (code/test) | Auth integration test covers direct Auth access and RLS isolation |
 | Login/logout/session and recovery/reauth flow | PASS (local CI evidence) | CI and Auth integration test suite |
 | Hosted OTP length = 8 and expiry = 600 seconds | UNVERIFIED | Hosted Auth configuration cannot be inferred from `supabase/config.toml`; verify project Auth settings and complete a real hosted recovery + reauthentication test |
@@ -37,4 +37,4 @@
 
 ## Final gate
 
-P1 is **not fully accepted yet** while hosted OTP configuration and real hosted recovery/reauthentication remain unverified. Do not mark OTP PASS based only on local CI. This document does not claim that tests were rerun against the newly updated hosted database; the successful GitHub Actions runs above belong to the baseline commit before the hosted migration was applied.
+P1 is **not fully accepted yet** while hosted OTP configuration and real hosted recovery/reauthentication remain unverified. Do not mark OTP PASS based only on local CI. The new PR's database workflow is running; its result must be checked before merging. The successful GitHub Actions runs above belong to the baseline commit before the hosted migration was applied.
