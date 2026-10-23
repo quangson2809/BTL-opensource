@@ -17,6 +17,10 @@ import {
 import { requireActiveBusinessAccount } from "@/lib/business";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
+import {
+  classifyOtpDeliveryError,
+  createOtpDeliveryFailureLog,
+} from "@/lib/auth-otp-errors.mjs";
 
 function field(formData: FormData, name: string) {
   const value = formData.get(name);
@@ -105,6 +109,27 @@ async function logRegistrationFailure({
     JSON.stringify(
       createRegistrationFailureLog({ category, error, source, requestId, event }),
     ),
+  );
+}
+
+async function logOtpDeliveryFailure(
+  flow: "password-change" | "password-recovery",
+  error: unknown,
+) {
+  let requestId: string | null = null;
+
+  try {
+    const requestHeaders = await headers();
+    requestId =
+      requestHeaders.get("x-vercel-id") ??
+      requestHeaders.get("x-request-id") ??
+      null;
+  } catch {
+    // Logging must not break the authentication response.
+  }
+
+  console.error(
+    JSON.stringify(createOtpDeliveryFailureLog({ flow, error, requestId })),
   );
 }
 
@@ -245,7 +270,9 @@ export async function requestPasswordChangeOtp() {
   const { error } = await supabase.auth.reauthenticate();
 
   if (error) {
-    redirect("/password/change?error=otp-request");
+    const category = classifyOtpDeliveryError(error);
+    await logOtpDeliveryFailure("password-change", error);
+    redirect("/password/change?error=" + category);
   }
 
   redirect("/password/change?status=otp-sent");
@@ -297,8 +324,10 @@ export async function requestPasswordRecovery(formData: FormData) {
   const { error } = await supabase.auth.resetPasswordForEmail(email);
 
   if (error) {
-    // Keep the response generic; do not disclose whether the account exists.
-    redirect("/password/recovery?error=service");
+    // Delivery categories do not reveal whether the account exists.
+    const category = classifyOtpDeliveryError(error);
+    await logOtpDeliveryFailure("password-recovery", error);
+    redirect("/password/recovery?error=" + category);
   }
 
   // Use the same success response regardless of whether the address exists to
