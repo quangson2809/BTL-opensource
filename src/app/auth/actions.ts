@@ -17,6 +17,7 @@ import {
 import { requireActiveBusinessAccount } from "@/lib/business";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
+import { getAuthCallbackUrl } from "@/lib/auth-callback-url.mjs";
 import {
   classifyOtpDeliveryError,
   createOtpDeliveryFailureLog,
@@ -30,33 +31,6 @@ function field(formData: FormData, name: string) {
 function rawField(formData: FormData, name: string) {
   const value = formData.get(name);
   return typeof value === "string" ? value : "";
-}
-
-function getAuthCallbackUrl() {
-  const configuredSiteUrl = process.env.NEXT_PUBLIC_SITE_URL?.trim();
-  const deploymentHost =
-    process.env.VERCEL_PROJECT_PRODUCTION_URL?.trim() ||
-    process.env.VERCEL_URL?.trim();
-  const deploymentOrigin = deploymentHost
-    ? new URL(
-        deploymentHost.startsWith("http://") || deploymentHost.startsWith("https://")
-          ? deploymentHost
-          : `https://${deploymentHost}`,
-      ).origin
-    : null;
-  const siteUrl =
-    configuredSiteUrl || deploymentOrigin || "http://localhost:3000";
-  const parsedUrl = new URL(siteUrl);
-
-  if (
-    !["http:", "https:"].includes(parsedUrl.protocol) ||
-    parsedUrl.username ||
-    parsedUrl.password
-  ) {
-    throw new Error("Invalid site URL configuration.");
-  }
-
-  return new URL("/auth/callback", parsedUrl.origin).toString();
 }
 
 async function logLoginFailure(
@@ -158,7 +132,14 @@ export async function register(formData: FormData) {
           const { data, error } = await supabase.auth.signUp({
             email,
             password,
-            options: { data: metadata, emailRedirectTo: getAuthCallbackUrl() },
+            options: {
+              data: metadata,
+              emailRedirectTo: getAuthCallbackUrl({
+                configuredSiteUrl: process.env.NEXT_PUBLIC_SITE_URL,
+                projectProductionUrl: process.env.VERCEL_PROJECT_PRODUCTION_URL,
+                deploymentUrl: process.env.VERCEL_URL,
+              }),
+            },
           });
           return {
             user: data.user
