@@ -9,7 +9,7 @@
 Supabase Auth logs contain three `auth_logs` records with error code `over_email_send_rate_limit` for endpoint `/reauthenticate`:
 
 - 2026-10-23 07:16:41 UTC — `over_email_send_rate_limit`
-- 2026-10-23 07:16:xx UTC — `over_email_send_rate_limit` (second record in the same minute)
+- Two records at 2026-10-23 07:16 UTC — `over_email_send_rate_limit`
 - 2026-10-23 07:17:50 UTC — `over_email_send_rate_limit`
 
 This proves that Supabase Auth rejected password-change reauthentication email requests because the email-send rate limit was exceeded at those times. It does **not** prove that SMTP credentials are invalid, that every recovery request fails for the same reason, or that any email reached a recipient.
