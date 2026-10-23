@@ -8,9 +8,8 @@
 
 Supabase Auth logs contain three `auth_logs` records with error code `over_email_send_rate_limit` for endpoint `/reauthenticate`:
 
-- 2026-10-23 07:16:41 UTC — `over_email_send_rate_limit`
-- Two records at 2026-10-23 07:16 UTC — `over_email_send_rate_limit`
-- 2026-10-23 07:17:50 UTC — `over_email_send_rate_limit`
+- Two records during the 2026-10-23 07:16 UTC minute; the first recorded timestamp is 07:16:41 UTC.
+- One record at 2026-10-23 07:17:50 UTC.
 
 This proves that Supabase Auth rejected password-change reauthentication email requests because the email-send rate limit was exceeded at those times. It does **not** prove that SMTP credentials are invalid, that every recovery request fails for the same reason, or that any email reached a recipient.
 
@@ -43,7 +42,7 @@ Do not paste secrets into GitHub, chat, logs, or this report.
 3. Inspect **Authentication → URL Configuration**:
    - Set Site URL to the canonical deployed app origin.
    - Allowlist the exact callback URL `https://<deployed-host>/auth/callback` (and a local callback only for local development).
-   - In Vercel, verify `NEXT_PUBLIC_SITE_URL` is set for the intended Production/Preview environments. The value must be the origin, not a path or a localhost URL for production.
+   - The current Vercel environment-variable inventory contains no `NEXT_PUBLIC_SITE_URL` entry for Preview or Production. The code falls back to Vercel's deployment host when available, but set `NEXT_PUBLIC_SITE_URL` explicitly to the canonical app origin to make the intended callback deterministic. The value must be the origin, not a path or a localhost URL for production.
 4. After checking the current settings and allowing the rate limit to reset, perform **one** controlled reauthentication test with an authorized test account, then one recovery test if needed. Capture the UTC timestamp and request ID; do not repeatedly click send.
 5. Verify whether the provider accepted the message and whether the test mailbox received it. A successful Auth API response alone is not proof of inbox delivery.
 
