@@ -197,6 +197,18 @@ select col_is_unique('public', 'quyen', 'ma_quyen', 'permission code is unique')
 select col_is_unique('public', 'phan_cong_vai_tro', array['tai_khoan_id', 'vai_tro_id'], 'role assignment pair is unique');
 select col_is_unique('public', 'phan_quyen_vai_tro', array['vai_tro_id', 'quyen_id'], 'role permission pair is unique');
 select col_is_unique('public', 'khach_hang', 'ma_khach_hang', 'customer code is unique');
+select ok(to_regclass('app_private.khach_hang_code_seq') is not null, 'customer code sequence exists');
+select ok(
+  exists (
+    select 1
+    from pg_catalog.pg_trigger
+    where tgrelid = 'public.khach_hang'::regclass
+      and tgname = 'trg_khach_hang_code_generation'
+      and not tgisinternal
+      and tgenabled in ('O', 'A')
+  ),
+  'customer code generation trigger exists and is enabled'
+);
 select col_is_unique('public', 'khach_hang', 'so_dien_thoai', 'customer phone is unique');
 select col_is_unique('public', 'thong_bao_nguoi_nhan', array['thong_bao_id', 'tai_khoan_id'], 'notification recipient pair is unique');
 
