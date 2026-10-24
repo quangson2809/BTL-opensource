@@ -137,6 +137,9 @@ test("representative workspace pages preserve error, detail, and form contracts"
   assert.ok(reports.includes("var(--color-accent)"));
   assert.ok(reports.includes("var(--color-surface-muted)"));
   assert.doesNotMatch(reports, /background: "#fff"|background: "#edf2ee"|color: "#176b4d"|color: "#b8860b"/);
+  assert.ok(reports.includes("teamRows.length > 0 ? ("));
+  assert.ok(reports.includes("hasTeamRows ? ("));
+  assert.ok(reports.includes("Biểu đồ chỉ hiển thị số liệu cá nhân"));
   assert.ok(reports.includes('className="table-scroll"'));
   assert.ok(reports.includes("Chưa có dữ liệu xếp hạng"));
 });
