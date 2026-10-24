@@ -16,7 +16,6 @@ function field(formData: FormData, name: string) {
 
 function customerPayload(formData: FormData) {
   const payload = {
-    ma_khach_hang: field(formData, "ma_khach_hang"),
     ho_ten: field(formData, "ho_ten"),
     so_dien_thoai: field(formData, "so_dien_thoai"),
     gioi_tinh: field(formData, "gioi_tinh"),
