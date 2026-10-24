@@ -47,3 +47,19 @@ test("profile route uses error/success feedback and exposes a read-only system s
   assert.ok(migration.includes("tai_khoan_update_own_profile"));
   assert.ok(migration.includes("app_private.current_account_has_application_access()"));
 });
+
+
+test("profile is included in post-fix responsive screenshot acceptance", async () => {
+  const [page, styles, screenshots] = await Promise.all([
+    readSource("../src/app/profile/page.tsx"),
+    readSource("../src/app/workspace.css"),
+    readSource("../tests/phase6-visual-screenshots.cjs"),
+  ]);
+
+  assert.ok(page.includes('DM: "Trưởng phòng kinh doanh"'));
+  assert.ok(page.includes('UM: "Trưởng nhóm kinh doanh"'));
+  assert.ok(styles.includes("var(--color-border)"));
+  assert.ok(styles.includes("var(--color-ink-soft)"));
+  assert.ok(screenshots.includes('{ name: "agency-profile", path: "/profile", expectedHeading: "Hồ sơ đại lý" }'));
+  assert.ok(screenshots.includes("...(captureOnly ? [] :"));
+});
