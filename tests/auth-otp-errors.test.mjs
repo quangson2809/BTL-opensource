@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
+import { readFile } from "node:fs/promises";
 
 import {
   classifyOtpDeliveryError,
@@ -58,4 +59,24 @@ test("failure log omits email, OTP, tokens and raw provider message", () => {
   assert.equal(JSON.stringify(entry).includes("12345678"), false);
   assert.equal(JSON.stringify(entry).includes("secret"), false);
   assert.equal(JSON.stringify(entry).includes(sensitiveError.message), false);
+});
+
+
+test("OTP UI and email templates do not claim unverified hosted length or expiry", async () => {
+  const read = (path) => readFile(new URL(path, import.meta.url), "utf8");
+  const files = await Promise.all([
+    read("../src/app/password/change/page.tsx"),
+    read("../src/app/password/recovery/verify/page.tsx"),
+    read("../supabase/templates/reauthentication.html"),
+    read("../supabase/templates/recovery.html"),
+  ]);
+
+  for (const source of files) {
+    assert.equal(source.includes("10 phút"), false);
+    assert.equal(source.includes("8 số"), false);
+  }
+  assert.ok(files[0].includes("cấu hình xác thực của hệ thống"));
+  assert.ok(files[1].includes("cấu hình xác thực"));
+  assert.ok(files[2].includes("thời hạn được cấu hình"));
+  assert.ok(files[3].includes("thời hạn được cấu hình"));
 });
