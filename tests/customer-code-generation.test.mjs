@@ -21,8 +21,8 @@ test("Server Action does not trust client code and retries only code conflicts",
 });
 
 test("customer codes are generated and made immutable in PostgreSQL", () => {
-  const migration = read("../supabase/migrations/20261024120000_customer_code_generation.sql");
-  const schema = read("../supabase/migrations/20260926070000_core_schema.sql");
+  const migration = read("../supabase/migrations/20261024135136_customer_code_generation.sql");
+  const schema = read("../supabase/migrations/20261009071632_core_schema.sql");
   const schemaTest = read("../supabase/tests/database/001_schema_test.sql");
 
   assert.match(migration, /create sequence if not exists app_private\.khach_hang_code_seq/);
