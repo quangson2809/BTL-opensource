@@ -601,7 +601,7 @@
   gap: 1rem;
 }
 
-@media (max-width: 60rem) {
+@media (max-width: 72rem) {
   .agency-profile-grid {
     grid-template-columns: minmax(0, 1fr);
   }
