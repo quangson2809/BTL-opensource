@@ -129,8 +129,9 @@ test("representative workspace pages preserve error, detail, and form contracts"
   assert.ok(createForm.includes('name="so_dien_thoai" required'));
 
   assert.ok(reports.includes('supabase.rpc("report_scope"'));
-  assert.ok(reports.includes("if (error)"));
-  assert.ok(reports.indexOf("if (error)") < reports.indexOf("return ("));
+  const reportPage = reports.slice(reports.indexOf("export default async function ReportsPage"));
+  assert.ok(reportPage.includes("if (error)"));
+  assert.ok(reportPage.indexOf("if (error)") < reportPage.indexOf("return ("));
   assert.ok(reports.includes("<PageHeader"));
   assert.ok(reports.includes('className="table-scroll"'));
   assert.ok(reports.includes("Chưa có dữ liệu xếp hạng"));
