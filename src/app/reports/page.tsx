@@ -50,7 +50,7 @@ function ReportComparisonCharts({ metrics, hasTeamRows }: { metrics: ReportMetri
         </p>
       </div>
 
-      <div aria-label="Chú giải biểu đồ" style={{ display: "flex", flexWrap: "wrap", gap: "1rem" }}>
+      <div role="group" aria-label="Chú giải biểu đồ" style={{ display: "flex", flexWrap: "wrap", gap: "1rem" }}>
         <span style={{ display: "inline-flex", alignItems: "center", gap: "0.45rem" }}>
           <span aria-hidden="true" style={{ width: "0.8rem", height: "0.8rem", borderRadius: "0.2rem", background: "#176b4d" }} />
           Cá nhân
