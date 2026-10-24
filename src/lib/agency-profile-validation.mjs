@@ -22,7 +22,7 @@ export function validateAgencyProfilePhone(value) {
     return { ok: false, code: "invalid-phone" };
   }
   const normalized = value.trim();
-  if (!/^\\+?[0-9][0-9\\s().-]{7,19}$/u.test(normalized)) {
+  if (!/^[+]?[0-9][0-9 ().-]{7,19}$/u.test(normalized)) {
     return { ok: false, code: "invalid-phone" };
   }
   return { ok: true, value: normalized };
