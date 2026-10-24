@@ -161,9 +161,7 @@ export default async function ReportsPage({ searchParams }: ReportsPageProps) {
         <section className="card wide-card">
           <PageHeader
             title="Báo cáo & thống kê"
-            description={teamRows.length > 0
-             ? "Theo dõi kết quả cá nhân và nhóm trong phạm vi dữ liệu được cấp quyền."
-             : "Theo dõi kết quả cá nhân trong phạm vi dữ liệu được cấp quyền."}
+            description="Theo dõi kết quả cá nhân và nhóm trong phạm vi dữ liệu được cấp quyền."
             actions={
               <>
                 <Link className="button-link button-secondary" href="/dashboard">Dashboard</Link>
@@ -208,7 +206,9 @@ export default async function ReportsPage({ searchParams }: ReportsPageProps) {
       <section className="card wide-card">
         <PageHeader
           title="Báo cáo & thống kê"
-          description="Theo dõi kết quả cá nhân và nhóm trong phạm vi dữ liệu được cấp quyền."
+          description={teamRows.length > 0
+            ? "Theo dõi kết quả cá nhân và nhóm trong phạm vi dữ liệu được cấp quyền."
+            : "Theo dõi kết quả cá nhân trong phạm vi dữ liệu được cấp quyền."}
           actions={
             <>
               <Link className="button-link button-secondary" href="/dashboard">Dashboard</Link>
