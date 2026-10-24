@@ -83,7 +83,7 @@ jobs:
             curl -fsS "http://127.0.0.1:3000$route" >/dev/null
           done
 
-          for route in /dashboard /customers /customers/new /activities /activities/new /notifications /notifications/new /notifications/c5000000-0000-4000-8000-000000000001/edit /reports /personnel /admin/accounts /admin/roles /admin/roles/new /admin/roles/c6000000-0000-4000-8000-000000000001/edit /password/change; do
+          for route in /dashboard /customers /customers/new /activities /activities/new /notifications /notifications/new /notifications/c5000000-0000-4000-8000-000000000001/edit /reports /personnel /admin/accounts /admin/roles /admin/roles/new /admin/roles/c6000000-0000-4000-8000-000000000001/edit /password/change /profile; do
             status="$(curl -sS -o /dev/null -w '%{http_code}' "http://127.0.0.1:3000$route")"
             case "$status" in
               301|302|303|307|308) ;;
@@ -208,6 +208,10 @@ jobs:
           # Capture the pre-fix source in the same local Supabase database and viewport matrix.
           git fetch --no-tags --depth=1 origin 1aeb11802438c53583a587b9fb25c7d62daa6223
           git checkout --detach 1aeb11802438c53583a587b9fb25c7d62daa6223
+          # Next.js writes route metadata into .next during the after-fix build.
+          # Clear it before building the baseline commit, which may not contain
+          # the same routes (for example, /profile).
+          rm -rf .next
           npm ci
           cp /tmp/phase6-visual-screenshots.cjs tests/phase6-visual-screenshots.cjs
 
