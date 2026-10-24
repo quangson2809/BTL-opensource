@@ -108,6 +108,51 @@ async function logRegistrationFailure({
   );
 }
 
+function classifyOtpDeliveryError(error: unknown): "rate-limited" | "email-not-authorized" | "email-provider" | "service" {
+  const value = error !== null && typeof error === "object"
+    ? error as { code?: unknown; message?: unknown; status?: unknown; name?: unknown }
+    : {};
+  const code = typeof value.code === "string" ? value.code.toLowerCase() : "";
+  const message = typeof value.message === "string" ? value.message.toLowerCase() : "";
+  const status = typeof value.status === "number" ? value.status : 0;
+
+  if (
+    status === 429 ||
+    /rate.?limit|too many requests|over_email_send_rate_limit|over_request_rate_limit/.test(code + " " + message)
+  ) return "rate-limited";
+  if (
+    /email_address_not_authorized|recipient.*not authorized|only.*team.*email|email.*not.*authorized|testing purposes/.test(code + " " + message)
+  ) return "email-not-authorized";
+  if (
+    /smtp|email provider|sending email|send.*email|mail server|failed to send/.test(code + " " + message) ||
+    status >= 500
+  ) return "email-provider";
+  return "service";
+}
+
+async function logOtpDeliveryFailure(flow: "password-change" | "password-recovery", error: unknown) {
+  const value = error !== null && typeof error === "object"
+    ? error as { code?: unknown; message?: unknown; status?: unknown; name?: unknown }
+    : {};
+  let requestId: string | null = null;
+  try {
+    const requestHeaders = await headers();
+    requestId = requestHeaders.get("x-vercel-id") ?? requestHeaders.get("x-request-id") ?? null;
+  } catch {
+    // Logging must not break the response.
+  }
+  // Do not log the email address, OTP, access token, or raw provider message.
+  console.error(JSON.stringify({
+    event: "auth.otp_delivery.failed",
+    flow,
+    category: classifyOtpDeliveryError(error),
+    providerErrorCode: typeof value.code === "string" ? value.code.slice(0, 80) : null,
+    providerErrorName: typeof value.name === "string" ? value.name.slice(0, 80) : null,
+    providerStatus: typeof value.status === "number" ? value.status : null,
+    requestId,
+  }));
+}
+
 function meetsPasswordPolicy(password: string) {
   return (
     password.length >= 8 &&
@@ -245,7 +290,9 @@ export async function requestPasswordChangeOtp() {
   const { error } = await supabase.auth.reauthenticate();
 
   if (error) {
-    redirect("/password/change?error=otp-request");
+    const errorCode = classifyOtpDeliveryError(error);
+    await logOtpDeliveryFailure("password-change", error);
+    redirect("/password/change?error=" + errorCode);
   }
 
   redirect("/password/change?status=otp-sent");
@@ -297,8 +344,10 @@ export async function requestPasswordRecovery(formData: FormData) {
   const { error } = await supabase.auth.resetPasswordForEmail(email);
 
   if (error) {
-    // Keep the response generic; do not disclose whether the account exists.
-    redirect("/password/recovery?error=service");
+    // Only disclose delivery/system failure categories, never account existence.
+    const errorCode = classifyOtpDeliveryError(error);
+    await logOtpDeliveryFailure("password-recovery", error);
+    redirect("/password/recovery?error=" + errorCode);
   }
 
   // Use the same success response regardless of whether the address exists to
