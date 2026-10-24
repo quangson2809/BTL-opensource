@@ -11,10 +11,14 @@ do $$
 declare
   v_max_code numeric;
 begin
-  select max(pg_catalog.regexp_replace(ma_khach_hang, '^KH-', '')::numeric)
+  select max(
+    case
+      when ma_khach_hang ~ '^KH-[0-9]+$'
+        then pg_catalog.regexp_replace(ma_khach_hang, '^KH-', '')::numeric
+    end
+  )
     into v_max_code
-  from public.khach_hang
-  where ma_khach_hang ~ '^KH-[0-9]+$';
+  from public.khach_hang;
 
   if v_max_code is null or v_max_code < 1 then
     perform pg_catalog.setval('app_private.khach_hang_code_seq'::regclass, 1, false);
