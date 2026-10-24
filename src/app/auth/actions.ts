@@ -138,6 +138,7 @@ export async function register(formData: FormData) {
                 configuredSiteUrl: process.env.NEXT_PUBLIC_SITE_URL,
                 projectProductionUrl: process.env.VERCEL_PROJECT_PRODUCTION_URL,
                 deploymentUrl: process.env.VERCEL_URL,
+                vercelEnvironment: process.env.VERCEL_ENV,
               }),
             },
           });
