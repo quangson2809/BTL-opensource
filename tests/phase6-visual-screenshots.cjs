@@ -120,6 +120,7 @@ async function main() {
 
     const pages = [
       { name: "dashboard", path: "/dashboard", expectedHeading: "Xin chào," },
+      ...(captureOnly ? [] : [{ name: "agency-profile", path: "/profile", expectedHeading: "Hồ sơ đại lý" }]),
       { name: "customer-list", path: "/customers", expectedHeading: "Khách hàng" },
       { name: "customer-detail", path: "/customers/" + customer.id, expectedHeading: customerName },
       { name: "customer-form", path: "/customers/new", expectedHeading: "Thêm khách hàng" },
