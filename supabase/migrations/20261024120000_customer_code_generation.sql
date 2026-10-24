@@ -2,8 +2,8 @@
 -- Existing customer codes are preserved; the sequence starts after the largest
 -- existing KH-<number> code so this remains safe on populated installations.
 
-lock table public.khach_hang in access exclusive mode;
-
+-- The trigger checks legacy codes at insert time as well as syncing the sequence
+-- below, so rows inserted during deployment cannot cause duplicate generated codes.
 create schema if not exists app_private;
 create sequence if not exists app_private.khach_hang_code_seq as bigint;
 
