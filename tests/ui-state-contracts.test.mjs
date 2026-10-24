@@ -140,6 +140,9 @@ test("representative workspace pages preserve error, detail, and form contracts"
   assert.ok(reports.includes("teamRows.length > 0 ? ("));
   assert.ok(reports.includes("hasTeamRows ? ("));
   assert.ok(reports.includes("Biểu đồ chỉ hiển thị số liệu cá nhân"));
+  assert.ok(reports.includes("Theo dõi kết quả cá nhân trong phạm vi dữ liệu được cấp quyền."));
+  assert.ok(reports.includes("{teamRows.length > 0 ? ("));
+  assert.ok(reports.includes('aria-label="So sánh cá nhân và nhóm"'));
   assert.ok(reports.includes('className="table-scroll"'));
   assert.ok(reports.includes("Chưa có dữ liệu xếp hạng"));
 });
