@@ -29,7 +29,7 @@ function formatCount(value: number) {
   return new Intl.NumberFormat("vi-VN", { maximumFractionDigits: 0 }).format(value);
 }
 
-function ReportComparisonCharts({ metrics }: { metrics: ReportMetric[] }) {
+function ReportComparisonCharts({ metrics, hasTeamRows }: { metrics: ReportMetric[]; hasTeamRows: boolean }) {
   const hasData = metrics.some((metric) => metric.personal > 0 || metric.team > 0);
 
   if (!hasData) {
@@ -44,7 +44,7 @@ function ReportComparisonCharts({ metrics }: { metrics: ReportMetric[] }) {
   return (
     <section aria-labelledby="report-charts-title" style={{ display: "grid", gap: "1rem" }}>
       <div>
-        <h2 id="report-charts-title">Biểu đồ so sánh cá nhân / nhóm</h2>
+        <h2 id="report-charts-title">{hasTeamRows ? "Biểu đồ so sánh cá nhân / nhóm" : "Biểu đồ số liệu cá nhân"}</h2>
         <p className="secondary-text">
           Mỗi thanh biểu thị tổng của khoảng ngày/tuần/tháng đang chọn. Biểu đồ và bảng dùng cùng kết quả RPC, không tự tạo các mốc thời gian không có trong hợp đồng dữ liệu.
         </p>
@@ -66,7 +66,7 @@ function ReportComparisonCharts({ metrics }: { metrics: ReportMetric[] }) {
           const maximum = Math.max(metric.personal, metric.team, 1);
           const bars = [
             { label: "Cá nhân", value: metric.personal, color: "#176b4d" },
-            { label: "Nhóm", value: metric.team, color: "#b8860b" },
+            ...(hasTeamRows ? [{ label: "Nhóm cấp dưới", value: metric.team, color: "#b8860b" }] : []),
           ];
 
           return (
@@ -249,7 +249,7 @@ export default async function ReportsPage({ searchParams }: ReportsPageProps) {
           </article>
         </div>
 
-        <ReportComparisonCharts metrics={chartMetrics} />
+        <ReportComparisonCharts metrics={chartMetrics} hasTeamRows={teamRows.length > 0} />
 
         {leaderboard.length > 0 ? (
           <section aria-labelledby="report-leaderboard-title">
