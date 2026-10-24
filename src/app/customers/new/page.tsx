@@ -23,7 +23,7 @@ export default async function NewCustomerPage({ searchParams }: NewCustomerPageP
       <section className="page-content">
         <PageHeader
           title="Thêm khách hàng"
-          description="Tạo hồ sơ khách hàng trong phạm vi được cấp quyền."
+          description="Tạo hồ sơ khách hàng trong phạm vi được cấp quyền; mã khách hàng được sinh tự động."
           actions={<DraftCancelLink className="button-link button-secondary" href="/customers" scopeKey={accountId} persistKeys={["customer-create"]}>Quay lại danh sách</DraftCancelLink>}
         />
         {query.error ? <ActionFeedback error={query.error} /> : null}
