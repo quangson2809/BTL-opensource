@@ -155,14 +155,14 @@ select set_config(
 );
 
 select lives_ok(
-  $
+  $$
     select public.admin_update_role(
       (select id from public.vai_tro where ma_vai_tro = 'ACTIVITY_READER_TEST'),
       'Activity Reader Test',
       'Permission revoked for the role-scope test.',
       array[]::uuid[]
     )
-  $,
+  $$,
   'Admin can revoke the existing permission from a custom role'
 );
 
