@@ -95,7 +95,7 @@ const { data: customer, error: customerError } = await sa.client
   .single();
 assertNoError(customerError, "SA create owned customer");
 assert.ok(customer?.id, "created customer must have id");
-assert.match(customer.ma_khach_hang, /^KH-\\d{6,}$/, "customer code must use generated format");
+assert.match(customer.ma_khach_hang, /^KH-\d{6,}$/, "customer code must use generated format");
 assert.notEqual(customer.ma_khach_hang, submittedCustomerCode, "database must ignore a client-supplied code");
 
 // Concurrent inserts omit ma_khach_hang altogether. The BEFORE INSERT trigger
@@ -121,7 +121,7 @@ const concurrentCustomers = await Promise.all(
       .single();
     assertNoError(error, "concurrent customer insert " + index);
     assert.ok(data?.id, "concurrent customer " + index + " must exist");
-    assert.match(data.ma_khach_hang, /^KH-\\d{6,}$/, "omitted code must be generated");
+    assert.match(data.ma_khach_hang, /^KH-\d{6,}$/, "omitted code must be generated");
     return data;
   }),
 );
