@@ -7,6 +7,7 @@ import { requireBusinessAccount } from "@/lib/business";
 import { resolveReportRange } from "@/lib/reporting";
 import { rankReportRows } from "@/lib/report-leaderboard.mjs";
 import { buildReportComparisonMetrics, reportTotals } from "@/lib/report-metrics.mjs";
+import type { ReportMetric } from "@/lib/report-metrics.mjs";
 
 export const dynamic = "force-dynamic";
 
