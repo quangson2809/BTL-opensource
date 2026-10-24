@@ -12,7 +12,9 @@ values
   ('c7000000-0000-4000-8000-000000000004', 'p79-dm2@example.test'),
   ('c7000000-0000-4000-8000-000000000005', 'p79-pending@example.test'),
   ('c7000000-0000-4000-8000-000000000006', 'p79-locked@example.test'),
-  ('c7000000-0000-4000-8000-000000000007', 'p79-otp@example.test');
+  ('c7000000-0000-4000-8000-000000000007', 'p79-otp@example.test'),
+  ('c7000000-0000-4000-8000-000000000008', 'p79-um@example.test'),
+  ('c7000000-0000-4000-8000-000000000009', 'p79-admin@example.test');
 
 insert into public.tai_khoan (
   id, ho_ten, email, so_dien_thoai, ma_dai_ly, manager_id, trang_thai
@@ -24,7 +26,9 @@ values
   ('c7000000-0000-4000-8000-000000000004', 'P79 DM Two', 'p79-dm2@example.test', '0970000004', 'P79-DM2', null, 'DANG_HOAT_DONG'),
   ('c7000000-0000-4000-8000-000000000005', 'P79 Pending DM', 'p79-pending@example.test', '0970000005', 'P79-PENDING', null, 'CHO_PHE_DUYET'),
   ('c7000000-0000-4000-8000-000000000006', 'P79 Locked DM', 'p79-locked@example.test', '0970000006', 'P79-LOCKED', null, 'KHOA'),
-  ('c7000000-0000-4000-8000-000000000007', 'P79 OTP DM', 'p79-otp@example.test', '0970000007', 'P79-OTP', null, 'DANG_HOAT_DONG');
+  ('c7000000-0000-4000-8000-000000000007', 'P79 OTP DM', 'p79-otp@example.test', '0970000007', 'P79-OTP', null, 'DANG_HOAT_DONG'),
+  ('c7000000-0000-4000-8000-000000000008', 'P79 UM', 'p79-um@example.test', '0970000008', 'P79-UM', null, 'DANG_HOAT_DONG'),
+  ('c7000000-0000-4000-8000-000000000009', 'P79 ADMIN', 'p79-admin@example.test', '0970000009', 'P79-ADMIN', null, 'DANG_HOAT_DONG');
 
 insert into public.phan_cong_vai_tro (tai_khoan_id, vai_tro_id)
 select account_id, vt.id
@@ -36,9 +40,16 @@ from (
     ('c7000000-0000-4000-8000-000000000004'::uuid, 'DM'::text),
     ('c7000000-0000-4000-8000-000000000005'::uuid, 'DM'::text),
     ('c7000000-0000-4000-8000-000000000006'::uuid, 'DM'::text),
-    ('c7000000-0000-4000-8000-000000000007'::uuid, 'DM'::text)
+    ('c7000000-0000-4000-8000-000000000007'::uuid, 'DM'::text),
+    ('c7000000-0000-4000-8000-000000000008'::uuid, 'UM'::text),
+    ('c7000000-0000-4000-8000-000000000009'::uuid, 'ADMIN'::text)
 ) roles(account_id, role_code)
 join public.vai_tro vt on vt.ma_vai_tro = roles.role_code;
+
+-- Build a nested manager scope: UM -> DM -> SA.
+update public.tai_khoan
+set manager_id = 'c7000000-0000-4000-8000-000000000008'
+where id = 'c7000000-0000-4000-8000-000000000001';
 
 insert into public.khach_hang (
   id, chu_so_huu_id, ma_khach_hang, ho_ten, so_dien_thoai, gioi_tinh,
@@ -199,6 +210,54 @@ select ok(
       and is_self
   ),
   'SA report row is bound to auth.uid'
+);
+
+-- UM can see its own account and the full descendant tree, but not unrelated users.
+select set_config('request.jwt.claim.sub', 'c7000000-0000-4000-8000-000000000008', true);
+select set_config(
+  'request.jwt.claims',
+  jsonb_build_object(
+    'role', 'authenticated',
+    'sub', 'c7000000-0000-4000-8000-000000000008',
+    'amr', jsonb_build_array(jsonb_build_object('method', 'password', 'timestamp', 0))
+  )::text,
+  true
+);
+select is(
+  (
+    select count(*)::bigint
+    from public.report_scope('2026-10-05T17:00:00Z', '2026-10-06T17:00:00Z')
+  ),
+  3::bigint,
+  'UM report contains self and descendant manager tree'
+);
+select ok(
+  not exists (
+    select 1
+    from public.report_scope('2026-10-05T17:00:00Z', '2026-10-06T17:00:00Z')
+    where account_id = 'c7000000-0000-4000-8000-000000000003'
+  ),
+  'UM report excludes unrelated account'
+);
+
+-- ADMIN is authorized for the reports route but this RPC contract grants self-only data.
+select set_config('request.jwt.claim.sub', 'c7000000-0000-4000-8000-000000000009', true);
+select set_config(
+  'request.jwt.claims',
+  jsonb_build_object(
+    'role', 'authenticated',
+    'sub', 'c7000000-0000-4000-8000-000000000009',
+    'amr', jsonb_build_array(jsonb_build_object('method', 'password', 'timestamp', 0))
+  )::text,
+  true
+);
+select is(
+  (
+    select count(*)::bigint
+    from public.report_scope('2026-10-05T17:00:00Z', '2026-10-06T17:00:00Z')
+  ),
+  1::bigint,
+  'ADMIN report remains self-only under report_scope contract'
 );
 
 -- Restore DM for manager and notification tests.
