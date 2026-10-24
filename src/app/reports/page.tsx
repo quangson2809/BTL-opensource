@@ -6,6 +6,7 @@ import { PageHeader } from "@/components/page-header";
 import { requireBusinessAccount } from "@/lib/business";
 import { resolveReportRange } from "@/lib/reporting";
 import { rankReportRows } from "@/lib/report-leaderboard.mjs";
+import { buildReportComparisonMetrics, reportTotals } from "@/lib/report-metrics.mjs";
 
 export const dynamic = "force-dynamic";
 
@@ -19,29 +20,9 @@ type ReportRow = {
   connected_customer_count: number;
 };
 
-type ReportMetric = {
-  key: "customer_count" | "activity_count" | "connected_customer_count";
-  label: string;
-  unit: string;
-  personal: number;
-  team: number;
-};
-
 type ReportsPageProps = {
   searchParams: Promise<{ period?: string; anchor?: string }>;
 };
-
-function totals(rows: ReportRow[]) {
-  return rows.reduce(
-    (sum, row) => ({
-      customer_count: sum.customer_count + Number(row.customer_count),
-      activity_count: sum.activity_count + Number(row.activity_count),
-      connected_customer_count:
-        sum.connected_customer_count + Number(row.connected_customer_count),
-    }),
-    { customer_count: 0, activity_count: 0, connected_customer_count: 0 },
-  );
-}
 
 function formatCount(value: number) {
   return new Intl.NumberFormat("vi-VN", { maximumFractionDigits: 0 }).format(value);
@@ -64,7 +45,7 @@ function ReportComparisonCharts({ metrics }: { metrics: ReportMetric[] }) {
       <div>
         <h2 id="report-charts-title">Biểu đồ so sánh cá nhân / nhóm</h2>
         <p className="secondary-text">
-          Số liệu trong biểu đồ được tổng hợp từ cùng kết quả báo cáo và cùng khoảng thời gian bên trên.
+          Mỗi thanh biểu thị tổng của khoảng ngày/tuần/tháng đang chọn. Biểu đồ và bảng dùng cùng kết quả RPC, không tự tạo các mốc thời gian không có trong hợp đồng dữ liệu.
         </p>
       </div>
 
@@ -209,32 +190,10 @@ export default async function ReportsPage({ searchParams }: ReportsPageProps) {
   const personal = rows.find((row) => row.is_self);
   const teamRows = rows.filter((row) => !row.is_self);
   const leaderboard = rankReportRows(teamRows);
-  const team = totals(teamRows);
-  const overview = totals(rows);
-  const personalTotals = totals(personal ? [personal] : []);
-  const chartMetrics: ReportMetric[] = [
-    {
-      key: "customer_count",
-      label: "Khách hàng mới",
-      unit: "khách hàng",
-      personal: personalTotals.customer_count,
-      team: team.customer_count,
-    },
-    {
-      key: "activity_count",
-      label: "Hoạt động",
-      unit: "hoạt động",
-      personal: personalTotals.activity_count,
-      team: team.activity_count,
-    },
-    {
-      key: "connected_customer_count",
-      label: "Lượt khách kết nối",
-      unit: "lượt",
-      personal: personalTotals.connected_customer_count,
-      team: team.connected_customer_count,
-    },
-  ];
+  const team = reportTotals(teamRows);
+  const overview = reportTotals(rows);
+  const personalTotals = reportTotals(personal ? [personal] : []);
+  const chartMetrics = buildReportComparisonMetrics(rows);
 
   return (
     <main>
