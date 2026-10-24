@@ -18,6 +18,8 @@ const roleLabels: Record<string, string> = {
 const errorMessages: Record<string, string> = {
   missing: "Họ và tên không được để trống.",
   invalid: "Họ và tên chứa ký tự không hợp lệ.",
+  "invalid-phone": "Số điện thoại không đúng định dạng.",
+  "phone-taken": "Số điện thoại này đã được sử dụng bởi tài khoản khác.",
   save: "Không thể lưu hồ sơ lúc này. Vui lòng thử lại.",
 };
 
@@ -85,7 +87,7 @@ export default async function AgencyProfilePage({
 
         {params.status === "saved" ? (
           <p className="message success" role="status" aria-live="polite">
-            Đã cập nhật họ và tên.
+            Đã cập nhật hồ sơ.
           </p>
         ) : null}
         {errorMessage ? (
@@ -101,8 +103,8 @@ export default async function AgencyProfilePage({
           >
             <h2 id="agency-profile-edit-title">Thông tin cá nhân</h2>
             <p className="agency-profile-note">
-              Chỉ họ và tên được chỉnh sửa trong phạm vi hiện tại. Dữ liệu được
-              kiểm tra lại ở máy chủ trước khi lưu.
+              Họ và tên và số điện thoại có thể cập nhật. Dữ liệu được kiểm tra
+              lại ở máy chủ; số điện thoại phải chưa được tài khoản khác sử dụng.
             </p>
             <form action={updateAgencyProfile} className="agency-profile-form">
               <label htmlFor="agency-profile-name">Họ và tên</label>
@@ -113,6 +115,16 @@ export default async function AgencyProfilePage({
                 name="ho_ten"
                 required
                 type="text"
+              />
+              <label htmlFor="agency-profile-phone">Số điện thoại</label>
+              <input
+                autoComplete="tel"
+                defaultValue={profile.so_dien_thoai}
+                id="agency-profile-phone"
+                inputMode="tel"
+                name="so_dien_thoai"
+                required
+                type="tel"
               />
               <PendingSubmitButton pendingLabel="Đang lưu hồ sơ…">
                 Lưu thay đổi
