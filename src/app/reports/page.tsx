@@ -162,8 +162,8 @@ export default async function ReportsPage({ searchParams }: ReportsPageProps) {
           <PageHeader
             title="Báo cáo & thống kê"
             description={teamRows.length > 0
-              ? "Theo dõi kết quả cá nhân và nhóm trong phạm vi dữ liệu được cấp quyền."
-              : "Theo dõi kết quả cá nhân trong phạm vi dữ liệu được cấp quyền."}
+             ? "Theo dõi kết quả cá nhân và nhóm trong phạm vi dữ liệu được cấp quyền."
+             : "Theo dõi kết quả cá nhân trong phạm vi dữ liệu được cấp quyền."}
             actions={
               <>
                 <Link className="button-link button-secondary" href="/dashboard">Dashboard</Link>
@@ -262,43 +262,43 @@ export default async function ReportsPage({ searchParams }: ReportsPageProps) {
 
         {teamRows.length > 0 ? (
           leaderboard.length > 0 ? (
-          <section aria-labelledby="report-leaderboard-title">
-            <h2 id="report-leaderboard-title">Xếp hạng nhân sự theo số hoạt động</h2>
-            <p className="secondary-text">
-              Xếp hạng trong phạm vi cấp dưới mà tài khoản hiện tại được phép xem, theo {range.label.toLowerCase()}.
-              Nhân sự có cùng số hoạt động được đồng hạng; số khách hàng dùng để sắp xếp ổn định trong nhóm đồng hạng.
-            </p>
-            <div className="table-scroll">
-              <table>
-                <thead>
-                  <tr>
-                    <th scope="col">Hạng</th>
-                    <th scope="col">Nhân sự</th>
-                    <th scope="col">Mã đại lý</th>
-                    <th scope="col">Hoạt động</th>
-                    <th scope="col">Khách hàng mới</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {leaderboard.map((row) => (
-                    <tr key={row.account_id}>
-                      <td>{row.rank}</td>
-                      <td>{row.ho_ten}</td>
-                      <td>{row.ma_dai_ly}</td>
-                      <td>{row.activity_count}</td>
-                      <td>{row.customer_count}</td>
+            <section aria-labelledby="report-leaderboard-title">
+              <h2 id="report-leaderboard-title">Xếp hạng nhân sự theo số hoạt động</h2>
+              <p className="secondary-text">
+                Xếp hạng trong phạm vi cấp dưới mà tài khoản hiện tại được phép xem, theo {range.label.toLowerCase()}.
+                Nhân sự có cùng số hoạt động được đồng hạng; số khách hàng dùng để sắp xếp ổn định trong nhóm đồng hạng.
+              </p>
+              <div className="table-scroll">
+                <table>
+                  <thead>
+                    <tr>
+                      <th scope="col">Hạng</th>
+                      <th scope="col">Nhân sự</th>
+                      <th scope="col">Mã đại lý</th>
+                      <th scope="col">Hoạt động</th>
+                      <th scope="col">Khách hàng mới</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </section>
-        ) : (
-          <EmptyState
-            title="Chưa có dữ liệu xếp hạng"
-            description="Bảng xếp hạng sẽ xuất hiện khi có hoạt động được ghi nhận trong kỳ báo cáo."
-          />
-          ) : null
+                  </thead>
+                  <tbody>
+                    {leaderboard.map((row) => (
+                      <tr key={row.account_id}>
+                        <td>{row.rank}</td>
+                        <td>{row.ho_ten}</td>
+                        <td>{row.ma_dai_ly}</td>
+                        <td>{row.activity_count}</td>
+                        <td>{row.customer_count}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </section>
+          ) : (
+            <EmptyState
+              title="Chưa có dữ liệu xếp hạng"
+              description="Bảng xếp hạng sẽ xuất hiện khi có hoạt động được ghi nhận trong kỳ báo cáo."
+            />
+          )
         ) : null}
 
         {teamRows.length > 0 ? (
