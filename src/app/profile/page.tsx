@@ -10,8 +10,8 @@ export const dynamic = "force-dynamic";
 
 const roleLabels: Record<string, string> = {
   ADMIN: "Quản trị hệ thống",
-  DM: "Giám đốc miền",
-  UM: "Quản lý đơn vị",
+  DM: "Trưởng phòng kinh doanh",
+  UM: "Trưởng nhóm kinh doanh",
   SA: "Đại lý",
 };
 
