@@ -208,6 +208,10 @@ jobs:
           # Capture the pre-fix source in the same local Supabase database and viewport matrix.
           git fetch --no-tags --depth=1 origin 1aeb11802438c53583a587b9fb25c7d62daa6223
           git checkout --detach 1aeb11802438c53583a587b9fb25c7d62daa6223
+          # Next.js writes route metadata into .next during the after-fix build.
+          # Clear it before building the baseline commit, which may not contain
+          # the same routes (for example, /profile).
+          rm -rf .next
           npm ci
           cp /tmp/phase6-visual-screenshots.cjs tests/phase6-visual-screenshots.cjs
 
