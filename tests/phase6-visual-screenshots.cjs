@@ -146,6 +146,24 @@ async function main() {
         assert.ok(response?.ok(), route.name + " returned a non-2xx response");
         await page.locator("main h1").first().waitFor();
 
+        // Wait for the reports route to leave its streaming loading boundary before
+        // taking screenshots; otherwise fast DOMContentLoaded can capture skeletons.
+        if (route.name === "reports") {
+          await page.waitForFunction(
+            () => {
+              const main = document.querySelector("main");
+              const hasChart = Boolean(main?.querySelector("#report-charts-title"));
+              const hasEmptyState = [...(main?.querySelectorAll("h2, h3") ?? [])].some((heading) =>
+                heading.textContent?.includes("Chưa có dữ liệu biểu đồ"),
+              );
+              const hasError = Boolean(main?.querySelector('[role="alert"]'));
+              return hasChart || hasEmptyState || hasError;
+            },
+            null,
+            { timeout: 20_000 },
+          );
+        }
+
         const heading = (await page.locator("main h1").first().innerText()).trim();
         assert.ok(
           heading.includes(route.expectedHeading),
