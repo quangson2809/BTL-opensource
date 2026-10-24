@@ -140,6 +140,64 @@ select is(
   'custom-role permission behavior does not depend on hard-coded DM/UM membership'
 );
 
+-- Revoke the same permission while the reader's auth session remains unchanged.
+-- The next database authorization check must observe the current mapping, not a
+-- permission snapshot embedded in the JWT/session.
+select set_config('request.jwt.claim.sub', 'c8000000-0000-4000-8000-000000000004', true);
+select set_config(
+  'request.jwt.claims',
+  jsonb_build_object(
+    'role', 'authenticated',
+    'sub', 'c8000000-0000-4000-8000-000000000004',
+    'amr', jsonb_build_array(jsonb_build_object('method', 'password', 'timestamp', 0))
+  )::text,
+  true
+);
+
+select lives_ok(
+  $
+    select public.admin_update_role(
+      (select id from public.vai_tro where ma_vai_tro = 'ACTIVITY_READER_TEST'),
+      'Activity Reader Test',
+      'Permission revoked for the role-scope test.',
+      array[]::uuid[]
+    )
+  $,
+  'Admin can revoke the existing permission from a custom role'
+);
+
+select set_config('request.jwt.claim.sub', 'c8000000-0000-4000-8000-000000000001', true);
+select set_config(
+  'request.jwt.claims',
+  jsonb_build_object(
+    'role', 'authenticated',
+    'sub', 'c8000000-0000-4000-8000-000000000001',
+    'amr', jsonb_build_array(jsonb_build_object('method', 'password', 'timestamp', 0))
+  )::text,
+  true
+);
+
+select is(
+  (select count(*)::bigint from public.hoat_dong where id = 'c8000000-0000-4000-8000-000000000101'),
+  1::bigint,
+  'permission revocation does not remove the caller own-activity access'
+);
+select is(
+  (select count(*)::bigint from public.hoat_dong where id = 'c8000000-0000-4000-8000-000000000102'),
+  0::bigint,
+  'permission revocation takes effect on the next query without a new login'
+);
+select is(
+  (select count(*)::bigint
+   from public.phan_quyen_vai_tro pq
+   join public.vai_tro vt on vt.id = pq.vai_tro_id
+   join public.quyen q on q.id = pq.quyen_id
+   where vt.ma_vai_tro = 'ACTIVITY_READER_TEST'
+     and q.ma_quyen = 'ACTIVITY_VIEW_SUBTREE'),
+  0::bigint,
+  'revoked permission mapping is absent from the authoritative database table'
+);
+
 reset role;
 select * from finish();
 rollback;
