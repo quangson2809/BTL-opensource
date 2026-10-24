@@ -8,10 +8,11 @@ import { requestPasswordRecovery } from "@/app/auth/actions";
 const errorMessages: Record<string, string> = {
   missing: "Vui lòng nhập email.",
   session: "Phiên đặt lại mật khẩu không hợp lệ. Vui lòng yêu cầu OTP mới.",
-  service: "Dịch vụ xác thực chưa xử lý được yêu cầu gửi OTP. Hãy thử lại sau và kiểm tra nhật ký Auth nếu lỗi tiếp diễn.",
-  "rate-limited": "Supabase đang giới hạn số lần gửi OTP. Hãy chờ một lúc rồi thử lại. Thông báo này không cho biết email có tồn tại hay không.",
-  "email-not-authorized": "SMTP mặc định của Supabase chưa cho phép gửi đến email này. Dùng email đã được xác thực trong nhóm dự án hoặc cấu hình SMTP riêng. Thông báo này không cho biết email có tồn tại hay không.",
-  "email-provider": "Nhà cung cấp email của Supabase không gửi được OTP. Kiểm tra cấu hình SMTP và nhật ký Auth của dự án. Thông báo này không cho biết email có tồn tại hay không.",
+  "rate-limited": "Hệ thống đang giới hạn số email OTP được gửi trong thời gian ngắn. Vui lòng chờ trước khi thử lại. Nếu lỗi tiếp diễn, quản trị viên cần kiểm tra giới hạn gửi email và cấu hình SMTP. Thông báo này không xác nhận email có tồn tại trong hệ thống hay không.",
+  "email-not-authorized": "Cấu hình gửi email hiện không chấp nhận yêu cầu này. Vui lòng liên hệ quản trị viên. Thông báo này không xác nhận email có tồn tại trong hệ thống hay không.",
+  "redirect-invalid": "Đường dẫn xác thực chưa được cấu hình hợp lệ. Vui lòng liên hệ quản trị viên. Thông báo này không xác nhận email có tồn tại trong hệ thống hay không.",
+  "email-provider": "Nhà cung cấp email chưa chấp nhận yêu cầu gửi OTP. Vui lòng chờ rồi thử lại. Thông báo này không xác nhận email có tồn tại trong hệ thống hay không.",
+  service: "Chưa thể xử lý yêu cầu lúc này. Vui lòng thử lại sau. Thông báo này không xác nhận email có tồn tại trong hệ thống hay không.",
 };
 
 type RecoveryPageProps = {
