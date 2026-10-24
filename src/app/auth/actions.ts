@@ -17,6 +17,11 @@ import {
 import { requireActiveBusinessAccount } from "@/lib/business";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
+import { getAuthCallbackUrl } from "@/lib/auth-callback-url.mjs";
+import {
+  classifyOtpDeliveryError,
+  createOtpDeliveryFailureLog,
+} from "@/lib/auth-otp-errors.mjs";
 
 function field(formData: FormData, name: string) {
   const value = formData.get(name);
@@ -26,33 +31,6 @@ function field(formData: FormData, name: string) {
 function rawField(formData: FormData, name: string) {
   const value = formData.get(name);
   return typeof value === "string" ? value : "";
-}
-
-function getAuthCallbackUrl() {
-  const configuredSiteUrl = process.env.NEXT_PUBLIC_SITE_URL?.trim();
-  const deploymentHost =
-    process.env.VERCEL_PROJECT_PRODUCTION_URL?.trim() ||
-    process.env.VERCEL_URL?.trim();
-  const deploymentOrigin = deploymentHost
-    ? new URL(
-        deploymentHost.startsWith("http://") || deploymentHost.startsWith("https://")
-          ? deploymentHost
-          : `https://${deploymentHost}`,
-      ).origin
-    : null;
-  const siteUrl =
-    configuredSiteUrl || deploymentOrigin || "http://localhost:3000";
-  const parsedUrl = new URL(siteUrl);
-
-  if (
-    !["http:", "https:"].includes(parsedUrl.protocol) ||
-    parsedUrl.username ||
-    parsedUrl.password
-  ) {
-    throw new Error("Invalid site URL configuration.");
-  }
-
-  return new URL("/auth/callback", parsedUrl.origin).toString();
 }
 
 async function logLoginFailure(
@@ -108,49 +86,25 @@ async function logRegistrationFailure({
   );
 }
 
-function classifyOtpDeliveryError(error: unknown): "rate-limited" | "email-not-authorized" | "email-provider" | "service" {
-  const value = error !== null && typeof error === "object"
-    ? error as { code?: unknown; message?: unknown; status?: unknown; name?: unknown }
-    : {};
-  const code = typeof value.code === "string" ? value.code.toLowerCase() : "";
-  const message = typeof value.message === "string" ? value.message.toLowerCase() : "";
-  const status = typeof value.status === "number" ? value.status : 0;
-
-  if (
-    status === 429 ||
-    /rate.?limit|too many requests|over_email_send_rate_limit|over_request_rate_limit/.test(code + " " + message)
-  ) return "rate-limited";
-  if (
-    /email_address_not_authorized|recipient.*not authorized|only.*team.*email|email.*not.*authorized|testing purposes/.test(code + " " + message)
-  ) return "email-not-authorized";
-  if (
-    /smtp|email provider|sending email|send.*email|mail server|failed to send/.test(code + " " + message) ||
-    status >= 500
-  ) return "email-provider";
-  return "service";
-}
-
-async function logOtpDeliveryFailure(flow: "password-change" | "password-recovery", error: unknown) {
-  const value = error !== null && typeof error === "object"
-    ? error as { code?: unknown; message?: unknown; status?: unknown; name?: unknown }
-    : {};
+async function logOtpDeliveryFailure(
+  flow: "password-change" | "password-recovery",
+  error: unknown,
+) {
   let requestId: string | null = null;
+
   try {
     const requestHeaders = await headers();
-    requestId = requestHeaders.get("x-vercel-id") ?? requestHeaders.get("x-request-id") ?? null;
+    requestId =
+      requestHeaders.get("x-vercel-id") ??
+      requestHeaders.get("x-request-id") ??
+      null;
   } catch {
-    // Logging must not break the response.
+    // Logging must not break the authentication response.
   }
-  // Do not log the email address, OTP, access token, or raw provider message.
-  console.error(JSON.stringify({
-    event: "auth.otp_delivery.failed",
-    flow,
-    category: classifyOtpDeliveryError(error),
-    providerErrorCode: typeof value.code === "string" ? value.code.slice(0, 80) : null,
-    providerErrorName: typeof value.name === "string" ? value.name.slice(0, 80) : null,
-    providerStatus: typeof value.status === "number" ? value.status : null,
-    requestId,
-  }));
+
+  console.error(
+    JSON.stringify(createOtpDeliveryFailureLog({ flow, error, requestId })),
+  );
 }
 
 function meetsPasswordPolicy(password: string) {
@@ -178,7 +132,15 @@ export async function register(formData: FormData) {
           const { data, error } = await supabase.auth.signUp({
             email,
             password,
-            options: { data: metadata, emailRedirectTo: getAuthCallbackUrl() },
+            options: {
+              data: metadata,
+              emailRedirectTo: getAuthCallbackUrl({
+                configuredSiteUrl: process.env.NEXT_PUBLIC_SITE_URL,
+                projectProductionUrl: process.env.VERCEL_PROJECT_PRODUCTION_URL,
+                deploymentUrl: process.env.VERCEL_URL,
+                vercelEnvironment: process.env.VERCEL_ENV,
+              }),
+            },
           });
           return {
             user: data.user
@@ -290,9 +252,9 @@ export async function requestPasswordChangeOtp() {
   const { error } = await supabase.auth.reauthenticate();
 
   if (error) {
-    const errorCode = classifyOtpDeliveryError(error);
+    const category = classifyOtpDeliveryError(error);
     await logOtpDeliveryFailure("password-change", error);
-    redirect("/password/change?error=" + errorCode);
+    redirect("/password/change?error=" + category);
   }
 
   redirect("/password/change?status=otp-sent");
@@ -344,10 +306,10 @@ export async function requestPasswordRecovery(formData: FormData) {
   const { error } = await supabase.auth.resetPasswordForEmail(email);
 
   if (error) {
-    // Only disclose delivery/system failure categories, never account existence.
-    const errorCode = classifyOtpDeliveryError(error);
+    // Delivery categories do not reveal whether the account exists.
+    const category = classifyOtpDeliveryError(error);
     await logOtpDeliveryFailure("password-recovery", error);
-    redirect("/password/recovery?error=" + errorCode);
+    redirect("/password/recovery?error=" + category);
   }
 
   // Use the same success response regardless of whether the address exists to
