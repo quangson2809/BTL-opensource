@@ -132,6 +132,7 @@ function ReportComparisonCharts({ metrics, hasTeamRows }: { metrics: ReportMetri
       </div>
       <p className="secondary-text" style={{ fontSize: "0.85rem" }}>
         Đơn vị: số lượng {metrics.map((metric) => metric.unit).filter((unit, index, all) => all.indexOf(unit) === index).join(", ")}.
+        {" "}
         {hasTeamRows
           ? "Nhóm chỉ bao gồm các tài khoản được RPC báo cáo trả về trong phạm vi quyền hiện tại."
           : "Biểu đồ chỉ hiển thị số liệu cá nhân trong phạm vi quyền hiện tại."}
@@ -160,7 +161,9 @@ export default async function ReportsPage({ searchParams }: ReportsPageProps) {
         <section className="card wide-card">
           <PageHeader
             title="Báo cáo & thống kê"
-            description="Theo dõi kết quả cá nhân và nhóm trong phạm vi dữ liệu được cấp quyền."
+            description={teamRows.length > 0
+              ? "Theo dõi kết quả cá nhân và nhóm trong phạm vi dữ liệu được cấp quyền."
+              : "Theo dõi kết quả cá nhân trong phạm vi dữ liệu được cấp quyền."}
             actions={
               <>
                 <Link className="button-link button-secondary" href="/dashboard">Dashboard</Link>
@@ -257,7 +260,8 @@ export default async function ReportsPage({ searchParams }: ReportsPageProps) {
 
         <ReportComparisonCharts metrics={chartMetrics} hasTeamRows={teamRows.length > 0} />
 
-        {leaderboard.length > 0 ? (
+        {teamRows.length > 0 ? (
+          leaderboard.length > 0 ? (
           <section aria-labelledby="report-leaderboard-title">
             <h2 id="report-leaderboard-title">Xếp hạng nhân sự theo số hoạt động</h2>
             <p className="secondary-text">
@@ -294,8 +298,11 @@ export default async function ReportsPage({ searchParams }: ReportsPageProps) {
             title="Chưa có dữ liệu xếp hạng"
             description="Bảng xếp hạng sẽ xuất hiện khi có hoạt động được ghi nhận trong kỳ báo cáo."
           />
-        )}
+          ) : null
+        ) : null}
 
+        {teamRows.length > 0 ? (
+          <>
         <h2>So sánh cá nhân / nhóm</h2>
         <p className="table-scroll-hint secondary-text">
           Trên màn hình nhỏ, vuốt ngang bảng để xem đủ các cột.
@@ -324,6 +331,8 @@ export default async function ReportsPage({ searchParams }: ReportsPageProps) {
             </tbody>
           </table>
         </div>
+          </>
+        ) : null}
       </section>
     </main>
   );
