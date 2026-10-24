@@ -46,7 +46,7 @@ export default async function ChangePasswordPage({
 
         {otpSent ? (
           <p role="status" aria-live="polite" className="message success">
-            Đã gửi OTP. Mã gồm 8 số và hết hạn sau 10 phút.
+            Đã gửi yêu cầu gửi OTP. Hãy kiểm tra email và nhập mã còn hiệu lực theo cấu hình xác thực của hệ thống.
           </p>
         ) : null}
         {errorMessage ? (
