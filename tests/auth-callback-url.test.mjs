@@ -20,10 +20,25 @@ test("uses the Vercel production host when no explicit site URL is set", () => {
   );
 });
 
-test("uses the deployment host for preview when no explicit URL is set", () => {
+test("uses the preview deployment host instead of the production host", () => {
   assert.equal(
-    getAuthCallbackUrl({ deploymentUrl: "idaily-git-branch.vercel.app" }),
+    getAuthCallbackUrl({
+      projectProductionUrl: "idaily.vercel.app",
+      deploymentUrl: "idaily-git-branch.vercel.app",
+      vercelEnvironment: "preview",
+    }),
     "https://idaily-git-branch.vercel.app/auth/callback",
+  );
+});
+
+test("uses production host for production deployments", () => {
+  assert.equal(
+    getAuthCallbackUrl({
+      projectProductionUrl: "idaily.vercel.app",
+      deploymentUrl: "idaily-other.vercel.app",
+      vercelEnvironment: "production",
+    }),
+    "https://idaily.vercel.app/auth/callback",
   );
 });
 
