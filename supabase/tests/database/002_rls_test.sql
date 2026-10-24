@@ -118,6 +118,21 @@ select is(
 );
 
 select results_eq(
+  $
+    update public.khach_hang
+    set ma_khach_hang = 'CLIENT-FORGED-CODE'
+    where id = '40000000-0000-4000-8000-000000000001'
+    returning ma_khach_hang
+  $,
+  $
+    select ma_khach_hang
+    from public.khach_hang
+    where id = '40000000-0000-4000-8000-000000000001'
+  $,
+  'customer code is immutable even when a client attempts to change it'
+);
+
+select results_eq(
   $$
     update public.khach_hang
     set ghi_chu = 'Forbidden update'
