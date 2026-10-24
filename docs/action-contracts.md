@@ -102,4 +102,4 @@ Security-definer helpers such as current_account_has_application_access, is_in_s
 3. The browser QA matrix is 375, 768, 1024 and 1440 CSS pixels, including keyboard-only drawer use, account-menu use, confirmation cancellation/acceptance, pending feedback, unauthorized route denial, and mutation success/failure/empty states.
 4. Mutation duplication is prevented only where the database operation's existing constraints/state checks guarantee it. A disabled button/confirmation dialog is not an exactly-once guarantee.
 
-**Database change note:** this feature branch adds notification-draft RPCs, role-catalog RPCs, a role-identity trigger, Admin lockout protection, and permission-based activity subtree checks. These migrations have not been applied to hosted production by this branch.
+**Database change note:** the cumulative branch includes notification-draft and role-catalog RPCs, a role-identity trigger, Admin lockout protection, permission-based activity subtree checks, and this PR's protected customer-code sequence/immutability trigger. These migrations have not been applied to hosted production by this branch.
