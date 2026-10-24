@@ -152,12 +152,13 @@ async function main() {
           await page.waitForFunction(
             () => {
               const main = document.querySelector("main");
+              const hasSummary = Boolean(main?.querySelector(".report-cards h2"));
               const hasChart = Boolean(main?.querySelector("#report-charts-title"));
               const hasEmptyState = [...(main?.querySelectorAll("h2, h3") ?? [])].some((heading) =>
                 heading.textContent?.includes("Chưa có dữ liệu biểu đồ"),
               );
               const hasError = Boolean(main?.querySelector('[role="alert"]'));
-              return hasChart || hasEmptyState || hasError;
+              return hasSummary || hasChart || hasEmptyState || hasError;
             },
             null,
             { timeout: 20_000 },
