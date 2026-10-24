@@ -14,11 +14,11 @@ const errorMessages: Record<string, string> = {
   mismatch: "Mật khẩu xác nhận không khớp.",
   "weak-password": "Mật khẩu phải có ít nhất 8 ký tự, gồm chữ thường, chữ hoa và số.",
   "same-password": "Mật khẩu mới phải khác mật khẩu hiện tại.",
-  "otp-request": "Không thể gửi mã OTP do lỗi chưa xác định. Kiểm tra log máy chủ với mã yêu cầu nếu lỗi tiếp diễn.",
-  "rate-limited": "Supabase đang giới hạn số lần gửi OTP. Hãy chờ một lúc rồi thử lại.",
-  "email-not-authorized": "Email người nhận chưa được Supabase cho phép nhận thư từ SMTP mặc định. Dùng email đã được xác thực trong nhóm dự án hoặc cấu hình SMTP riêng.",
-  "email-provider": "Nhà cung cấp email của Supabase không gửi được OTP. Kiểm tra cấu hình SMTP và nhật ký Auth của dự án.",
-  service: "Dịch vụ xác thực chưa xử lý được yêu cầu gửi OTP. Hãy thử lại sau và kiểm tra nhật ký Auth nếu lỗi tiếp diễn.",
+  "rate-limited": "Supabase đang giới hạn số email OTP được gửi trong thời gian ngắn. Vui lòng chờ trước khi thử lại; không gửi yêu cầu liên tiếp. Nếu lỗi tiếp diễn, quản trị viên cần kiểm tra giới hạn gửi email và cấu hình SMTP.",
+  "email-not-authorized": "Cấu hình email hiện không cho phép gửi tới địa chỉ này. Vui lòng liên hệ quản trị viên để kiểm tra cấu hình gửi email của Supabase.",
+  "redirect-invalid": "Đường dẫn xác thực chưa được cấu hình hợp lệ. Vui lòng liên hệ quản trị viên.",
+  "email-provider": "Nhà cung cấp email chưa chấp nhận gửi OTP. Vui lòng chờ rồi thử lại; nếu lỗi tiếp diễn, liên hệ quản trị viên.",
+  service: "Chưa thể gửi OTP do lỗi dịch vụ. Vui lòng thử lại sau.",
   otp: "OTP không hợp lệ hoặc đã hết hạn.",
   pending: "Tài khoản đang chờ phê duyệt và chưa thể đổi mật khẩu trong khu vực làm việc.",
   locked: "Tài khoản đang bị khóa. Hãy liên hệ quản trị viên.",
@@ -46,7 +46,7 @@ export default async function ChangePasswordPage({
 
         {otpSent ? (
           <p role="status" aria-live="polite" className="message success">
-            Đã gửi OTP. Mã gồm 8 số và hết hạn sau 10 phút.
+            Đã gửi yêu cầu gửi OTP. Hãy kiểm tra email và nhập mã còn hiệu lực theo cấu hình xác thực của hệ thống.
           </p>
         ) : null}
         {errorMessage ? (
