@@ -19,6 +19,14 @@ type ReportRow = {
   connected_customer_count: number;
 };
 
+type ReportMetric = {
+  key: "customer_count" | "activity_count" | "connected_customer_count";
+  label: string;
+  unit: string;
+  personal: number;
+  team: number;
+};
+
 type ReportsPageProps = {
   searchParams: Promise<{ period?: string; anchor?: string }>;
 };
@@ -35,6 +43,117 @@ function totals(rows: ReportRow[]) {
   );
 }
 
+function formatCount(value: number) {
+  return new Intl.NumberFormat("vi-VN", { maximumFractionDigits: 0 }).format(value);
+}
+
+function ReportComparisonCharts({ metrics }: { metrics: ReportMetric[] }) {
+  const hasData = metrics.some((metric) => metric.personal > 0 || metric.team > 0);
+
+  if (!hasData) {
+    return (
+      <EmptyState
+        title="Chưa có dữ liệu biểu đồ"
+        description="Không có khách hàng mới, hoạt động hoặc lượt khách kết nối trong khoảng thời gian đã chọn."
+      />
+    );
+  }
+
+  return (
+    <section aria-labelledby="report-charts-title" style={{ display: "grid", gap: "1rem" }}>
+      <div>
+        <h2 id="report-charts-title">Biểu đồ so sánh cá nhân / nhóm</h2>
+        <p className="secondary-text">
+          Số liệu trong biểu đồ được tổng hợp từ cùng kết quả báo cáo và cùng khoảng thời gian bên trên.
+        </p>
+      </div>
+
+      <div aria-label="Chú giải biểu đồ" style={{ display: "flex", flexWrap: "wrap", gap: "1rem" }}>
+        <span style={{ display: "inline-flex", alignItems: "center", gap: "0.45rem" }}>
+          <span aria-hidden="true" style={{ width: "0.8rem", height: "0.8rem", borderRadius: "0.2rem", background: "#176b4d" }} />
+          Cá nhân
+        </span>
+        <span style={{ display: "inline-flex", alignItems: "center", gap: "0.45rem" }}>
+          <span aria-hidden="true" style={{ width: "0.8rem", height: "0.8rem", borderRadius: "0.2rem", background: "#b8860b" }} />
+          Nhóm cấp dưới
+        </span>
+      </div>
+
+      <div style={{ display: "grid", gridTemplateColumns: "minmax(0, 1fr)", gap: "1rem" }}>
+        {metrics.map((metric) => {
+          const maximum = Math.max(metric.personal, metric.team, 1);
+          const bars = [
+            { label: "Cá nhân", value: metric.personal, color: "#176b4d" },
+            { label: "Nhóm", value: metric.team, color: "#b8860b" },
+          ];
+
+          return (
+            <article
+              key={metric.key}
+              style={{
+                minWidth: 0,
+                border: "1px solid var(--color-border)",
+                borderRadius: "var(--radius-md)",
+                padding: "1rem",
+                background: "#fff",
+              }}
+            >
+              <h3 style={{ marginBottom: "0.9rem" }}>{metric.label}</h3>
+              <div style={{ display: "grid", gap: "0.9rem" }}>
+                {bars.map((bar) => {
+                  const percentage = (bar.value / maximum) * 100;
+                  return (
+                    <div
+                      key={bar.label}
+                      style={{
+                        display: "grid",
+                        gridTemplateColumns: "5.5rem minmax(0, 1fr) 3.5rem",
+                        alignItems: "center",
+                        gap: "0.6rem",
+                      }}
+                    >
+                      <span style={{ fontSize: "0.85rem", overflowWrap: "anywhere" }}>{bar.label}</span>
+                      <div
+                        role="img"
+                        aria-label={`${bar.label}: ${formatCount(bar.value)} ${metric.unit}`}
+                        style={{
+                          height: "1.1rem",
+                          minWidth: 0,
+                          overflow: "hidden",
+                          borderRadius: "0.25rem",
+                          background: "#edf2ee",
+                        }}
+                      >
+                        <div
+                          aria-hidden="true"
+                          style={{
+                            width: `${percentage}%`,
+                            minWidth: bar.value > 0 ? "2px" : 0,
+                            height: "100%",
+                            borderRadius: "inherit",
+                            background: bar.color,
+                          }}
+                        />
+                      </div>
+                      <strong style={{ textAlign: "right", fontVariantNumeric: "tabular-nums", fontSize: "0.9rem" }}>
+                        {formatCount(bar.value)}
+                      </strong>
+                    </div>
+                  );
+                })}
+              </div>
+            </article>
+          );
+        })}
+      </div>
+      <p className="secondary-text" style={{ fontSize: "0.85rem" }}>
+        Đơn vị: số lượng {metrics.map((metric) => metric.unit).filter((unit, index, all) => all.indexOf(unit) === index).join(", ")}.
+        Nhóm chỉ bao gồm các tài khoản được RPC báo cáo trả về trong phạm vi quyền hiện tại.
+      </p>
+    </section>
+  );
+}
+
 export default async function ReportsPage({ searchParams }: ReportsPageProps) {
   const query = await searchParams;
   const range = resolveReportRange(query.period, query.anchor);
@@ -44,8 +163,46 @@ export default async function ReportsPage({ searchParams }: ReportsPageProps) {
     period_end: range.end,
   });
 
+  const exportQuery = new URLSearchParams({
+    period: range.period,
+    anchor: range.anchor,
+  }).toString();
+
   if (error) {
-    throw new Error("Không thể tải báo cáo trong scope hiện tại.");
+    return (
+      <main>
+        <section className="card wide-card">
+          <PageHeader
+            title="Báo cáo & thống kê"
+            description="Theo dõi kết quả cá nhân và nhóm trong phạm vi dữ liệu được cấp quyền."
+            actions={
+              <>
+                <Link className="button-link button-secondary" href="/dashboard">Dashboard</Link>
+                <Link className="button-link" href={`/reports/export?${exportQuery}`}>Xuất Excel (.csv)</Link>
+              </>
+            }
+          />
+          <form className="filter-grid" method="get">
+            <label>
+              Khoảng thời gian
+              <select defaultValue={range.period} name="period">
+                <option value="day">Ngày</option>
+                <option value="week">Tuần</option>
+                <option value="month">Tháng</option>
+              </select>
+            </label>
+            <label>
+              Ngày tham chiếu
+              <input defaultValue={range.anchor} name="anchor" type="date" />
+            </label>
+            <button type="submit">Xem báo cáo</button>
+          </form>
+          <p role="alert" className="error-state">
+            Không thể tải báo cáo và biểu đồ trong phạm vi dữ liệu hiện tại. Vui lòng thử lại sau.
+          </p>
+        </section>
+      </main>
+    );
   }
 
   const rows = (data ?? []) as ReportRow[];
@@ -54,10 +211,30 @@ export default async function ReportsPage({ searchParams }: ReportsPageProps) {
   const leaderboard = rankReportRows(teamRows);
   const team = totals(teamRows);
   const overview = totals(rows);
-  const exportQuery = new URLSearchParams({
-    period: range.period,
-    anchor: range.anchor,
-  }).toString();
+  const personalTotals = totals(personal ? [personal] : []);
+  const chartMetrics: ReportMetric[] = [
+    {
+      key: "customer_count",
+      label: "Khách hàng mới",
+      unit: "khách hàng",
+      personal: personalTotals.customer_count,
+      team: team.customer_count,
+    },
+    {
+      key: "activity_count",
+      label: "Hoạt động",
+      unit: "hoạt động",
+      personal: personalTotals.activity_count,
+      team: team.activity_count,
+    },
+    {
+      key: "connected_customer_count",
+      label: "Lượt khách kết nối",
+      unit: "lượt",
+      personal: personalTotals.connected_customer_count,
+      team: team.connected_customer_count,
+    },
+  ];
 
   return (
     <main>
@@ -67,12 +244,8 @@ export default async function ReportsPage({ searchParams }: ReportsPageProps) {
           description="Theo dõi kết quả cá nhân và nhóm trong phạm vi dữ liệu được cấp quyền."
           actions={
             <>
-              <Link className="button-link button-secondary" href="/dashboard">
-                Dashboard
-              </Link>
-              <Link className="button-link" href={`/reports/export?${exportQuery}`}>
-                Xuất Excel (.csv)
-              </Link>
+              <Link className="button-link button-secondary" href="/dashboard">Dashboard</Link>
+              <Link className="button-link" href={`/reports/export?${exportQuery}`}>Xuất Excel (.csv)</Link>
             </>
           }
         />
@@ -98,11 +271,9 @@ export default async function ReportsPage({ searchParams }: ReportsPageProps) {
         <div className="report-cards">
           <article className="card">
             <h2>Cá nhân</h2>
-            <p>Khách hàng mới: {personal?.customer_count ?? 0}</p>
-            <p>Hoạt động: {personal?.activity_count ?? 0}</p>
-            <p>
-              Lượt khách kết nối: {personal?.connected_customer_count ?? 0}
-            </p>
+            <p>Khách hàng mới: {personalTotals.customer_count}</p>
+            <p>Hoạt động: {personalTotals.activity_count}</p>
+            <p>Lượt khách kết nối: {personalTotals.connected_customer_count}</p>
           </article>
           <article className="card">
             <h2>Nhóm cấp dưới</h2>
@@ -117,6 +288,8 @@ export default async function ReportsPage({ searchParams }: ReportsPageProps) {
             <p>Lượt khách kết nối: {overview.connected_customer_count}</p>
           </article>
         </div>
+
+        <ReportComparisonCharts metrics={chartMetrics} />
 
         {leaderboard.length > 0 ? (
           <section aria-labelledby="report-leaderboard-title">
@@ -175,9 +348,7 @@ export default async function ReportsPage({ searchParams }: ReportsPageProps) {
             <tbody>
               {rows.map((row) => (
                 <tr key={row.account_id}>
-                  <td>
-                    {row.ho_ten} ({row.ma_dai_ly})
-                  </td>
+                  <td>{row.ho_ten} ({row.ma_dai_ly})</td>
                   <td>{row.is_self ? "Cá nhân" : "Cấp dưới"}</td>
                   <td>{row.customer_count}</td>
                   <td>{row.activity_count}</td>
