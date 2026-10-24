@@ -52,11 +52,11 @@ function ReportComparisonCharts({ metrics, hasTeamRows }: { metrics: ReportMetri
 
       <div role="group" aria-label="Chú giải biểu đồ" style={{ display: "flex", flexWrap: "wrap", gap: "1rem" }}>
         <span style={{ display: "inline-flex", alignItems: "center", gap: "0.45rem" }}>
-          <span aria-hidden="true" style={{ width: "0.8rem", height: "0.8rem", borderRadius: "0.2rem", background: "#176b4d" }} />
+          <span aria-hidden="true" style={{ width: "0.8rem", height: "0.8rem", borderRadius: "0.2rem", background: "var(--color-brand)" }} />
           Cá nhân
         </span>
         <span style={{ display: "inline-flex", alignItems: "center", gap: "0.45rem" }}>
-          <span aria-hidden="true" style={{ width: "0.8rem", height: "0.8rem", borderRadius: "0.2rem", background: "#b8860b" }} />
+          <span aria-hidden="true" style={{ width: "0.8rem", height: "0.8rem", borderRadius: "0.2rem", background: "var(--color-accent)" }} />
           Nhóm cấp dưới
         </span>
       </div>
@@ -65,8 +65,8 @@ function ReportComparisonCharts({ metrics, hasTeamRows }: { metrics: ReportMetri
         {metrics.map((metric) => {
           const maximum = Math.max(metric.personal, metric.team, 1);
           const bars = [
-            { label: "Cá nhân", value: metric.personal, color: "#176b4d" },
-            ...(hasTeamRows ? [{ label: "Nhóm cấp dưới", value: metric.team, color: "#b8860b" }] : []),
+            { label: "Cá nhân", value: metric.personal, color: "var(--color-brand)" },
+            ...(hasTeamRows ? [{ label: "Nhóm cấp dưới", value: metric.team, color: "var(--color-accent)" }] : []),
           ];
 
           return (
@@ -77,7 +77,7 @@ function ReportComparisonCharts({ metrics, hasTeamRows }: { metrics: ReportMetri
                 border: "1px solid var(--color-border)",
                 borderRadius: "var(--radius-md)",
                 padding: "1rem",
-                background: "#fff",
+                background: "var(--color-surface)",
               }}
             >
               <h3 style={{ marginBottom: "0.9rem" }}>{metric.label}</h3>
@@ -103,7 +103,7 @@ function ReportComparisonCharts({ metrics, hasTeamRows }: { metrics: ReportMetri
                           minWidth: 0,
                           overflow: "hidden",
                           borderRadius: "0.25rem",
-                          background: "#edf2ee",
+                          background: "var(--color-surface-muted)",
                         }}
                       >
                         <div
