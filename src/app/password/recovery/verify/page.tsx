@@ -33,7 +33,7 @@ export default async function VerifyRecoveryPage({
         <h1>Xác minh OTP và đặt lại mật khẩu</h1>
         {otpSent ? (
           <p role="status" aria-live="polite" className="message success">
-            Nếu email tồn tại, OTP 8 số đã được gửi và có hiệu lực 10 phút.
+            Nếu email tồn tại, hệ thống đã gửi OTP. Hãy kiểm tra email và nhập mã còn hiệu lực theo cấu hình xác thực.
           </p>
         ) : null}
         {errorMessage ? <p role="alert" aria-live="assertive" className="message error">{errorMessage}</p> : null}
