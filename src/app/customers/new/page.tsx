@@ -23,7 +23,7 @@ export default async function NewCustomerPage({ searchParams }: NewCustomerPageP
       <section className="page-content">
         <PageHeader
           title="Thêm khách hàng"
-          description="Tạo hồ sơ khách hàng trong phạm vi được cấp quyền."
+          description="Tạo hồ sơ khách hàng trong phạm vi được cấp quyền; mã khách hàng được sinh tự động."
           actions={<DraftCancelLink className="button-link button-secondary" href="/customers" scopeKey={accountId} persistKeys={["customer-create"]}>Quay lại danh sách</DraftCancelLink>}
         />
         {query.error ? <ActionFeedback error={query.error} /> : null}
@@ -33,7 +33,6 @@ export default async function NewCustomerPage({ searchParams }: NewCustomerPageP
           <fieldset className="form-section">
             <legend>Thông tin cơ bản</legend>
             <div className="form-grid">
-              <label><span className="field-label">Mã khách hàng <span aria-hidden="true" className="required-indicator">*</span></span><input name="ma_khach_hang" required /></label>
               <label><span className="field-label">Họ tên <span aria-hidden="true" className="required-indicator">*</span></span><input autoComplete="name" name="ho_ten" required /></label>
               <label><span className="field-label">Số điện thoại <span aria-hidden="true" className="required-indicator">*</span></span><input autoComplete="tel" name="so_dien_thoai" required /></label>
               <label><span className="field-label">Giới tính <span aria-hidden="true" className="required-indicator">*</span></span><input name="gioi_tinh" required /></label>
