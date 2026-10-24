@@ -18,7 +18,7 @@ This proves that Supabase Auth rejected password-change reauthentication email r
 - **Change password while signed in:** `supabase.auth.reauthenticate()`, which asks Supabase Auth to send the reauthentication OTP email.
 - **Forgot password:** `supabase.auth.resetPasswordForEmail(email)`, followed by `verifyOtp({ email, token, type: "recovery" })`.
 - The observed `/reauthenticate` rate-limit error is not a callback URL error. These two OTP request calls do not pass an `emailRedirectTo` override.
-- **Registration email confirmation** is a separate flow. It uses `signUp(..., options.emailRedirectTo)` and `/auth/callback`. The app currently builds this URL from `NEXT_PUBLIC_SITE_URL`, then Vercel deployment host, and finally falls back to localhost. The production value and Supabase redirect allowlist still need an environment-specific check.
+- **Registration email confirmation** is a separate flow. It uses `signUp(..., options.emailRedirectTo)` and `/auth/callback`. The app currently builds this URL from `NEXT_PUBLIC_SITE_URL`, then a deployment host selected using `VERCEL_ENV`, and finally falls back to localhost. Preview deployments prefer their own `VERCEL_URL` over the production host so confirmation links do not accidentally send preview users into production. The production value and Supabase redirect allowlist still need an environment-specific check.
 
 ## Code changes in this branch
 
@@ -42,7 +42,7 @@ Do not paste secrets into GitHub, chat, logs, or this report.
 3. Inspect **Authentication → URL Configuration**:
    - Set Site URL to the canonical deployed app origin.
    - Allowlist the exact callback URL `https://<deployed-host>/auth/callback` (and a local callback only for local development).
-   - The current Vercel environment-variable inventory contains no `NEXT_PUBLIC_SITE_URL` entry for Preview or Production. The code falls back to Vercel's deployment host when available, but set `NEXT_PUBLIC_SITE_URL` explicitly to the canonical app origin to make the intended callback deterministic. The value must be the origin, not a path or a localhost URL for production.
+   - The current Vercel environment-variable inventory contains no `NEXT_PUBLIC_SITE_URL` entry for Preview or Production. Do not set one globally across both environments if Preview should remain isolated: set it only for Production to the canonical production origin, and let Preview use its own deployment host unless you have a stable, allowlisted preview domain. The value must be an origin, not a callback path. Supabase must allowlist the resulting callback URL(s).
 4. After checking the current settings and allowing the rate limit to reset, perform **one** controlled reauthentication test with an authorized test account, then one recovery test if needed. Capture the UTC timestamp and request ID; do not repeatedly click send.
 5. Verify whether the provider accepted the message and whether the test mailbox received it. A successful Auth API response alone is not proof of inbox delivery.
 
@@ -53,7 +53,8 @@ Do not paste secrets into GitHub, chat, logs, or this report.
 ## Acceptance status
 
 - Root cause for the observed password-change failures: **PASS — hosted Auth logs prove email-send rate limiting**.
-- Code diagnostics and safe logging: **implemented; CI/runtime verification pending**.
+- Code diagnostics and safe logging: **implemented; automated CI verified**.
+- Callback URL selection: **updated to distinguish Preview and Production; automated tests added**.
 - SMTP/provider configuration: **UNVERIFIED**.
 - Recovery-flow delivery: **UNVERIFIED**.
 - Actual email accepted by provider / received in mailbox: **NOT YET VERIFIED**.
