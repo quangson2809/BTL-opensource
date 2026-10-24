@@ -42,8 +42,8 @@ select ok(
   'authenticated cannot directly update the Auth-linked email'
 );
 select ok(
-  not has_column_privilege('authenticated', 'public.tai_khoan', 'so_dien_thoai', 'UPDATE'),
-  'authenticated cannot update phone without an approved verification contract'
+  has_column_privilege('authenticated', 'public.tai_khoan', 'so_dien_thoai', 'UPDATE'),
+  'authenticated can update the phone column'
 );
 select ok(
   not has_column_privilege('authenticated', 'public.tai_khoan', 'ma_dai_ly', 'UPDATE'),
@@ -72,6 +72,16 @@ select is(
   (select ho_ten from public.tai_khoan where id = '94000000-0000-4000-8000-000000000001'),
   'Tên đã cập nhật'::text,
   'signed-in user can update own display name'
+);
+
+update public.tai_khoan
+set so_dien_thoai = '0940000099'
+where id = '94000000-0000-4000-8000-000000000001';
+
+select is(
+  (select so_dien_thoai from public.tai_khoan where id = '94000000-0000-4000-8000-000000000001'),
+  '0940000099'::text,
+  'signed-in user can update own phone number'
 );
 
 select results_eq(
