@@ -83,7 +83,7 @@ jobs:
             curl -fsS "http://127.0.0.1:3000$route" >/dev/null
           done
 
-          for route in /dashboard /customers /customers/new /activities /activities/new /notifications /notifications/new /notifications/c5000000-0000-4000-8000-000000000001/edit /reports /personnel /admin/accounts /admin/roles /admin/roles/new /admin/roles/c6000000-0000-4000-8000-000000000001/edit /password/change; do
+          for route in /dashboard /customers /customers/new /activities /activities/new /notifications /notifications/new /notifications/c5000000-0000-4000-8000-000000000001/edit /reports /personnel /admin/accounts /admin/roles /admin/roles/new /admin/roles/c6000000-0000-4000-8000-000000000001/edit /password/change /profile; do
             status="$(curl -sS -o /dev/null -w '%{http_code}' "http://127.0.0.1:3000$route")"
             case "$status" in
               301|302|303|307|308) ;;
