@@ -120,6 +120,7 @@ async function main() {
 
     const pages = [
       { name: "dashboard", path: "/dashboard", expectedHeading: "Xin chào," },
+      ...(captureOnly ? [] : [{ name: "agency-profile", path: "/profile", expectedHeading: "Hồ sơ đại lý" }]),
       { name: "customer-list", path: "/customers", expectedHeading: "Khách hàng" },
       { name: "customer-detail", path: "/customers/" + customer.id, expectedHeading: customerName },
       { name: "customer-form", path: "/customers/new", expectedHeading: "Thêm khách hàng" },
@@ -144,6 +145,25 @@ async function main() {
         const response = await page.goto(baseURL + route.path, { waitUntil: "domcontentloaded" });
         assert.ok(response?.ok(), route.name + " returned a non-2xx response");
         await page.locator("main h1").first().waitFor();
+
+        // Wait for the reports route to leave its streaming loading boundary before
+        // taking screenshots; otherwise fast DOMContentLoaded can capture skeletons.
+        if (route.name === "reports") {
+          await page.waitForFunction(
+            () => {
+              const main = document.querySelector("main");
+              const hasSummary = Boolean(main?.querySelector(".report-cards h2"));
+              const hasChart = Boolean(main?.querySelector("#report-charts-title"));
+              const hasEmptyState = [...(main?.querySelectorAll("h2, h3") ?? [])].some((heading) =>
+                heading.textContent?.includes("Chưa có dữ liệu biểu đồ"),
+              );
+              const hasError = Boolean(main?.querySelector('[role="alert"]'));
+              return hasSummary || hasChart || hasEmptyState || hasError;
+            },
+            null,
+            { timeout: 20_000 },
+          );
+        }
 
         const heading = (await page.locator("main h1").first().innerText()).trim();
         assert.ok(

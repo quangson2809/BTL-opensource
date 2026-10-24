@@ -23,6 +23,8 @@ test("unauthenticated requests to protected application routes are redirected", 
     "/admin/roles",
     "/admin/roles/new",
     "/admin/roles/c6000000-0000-4000-8000-000000000001/edit",
+    "/profile",
+    "/profile/edit",
     "/password/change",
   ];
 
@@ -62,8 +64,10 @@ test("protected route matching respects path-segment boundaries", () => {
   assert.equal(shouldRedirectUnauthenticated("/dashboard/overview"), true);
   assert.equal(shouldRedirectUnauthenticated("/customers/c123/edit"), true);
   assert.equal(shouldRedirectUnauthenticated("/reports/export/extra"), true);
+  assert.equal(shouldRedirectUnauthenticated("/profile/settings"), true);
   assert.equal(shouldRedirectUnauthenticated("/dashboard-old"), false);
   assert.equal(shouldRedirectUnauthenticated("/admin-tools"), false);
+  assert.equal(shouldRedirectUnauthenticated("/profile-public"), false);
 });
 
 test("the Supabase Proxy consumes verified claims instead of discarding getClaims()", async () => {
