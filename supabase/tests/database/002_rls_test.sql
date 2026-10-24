@@ -105,234 +105,7 @@ select ok(
     select 1
     from public.khach_hang
     where id = '40000000-0000-4000-8000-000000000001'
-      and ma_khach_hang ~ '^KH-[0-9]{6,}
-
-update public.khach_hang
-set ghi_chu = 'Owner updated'
-where id = '40000000-0000-4000-8000-000000000001';
-
-select is(
-  (select ghi_chu from public.khach_hang where id = '40000000-0000-4000-8000-000000000001'),
-  'Owner updated'::text,
-  'customer owner can update own customer'
-);
-
-select results_eq(
-  $
-    update public.khach_hang
-    set ma_khach_hang = 'CLIENT-FORGED-CODE'
-    where id = '40000000-0000-4000-8000-000000000001'
-    returning ma_khach_hang
-  $,
-  $
-    select ma_khach_hang
-    from public.khach_hang
-    where id = '40000000-0000-4000-8000-000000000001'
-  $,
-  'customer code is immutable even when a client attempts to change it'
-);
-
-select results_eq(
-  $$
-    update public.khach_hang
-    set ghi_chu = 'Forbidden update'
-    where id = '40000000-0000-4000-8000-000000000002'
-    returning id
-  $$,
-  $$ select null::uuid where false $$,
-  'customer owner cannot update another account customer'
-);
-
-select throws_ok(
-  $$
-    insert into public.khach_hang (
-      chu_so_huu_id, ma_khach_hang, ho_ten, so_dien_thoai, gioi_tinh,
-      ngay_sinh, dia_chi, so_thich, ghi_chu, loai_khach_hang, tinh_trang, nhom_tinh_cach
-    ) values (
-      '22222222-2222-4222-8222-222222222222', 'KH-FORBIDDEN', 'Sai owner', '0910000099', 'Nam',
-      '1992-03-03', 'Hà Nội', 'Không', 'Không', 'MUC_TIEU', 'BẠN', 'S'
-    )
-  $$,
-  '42501',
-  null,
-  'user cannot create a customer owned by another account'
-);
-
-select lives_ok(
-  $$
-    insert into public.khach_hang (
-      chu_so_huu_id, ma_khach_hang, ho_ten, so_dien_thoai, gioi_tinh,
-      ngay_sinh, dia_chi, so_thich, ghi_chu, loai_khach_hang, tinh_trang, nhom_tinh_cach
-    ) values (
-      '11111111-1111-4111-8111-111111111111', 'KH-SA-002', 'Khách mới', '0910000003', 'Nam',
-      '1993-04-04', 'Hà Nội', 'Thể thao', 'Own insert', 'DOI_TAC', 'BÁM', 'C'
-    )
-  $$,
-  'user can create a customer they own'
-);
-
-select is(
-  (select count(*)::bigint from public.hoat_dong),
-  2::bigint,
-  'SA with ACTIVITY_VIEW_SUBTREE reads own and descendant activity in scope'
-);
-
-select ok(
-  exists (select 1 from public.hoat_dong where id = '50000000-0000-4000-8000-000000000001'),
-  'SA can read own activity'
-);
-
-select ok(
-  exists (select 1 from public.hoat_dong where id = '50000000-0000-4000-8000-000000000003'),
-  'SA with ACTIVITY_VIEW_SUBTREE can read descendant activity without DM/UM role'
-);
-
-select ok(
-  not exists (select 1 from public.hoat_dong where id = '50000000-0000-4000-8000-000000000002'),
-  'SA cannot read unrelated activity'
-);
-
-select is(
-  (select count(*)::bigint from public.thong_bao_nguoi_nhan),
-  1::bigint,
-  'recipient can read only their own recipient row'
-);
-
-select ok(
-  exists (select 1 from public.thong_bao where id = '60000000-0000-4000-8000-000000000001'),
-  'recipient can read a notification addressed to them'
-);
-
-select ok(
-  not exists (select 1 from public.thong_bao where id = '60000000-0000-4000-8000-000000000002'),
-  'recipient cannot read a notification not addressed to them'
-);
-
-update public.thong_bao_nguoi_nhan
-set da_doc = true
-where id = '70000000-0000-4000-8000-000000000001';
-
-select ok(
-  (select da_doc from public.thong_bao_nguoi_nhan where id = '70000000-0000-4000-8000-000000000001'),
-  'recipient can update own read state'
-);
-
-select throws_ok(
-  $$
-    update public.thong_bao_nguoi_nhan
-    set tai_khoan_id = '22222222-2222-4222-8222-222222222222'
-    where id = '70000000-0000-4000-8000-000000000001'
-  $$,
-  '42501',
-  null,
-  'recipient cannot change recipient identity columns'
-);
-
-select throws_ok(
-  $$
-    insert into public.phan_cong_vai_tro (tai_khoan_id, vai_tro_id)
-    select '11111111-1111-4111-8111-111111111111', id
-    from public.vai_tro
-    where ma_vai_tro = 'ADMIN'
-  $$,
-  '42501',
-  null,
-  'normal user cannot self-grant ADMIN role'
-);
-
-select throws_ok(
-  $$
-    update public.quyen
-    set ten_quyen = 'Unauthorized change'
-    where ma_quyen = 'ACTIVITY_VIEW_SUBTREE'
-    returning id
-  $$,
-  '42501',
-  null,
-  'normal user cannot modify the migration-owned permission catalog'
-);
-
--- ADMIN must not bypass customer ownership.
-select set_config('request.jwt.claim.sub', 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa2', true);
-select set_config(
-  'request.jwt.claims',
-  jsonb_build_object(
-    'role', 'authenticated',
-    'sub', 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa2',
-    'amr', jsonb_build_array(jsonb_build_object('method', 'password', 'timestamp', 0))
-  )::text,
-  true
-);
-
-select is(
-  (select count(*)::bigint from public.khach_hang),
-  0::bigint,
-  'ADMIN does not bypass customer ownership'
-);
-
-select throws_ok(
-  $$
-    insert into public.quyen (ma_quyen, ten_quyen, mo_ta)
-    values ('TEST_ADMIN_PERMISSION', 'Test admin permission', 'Only created inside rollback-only RLS test')
-  $$,
-  '42501',
-  null,
-  'even ADMIN cannot mutate migration-owned permission definitions directly'
-);
-
--- Recursive hierarchy: DM -> UM -> SA. DM/UM seed roles carry ACTIVITY_VIEW_SUBTREE.
-select set_config('request.jwt.claim.sub', 'dddddddd-dddd-4ddd-8ddd-dddddddddddd', true);
-select set_config(
-  'request.jwt.claims',
-  jsonb_build_object(
-    'role', 'authenticated',
-    'sub', 'dddddddd-dddd-4ddd-8ddd-dddddddddddd',
-    'amr', jsonb_build_array(jsonb_build_object('method', 'password', 'timestamp', 0))
-  )::text,
-  true
-);
-
-select ok(
-  exists (select 1 from public.hoat_dong where id = '50000000-0000-4000-8000-000000000001'),
-  'DM can read descendant activity through recursive hierarchy'
-);
-
-select ok(
-  not exists (select 1 from public.hoat_dong where id = '50000000-0000-4000-8000-000000000002'),
-  'DM cannot read activity outside their subtree'
-);
-
-select results_eq(
-  $$
-    update public.hoat_dong
-    set dia_diem = 'Manager forbidden update'
-    where id = '50000000-0000-4000-8000-000000000001'
-    returning id
-  $$,
-  $$ select null::uuid where false $$,
-  'manager subtree read does not permit updating subordinate activity'
-);
-
-select set_config('request.jwt.claim.sub', 'eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee', true);
-select set_config(
-  'request.jwt.claims',
-  jsonb_build_object(
-    'role', 'authenticated',
-    'sub', 'eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee',
-    'amr', jsonb_build_array(jsonb_build_object('method', 'password', 'timestamp', 0))
-  )::text,
-  true
-);
-
-select ok(
-  exists (select 1 from public.hoat_dong where id = '50000000-0000-4000-8000-000000000001'),
-  'UM can read direct subordinate activity'
-);
-
-reset role;
-select * from finish();
-rollback;
-
+      and ma_khach_hang ~ '^KH-[0-9]{6,}$'
   ),
   'customer owner can read own customer with generated code'
 );
@@ -350,6 +123,21 @@ select is(
   (select ghi_chu from public.khach_hang where id = '40000000-0000-4000-8000-000000000001'),
   'Owner updated'::text,
   'customer owner can update own customer'
+);
+
+select results_eq(
+  $$
+    update public.khach_hang
+    set ma_khach_hang = 'CLIENT-FORGED-CODE'
+    where id = '40000000-0000-4000-8000-000000000001'
+    returning ma_khach_hang
+  $$,
+  $$
+    select ma_khach_hang
+    from public.khach_hang
+    where id = '40000000-0000-4000-8000-000000000001'
+  $$,
+  'customer code is immutable even when a client attempts to change it'
 );
 
 select results_eq(
