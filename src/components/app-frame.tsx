@@ -44,6 +44,7 @@ const workspacePrefixes = [
   "/reports",
   "/admin",
   "/password/change",
+  "/profile",
 ];
 
 const routeLabels: Record<string, string> = {
@@ -60,6 +61,7 @@ const routeLabels: Record<string, string> = {
   edit: "Chỉnh sửa",
   password: "Bảo mật",
   change: "Đổi mật khẩu",
+  profile: "Hồ sơ đại lý",
 };
 
 function isWorkspacePath(pathname: string) {
@@ -467,6 +469,9 @@ export function AppFrame({ children }: Readonly<{ children: ReactNode }>) {
                   <strong>{accountName}</strong>
                   <span>{!accountLoaded ? "Đang tải thông tin tài khoản…" : accountContextError ? "Không thể tải thông tin tài khoản." : accountEmail}</span>
                 </div>
+                <Link href="/profile" onClick={closeAccountMenu}>
+                  Hồ sơ đại lý
+                </Link>
                 <Link href="/password/change" onClick={closeAccountMenu}>
                   Đổi mật khẩu
                 </Link>
