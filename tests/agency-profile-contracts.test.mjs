@@ -60,6 +60,7 @@ test("profile is included in post-fix responsive screenshot acceptance", async (
   assert.ok(page.includes('UM: "Trưởng nhóm kinh doanh"'));
   assert.ok(styles.includes("var(--color-border)"));
   assert.ok(styles.includes("var(--color-ink-soft)"));
+  assert.ok(styles.includes("@media (max-width: 72rem) {\n  .agency-profile-grid"));
   assert.ok(screenshots.includes('{ name: "agency-profile", path: "/profile", expectedHeading: "Hồ sơ đại lý" }'));
   assert.ok(screenshots.includes("...(captureOnly ? [] :"));
 });
