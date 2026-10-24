@@ -2,11 +2,17 @@ export function getAuthCallbackUrl({
   configuredSiteUrl,
   projectProductionUrl,
   deploymentUrl,
+  vercelEnvironment,
 } = {}) {
   const configured = typeof configuredSiteUrl === "string" ? configuredSiteUrl.trim() : "";
   const productionHost = typeof projectProductionUrl === "string" ? projectProductionUrl.trim() : "";
   const fallbackHost = typeof deploymentUrl === "string" ? deploymentUrl.trim() : "";
-  const deploymentHost = productionHost || fallbackHost;
+  // A Preview deployment must callback to its own origin, not the production
+  // domain. NEXT_PUBLIC_SITE_URL is intentionally an explicit override.
+  const deploymentHost =
+    vercelEnvironment === "preview"
+      ? fallbackHost || productionHost
+      : productionHost || fallbackHost;
   const deploymentOrigin = deploymentHost
     ? new URL(
         deploymentHost.startsWith("http://") || deploymentHost.startsWith("https://")
