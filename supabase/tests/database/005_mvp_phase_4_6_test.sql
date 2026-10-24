@@ -77,9 +77,9 @@ select lives_ok(
 select lives_ok(
   $$
     delete from public.khach_hang
-    where ma_khach_hang = 'BATCH-KH-2'
+    where so_dien_thoai = '0950000002'
   $$,
-  'SA can delete an owned customer'
+  'SA can delete an owned customer by a stable business field; generated code is not client-controlled'
 );
 
 select throws_ok(
