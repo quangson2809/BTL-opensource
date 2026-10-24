@@ -55,10 +55,12 @@ function ReportComparisonCharts({ metrics, hasTeamRows }: { metrics: ReportMetri
           <span aria-hidden="true" style={{ width: "0.8rem", height: "0.8rem", borderRadius: "0.2rem", background: "var(--color-brand)" }} />
           Cá nhân
         </span>
-        <span style={{ display: "inline-flex", alignItems: "center", gap: "0.45rem" }}>
-          <span aria-hidden="true" style={{ width: "0.8rem", height: "0.8rem", borderRadius: "0.2rem", background: "var(--color-accent)" }} />
-          Nhóm cấp dưới
-        </span>
+        {hasTeamRows ? (
+          <span style={{ display: "inline-flex", alignItems: "center", gap: "0.45rem" }}>
+            <span aria-hidden="true" style={{ width: "0.8rem", height: "0.8rem", borderRadius: "0.2rem", background: "var(--color-accent)" }} />
+            Nhóm cấp dưới
+          </span>
+        ) : null}
       </div>
 
       <div style={{ display: "grid", gridTemplateColumns: "minmax(0, 1fr)", gap: "1rem" }}>
@@ -130,7 +132,9 @@ function ReportComparisonCharts({ metrics, hasTeamRows }: { metrics: ReportMetri
       </div>
       <p className="secondary-text" style={{ fontSize: "0.85rem" }}>
         Đơn vị: số lượng {metrics.map((metric) => metric.unit).filter((unit, index, all) => all.indexOf(unit) === index).join(", ")}.
-        Nhóm chỉ bao gồm các tài khoản được RPC báo cáo trả về trong phạm vi quyền hiện tại.
+        {hasTeamRows
+          ? "Nhóm chỉ bao gồm các tài khoản được RPC báo cáo trả về trong phạm vi quyền hiện tại."
+          : "Biểu đồ chỉ hiển thị số liệu cá nhân trong phạm vi quyền hiện tại."}
       </p>
     </section>
   );
@@ -235,12 +239,14 @@ export default async function ReportsPage({ searchParams }: ReportsPageProps) {
             <p>Hoạt động: {personalTotals.activity_count}</p>
             <p>Lượt khách kết nối: {personalTotals.connected_customer_count}</p>
           </article>
-          <article className="card">
-            <h2>Nhóm cấp dưới</h2>
-            <p>Khách hàng mới: {team.customer_count}</p>
-            <p>Hoạt động: {team.activity_count}</p>
-            <p>Lượt khách kết nối: {team.connected_customer_count}</p>
-          </article>
+          {teamRows.length > 0 ? (
+            <article className="card">
+              <h2>Nhóm cấp dưới</h2>
+              <p>Khách hàng mới: {team.customer_count}</p>
+              <p>Hoạt động: {team.activity_count}</p>
+              <p>Lượt khách kết nối: {team.connected_customer_count}</p>
+            </article>
+          ) : null}
           <article className="card">
             <h2>Tổng quan scope</h2>
             <p>Khách hàng mới: {overview.customer_count}</p>
