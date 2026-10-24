@@ -6,6 +6,7 @@ const PROTECTED_ROUTE_PREFIXES = Object.freeze([
   "/reports",
   "/personnel",
   "/admin",
+  "/profile",
   "/password/change",
 ]);
 
