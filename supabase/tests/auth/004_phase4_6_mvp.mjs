@@ -73,13 +73,13 @@ const dm = await createFixture("dm", DM_ROLE_ID);
 const sa = await createFixture("sa", SA_ROLE_ID, dm.id);
 const outsider = await createFixture("outsider", SA_ROLE_ID);
 
-const customerCode = "P46-KH-" + suffix;
+const submittedCustomerCode = "CLIENT-FORGED-CODE-" + suffix;
 const customerPhone = "05" + String(Date.now()).slice(-8);
 const { data: customer, error: customerError } = await sa.client
   .from("khach_hang")
   .insert({
     chu_so_huu_id: sa.id,
-    ma_khach_hang: customerCode,
+    ma_khach_hang: submittedCustomerCode,
     ho_ten: "Khách Phase 4",
     so_dien_thoai: customerPhone,
     gioi_tinh: "Nam",
@@ -91,10 +91,42 @@ const { data: customer, error: customerError } = await sa.client
     tinh_trang: "BẠN",
     nhom_tinh_cach: "D",
   })
-  .select("id")
+  .select("id,ma_khach_hang")
   .single();
 assertNoError(customerError, "SA create owned customer");
 assert.ok(customer?.id, "created customer must have id");
+assert.match(customer.ma_khach_hang, /^KH-\\d{6,}$/, "customer code must use generated format");
+assert.notEqual(customer.ma_khach_hang, submittedCustomerCode, "database must ignore a client-supplied code");
+
+// Concurrent inserts omit ma_khach_hang altogether. The BEFORE INSERT trigger
+// supplies distinct codes even when requests execute at the same time.
+const concurrentCustomers = await Promise.all(
+  [0, 1].map(async (index) => {
+    const { data, error } = await sa.client
+      .from("khach_hang")
+      .insert({
+        chu_so_huu_id: sa.id,
+        ho_ten: "Khách đồng thời " + index + " " + suffix,
+        so_dien_thoai: "07" + String(Date.now() + index + 1000).slice(-8),
+        gioi_tinh: "Nam",
+        ngay_sinh: "1990-01-01",
+        dia_chi: "Hà Nội",
+        so_thich: "Đọc sách",
+        ghi_chu: "Concurrent code-generation integration test",
+        loai_khach_hang: "MUC_TIEU",
+        tinh_trang: "BẠN",
+        nhom_tinh_cach: "D",
+      })
+      .select("id,ma_khach_hang")
+      .single();
+    assertNoError(error, "concurrent customer insert " + index);
+    assert.ok(data?.id, "concurrent customer " + index + " must exist");
+    assert.match(data.ma_khach_hang, /^KH-\\d{6,}$/, "omitted code must be generated");
+    return data;
+  }),
+);
+const generatedCodes = [customer.ma_khach_hang, ...concurrentCustomers.map((item) => item.ma_khach_hang)];
+assert.equal(new Set(generatedCodes).size, 3, "sequential and concurrent requests must receive unique codes");
 
 const { data: dmCustomers, error: dmCustomersError } = await dm.client
   .from("khach_hang")
