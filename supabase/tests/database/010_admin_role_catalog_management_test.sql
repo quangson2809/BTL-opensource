@@ -127,8 +127,40 @@ select is(
 );
 
 
+-- System-role permission mappings are editable by ADMIN, except ADMIN itself.
+select lives_ok(
+  $ select public.admin_update_role(
+    (select id from public.vai_tro where ma_vai_tro = 'DM'),
+    'DM', null, array['20000000-0000-0000-0000-000000000001'::uuid]
+  ) $,
+  'ADMIN can update the DM permission mapping'
+);
+select lives_ok(
+  $ select public.admin_update_role(
+    (select id from public.vai_tro where ma_vai_tro = 'UM'),
+    'UM', null, array['20000000-0000-0000-0000-000000000001'::uuid]
+  ) $,
+  'ADMIN can update the UM permission mapping'
+);
+select lives_ok(
+  $ select public.admin_update_role(
+    (select id from public.vai_tro where ma_vai_tro = 'SA'),
+    'SA', null, array['20000000-0000-0000-0000-000000000001'::uuid]
+  ) $,
+  'ADMIN can update the SA permission mapping'
+);
+select is(
+  (select count(*)::bigint
+   from public.phan_quyen_vai_tro pq
+   join public.vai_tro vt on vt.id = pq.vai_tro_id
+   where vt.ma_vai_tro in ('DM', 'UM', 'SA')
+     and pq.quyen_id = '20000000-0000-0000-0000-000000000001'::uuid),
+  3::bigint,
+  'DM, UM and SA mappings are persisted while ADMIN remains immutable'
+);
+
 select throws_ok(
-  $$ select public.admin_create_role('invalid-code', 'Invalid code', null, array[]::uuid[]) $$,
+  $ select public.admin_create_role('invalid-code', 'Invalid code', null, array[]::uuid[]) $,
   '22023',
   null,
   'role code must use the canonical uppercase identifier format'
