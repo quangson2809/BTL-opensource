@@ -25,6 +25,21 @@ test("feedback maps known error codes to safe messages", () => {
   assert.doesNotMatch(result.message, /postgres|supabase|sql/i);
 });
 
+test("draft notification and role authorization errors explain the actionable cause", () => {
+  const forbidden = resolveActionFeedback({ error: "forbidden" });
+  assert.equal(forbidden.kind, "error");
+  assert.match(forbidden.message, /không có quyền/i);
+  assert.doesNotMatch(forbidden.message, /postgres|supabase|sql/i);
+
+  const notDraft = resolveActionFeedback({ error: "not-draft" });
+  assert.equal(notDraft.kind, "error");
+  assert.match(notDraft.message, /Chỉ có thể sửa bản nháp/);
+
+  const roleForbidden = resolveActionFeedback({ error: "forbidden" });
+  assert.equal(roleForbidden.kind, "error");
+  assert.match(roleForbidden.message, /không có quyền/i);
+});
+
 test("unknown error codes use safe fallback and override success status", () => {
   assert.deepEqual(resolveActionFeedback({ error: "provider-secret", status: "created" }), {
     kind: "error",

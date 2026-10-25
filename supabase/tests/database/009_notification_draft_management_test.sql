@@ -50,6 +50,15 @@ select 'c5000000-0000-4000-8000-000000000004', id from public.vai_tro where ma_v
 insert into public.phan_cong_vai_tro (tai_khoan_id, vai_tro_id)
 select 'c5000000-0000-4000-8000-000000000005', id from public.vai_tro where ma_vai_tro = 'DM';
 
+-- Test fixture models the explicit ADMIN grant configured in Vai trò & quyền.
+insert into public.phan_quyen_vai_tro (vai_tro_id, quyen_id, nguoi_gan_id)
+select vt.id, q.id, 'c5000000-0000-4000-8000-000000000001'::uuid
+from public.vai_tro vt
+cross join public.quyen q
+where vt.ma_vai_tro = 'DM'
+  and q.ma_quyen = 'NOTIFICATION_MANAGE'
+on conflict (vai_tro_id, quyen_id) do nothing;
+
 set local role authenticated;
 select set_config('request.jwt.claim.role', 'authenticated', true);
 select set_config('request.jwt.claim.sub', 'c5000000-0000-4000-8000-000000000001', true);

@@ -4,6 +4,35 @@ create extension if not exists pgtap with schema extensions;
 set local search_path = public, extensions;
 select * from no_plan();
 
+-- Runtime permissions used by the profile server action must be present after
+-- migrations, while system-controlled account fields remain protected.
+select ok(
+  has_column_privilege('authenticated', 'public.tai_khoan', 'ho_ten', 'UPDATE'),
+  'authenticated users can update their own profile name'
+);
+select ok(
+  has_column_privilege('authenticated', 'public.tai_khoan', 'so_dien_thoai', 'UPDATE'),
+  'authenticated users can update their own profile phone'
+);
+select ok(
+  not has_column_privilege('authenticated', 'public.tai_khoan', 'manager_id', 'UPDATE'),
+  'authenticated users cannot directly change manager hierarchy'
+);
+select ok(
+  not has_column_privilege('authenticated', 'public.tai_khoan', 'trang_thai', 'UPDATE'),
+  'authenticated users cannot directly change account status'
+);
+select ok(
+  exists (
+    select 1 from pg_policies
+    where schemaname = 'public'
+      and tablename = 'tai_khoan'
+      and policyname = 'tai_khoan_update_own_profile'
+      and cmd = 'UPDATE'
+  ),
+  'own-profile update is constrained by an RLS policy'
+);
+
 select throws_ok(
   $$ update public.vai_tro set ma_vai_tro = 'ADMIN_RENAMED' where ma_vai_tro = 'ADMIN' $$,
   '42501',
@@ -127,8 +156,40 @@ select is(
 );
 
 
+-- System-role permission mappings are editable by ADMIN, except ADMIN itself.
+select lives_ok(
+  $q$ select public.admin_update_role(
+    (select id from public.vai_tro where ma_vai_tro = 'DM'),
+    'DM', null, array['20000000-0000-0000-0000-000000000001'::uuid]
+  ) $q$,
+  'ADMIN can update the DM permission mapping'
+);
+select lives_ok(
+  $q$ select public.admin_update_role(
+    (select id from public.vai_tro where ma_vai_tro = 'UM'),
+    'UM', null, array['20000000-0000-0000-0000-000000000001'::uuid]
+  ) $q$,
+  'ADMIN can update the UM permission mapping'
+);
+select lives_ok(
+  $q$ select public.admin_update_role(
+    (select id from public.vai_tro where ma_vai_tro = 'SA'),
+    'SA', null, array['20000000-0000-0000-0000-000000000001'::uuid]
+  ) $q$,
+  'ADMIN can update the SA permission mapping'
+);
+select is(
+  (select count(*)::bigint
+   from public.phan_quyen_vai_tro pq
+   join public.vai_tro vt on vt.id = pq.vai_tro_id
+   where vt.ma_vai_tro in ('DM', 'UM', 'SA')
+     and pq.quyen_id = '20000000-0000-0000-0000-000000000001'::uuid),
+  3::bigint,
+  'DM, UM and SA mappings are persisted while ADMIN remains immutable'
+);
+
 select throws_ok(
-  $$ select public.admin_create_role('invalid-code', 'Invalid code', null, array[]::uuid[]) $$,
+  $q$ select public.admin_create_role('invalid-code', 'Invalid code', null, array[]::uuid[]) $q$,
   '22023',
   null,
   'role code must use the canonical uppercase identifier format'

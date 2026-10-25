@@ -64,5 +64,39 @@ export async function requireDm() {
     redirect("/access-denied");
   }
 
+  // The DM role alone is not sufficient: ADMIN must explicitly grant
+  // NOTIFICATION_MANAGE in the role-permission editor.
+  const { data: assignments, error: assignmentsError } = await context.supabase
+    .from("phan_cong_vai_tro")
+    .select("vai_tro_id")
+    .eq("tai_khoan_id", context.accountId);
+
+  if (assignmentsError || !assignments?.length) {
+    redirect("/access-denied");
+  }
+
+  const { data: mappings, error: mappingsError } = await context.supabase
+    .from("phan_quyen_vai_tro")
+    .select("quyen_id")
+    .in("vai_tro_id", assignments.map((assignment) => assignment.vai_tro_id));
+
+  if (mappingsError || !mappings?.length) {
+    redirect("/access-denied");
+  }
+
+  const { data: permission, error: permissionError } = await context.supabase
+    .from("quyen")
+    .select("id")
+    .eq("ma_quyen", "NOTIFICATION_MANAGE")
+    .maybeSingle();
+
+  if (
+    permissionError ||
+    !permission ||
+    !mappings.some((mapping) => mapping.quyen_id === permission.id)
+  ) {
+    redirect("/access-denied");
+  }
+
   return context;
 }

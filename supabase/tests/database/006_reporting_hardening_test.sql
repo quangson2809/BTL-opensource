@@ -51,6 +51,20 @@ update public.tai_khoan
 set manager_id = 'c7000000-0000-4000-8000-000000000008'
 where id = 'c7000000-0000-4000-8000-000000000001';
 
+-- The production migration seeds this permission for DM; the test must not
+-- grant it itself or it would hide a broken default role configuration.
+select ok(
+  exists (
+    select 1
+    from public.phan_quyen_vai_tro pq
+    join public.vai_tro vt on vt.id = pq.vai_tro_id
+    join public.quyen q on q.id = pq.quyen_id
+    where vt.ma_vai_tro = 'DM'
+      and q.ma_quyen = 'NOTIFICATION_MANAGE'
+  ),
+  'DM receives notification-management permission from migrations'
+);
+
 insert into public.khach_hang (
   id, chu_so_huu_id, ma_khach_hang, ho_ten, so_dien_thoai, gioi_tinh,
   ngay_sinh, dia_chi, so_thich, ghi_chu, loai_khach_hang, tinh_trang,

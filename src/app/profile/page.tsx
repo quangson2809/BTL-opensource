@@ -19,7 +19,11 @@ const errorMessages: Record<string, string> = {
   missing: "Họ và tên không được để trống.",
   invalid: "Họ và tên chứa ký tự không hợp lệ.",
   "invalid-phone": "Số điện thoại không đúng định dạng.",
-  "phone-taken": "Số điện thoại này đã được sử dụng bởi tài khoản khác.",
+  "phone-taken": "Số điện thoại này đã được sử dụng bởi tài khoản khác. Hãy dùng số khác.",
+  permission: "Tài khoản hiện không có quyền cập nhật hồ sơ. Hãy đăng xuất, đăng nhập lại; nếu vẫn gặp lỗi, liên hệ quản trị viên.",
+  "invalid-data": "Thông tin không phù hợp với quy tắc dữ liệu. Hãy kiểm tra họ tên và số điện thoại rồi thử lại.",
+  "not-updated": "Không có hồ sơ nào được cập nhật. Phiên đăng nhập có thể đã hết hạn hoặc tài khoản không còn đủ điều kiện cập nhật.",
+  service: "Máy chủ chưa lưu được hồ sơ. Dữ liệu chưa được xác nhận là đã thay đổi; hãy thử lại sau. Nếu lỗi tiếp diễn, cung cấp thời điểm thao tác cho quản trị viên để tra nhật ký.",
   save: "Không thể lưu hồ sơ lúc này. Vui lòng thử lại.",
 };
 
