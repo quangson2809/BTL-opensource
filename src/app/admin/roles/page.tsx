@@ -86,7 +86,7 @@ export default async function RolesPage({ searchParams }: RolesPageProps) {
       <section className="page-content">
         <PageHeader
           title="Vai trò & quyền"
-          description="Quản lý danh mục vai trò và cấu hình permission có trong hệ thống."
+          description="Xem danh mục quyền và quản lý tập quyền của mọi vai trò, bao gồm vai trò hệ thống."
           actions={
             <>
               <Link className="button-link" href="/admin/roles/new">
@@ -137,7 +137,7 @@ export default async function RolesPage({ searchParams }: RolesPageProps) {
                 )
                 .filter((permission) => permission !== undefined);
 
-              const isSystemRole = ["ADMIN", "DM", "UM", "SA"].includes(role.ma_vai_tro);
+              
 
             return (
                 <article className="role-assignment" key={role.id}>
@@ -159,16 +159,14 @@ export default async function RolesPage({ searchParams }: RolesPageProps) {
                     </p>
                   </div>
                   <div className="actions">
-                    {isSystemRole ? (
-                      <p className="secondary-text">
-                        Vai trò hệ thống được bảo vệ; không thể sửa tại đây.
-                      </p>
+                    {role.ma_vai_tro === "ADMIN" ? (
+                      <p className="secondary-text">Vai trò tối cao; không thể chỉnh sửa quyền.</p>
                     ) : (
                       <Link
                         className="button-link button-secondary"
                         href={"/admin/roles/" + role.id + "/edit"}
                       >
-                        Sửa vai trò & quyền
+                        Quản lý quyền
                       </Link>
                     )}
                   </div>
