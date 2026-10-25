@@ -413,6 +413,56 @@ export async function verifyRecoveryOtp(formData: FormData) {
   redirect("/login?status=password-reset");
 }
 
+export async function deletePendingProfile(formData: FormData) {
+  const email = field(formData, "email").toLowerCase();
+  const password = rawField(formData, "password");
+
+  if (!email || !password) {
+    redirect("/register?error=delete-pending-missing");
+  }
+
+  const supabase = await createClient();
+  const { data: identity, error: signInError } = await supabase.auth.signInWithPassword({
+    email,
+    password,
+  });
+
+  if (signInError || !identity.user) {
+    redirect("/register?error=delete-pending-auth");
+  }
+
+  const admin = createAdminClient();
+  const { data: account, error: accountError } = await admin
+    .from("tai_khoan")
+    .select("trang_thai")
+    .eq("id", identity.user.id)
+    .maybeSingle();
+
+  if (accountError || !account) {
+    await supabase.auth.signOut({ scope: "local" });
+    redirect("/register?error=delete-pending-not-found");
+  }
+
+  if (account.trang_thai !== "CHO_PHE_DUYET") {
+    await supabase.auth.signOut({ scope: "local" });
+    redirect("/register?error=delete-pending-status");
+  }
+
+  const { error: deleteError } = await supabase.rpc("delete_own_pending_account");
+  if (deleteError) {
+    await supabase.auth.signOut({ scope: "local" });
+    redirect(
+      "/register?error=" +
+        (deleteError.code === "23503"
+          ? "delete-pending-has-data"
+          : "delete-pending-failed"),
+    );
+  }
+
+  await supabase.auth.signOut({ scope: "local" });
+  redirect("/register?status=profile-deleted");
+}
+
 export async function logout() {
   const supabase = await createClient();
   await supabase.auth.signOut({ scope: "local" });
