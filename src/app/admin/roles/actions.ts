@@ -110,7 +110,9 @@ export async function updateRole(formData: FormData) {
           ? "duplicate"
           : error.code === "22023"
             ? "invalid"
-            : "save"),
+            : error.code === "42501"
+              ? "forbidden"
+              : "save"),
     );
   }
 
