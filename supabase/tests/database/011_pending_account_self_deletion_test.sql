@@ -35,7 +35,7 @@ select set_config(
 );
 
 select lives_ok(
-  $ select public.delete_own_pending_account() $,
+  $q$ select public.delete_own_pending_account() $q$,
   'a user can delete their own pending account'
 );
 reset role;
