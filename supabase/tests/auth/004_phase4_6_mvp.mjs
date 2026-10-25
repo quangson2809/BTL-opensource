@@ -177,6 +177,26 @@ const concurrentCustomers = await Promise.all(
 const generatedCodes = [customer.ma_khach_hang, ...concurrentCustomers.map((item) => item.ma_khach_hang)];
 assert.equal(new Set(generatedCodes).size, 3, "sequential and concurrent requests must receive unique codes");
 
+// This integration test uses the shipped DM role configuration, not a
+// privileged fixture-side permission grant. A clean deployment must enable the
+// notification feature for DM by applying migrations.
+const { data: notificationPermission, error: notificationPermissionError } = await setup
+  .from("quyen")
+  .select("id")
+  .eq("ma_quyen", "NOTIFICATION_MANAGE")
+  .single();
+assertNoError(notificationPermissionError, "notification management permission catalog entry");
+assert.ok(notificationPermission?.id, "notification management permission must exist");
+
+const { data: dmPermissionMapping, error: dmPermissionMappingError } = await setup
+  .from("phan_quyen_vai_tro")
+  .select("quyen_id")
+  .eq("vai_tro_id", DM_ROLE_ID)
+  .eq("quyen_id", notificationPermission.id)
+  .maybeSingle();
+assertNoError(dmPermissionMappingError, "DM notification permission mapping query");
+assert.ok(dmPermissionMapping, "DM role must be granted notification management by default");
+
 const title = "Phase 6 integration " + suffix;
 const { data: notificationId, error: notificationCreateError } =
   await dm.client.rpc("dm_create_notification", {
