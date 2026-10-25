@@ -40,6 +40,12 @@ begin
      or exists (
        select 1 from public.thong_bao
        where nguoi_tao_id = current_user_id and trang_thai = 'ĐÃ_GỬI'
+     )
+     or exists (
+       select 1
+       from public.thong_bao_nguoi_nhan tbn
+       join public.thong_bao tb on tb.id = tbn.thong_bao_id
+       where tbn.tai_khoan_id = current_user_id
      ) then
     raise exception using errcode = '23503', message = 'Account has business records and cannot self-delete';
   end if;
