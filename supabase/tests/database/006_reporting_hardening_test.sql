@@ -51,13 +51,19 @@ update public.tai_khoan
 set manager_id = 'c7000000-0000-4000-8000-000000000008'
 where id = 'c7000000-0000-4000-8000-000000000001';
 
--- Simulate ADMIN explicitly granting notification management to the DM fixture.
-insert into public.phan_quyen_vai_tro (vai_tro_id, quyen_id, nguoi_gan_id)
-select vt.id, q.id, 'c7000000-0000-4000-8000-000000000009'::uuid
-from public.vai_tro vt
-join public.quyen q on q.ma_quyen = 'NOTIFICATION_MANAGE'
-where vt.ma_vai_tro = 'DM'
-on conflict (vai_tro_id, quyen_id) do nothing;
+-- The production migration seeds this permission for DM; the test must not
+-- grant it itself or it would hide a broken default role configuration.
+select ok(
+  exists (
+    select 1
+    from public.phan_quyen_vai_tro pq
+    join public.vai_tro vt on vt.id = pq.vai_tro_id
+    join public.quyen q on q.id = pq.quyen_id
+    where vt.ma_vai_tro = 'DM'
+      and q.ma_quyen = 'NOTIFICATION_MANAGE'
+  ),
+  'DM receives notification-management permission from migrations'
+);
 
 insert into public.khach_hang (
   id, chu_so_huu_id, ma_khach_hang, ho_ten, so_dien_thoai, gioi_tinh,
