@@ -35,9 +35,10 @@ select set_config(
 );
 
 select lives_ok(
-  $$ select public.delete_own_pending_account() $$,
+  $ select public.delete_own_pending_account() $,
   'a user can delete their own pending account'
 );
+reset role;
 select is(
   (select count(*)::bigint from public.tai_khoan where id = 'c7000000-0000-4000-8000-000000000001'),
   0::bigint,
@@ -49,6 +50,7 @@ select is(
   'self-deletion removes the associated Auth identity'
 );
 
+set local role authenticated;
 select set_config('request.jwt.claim.sub', 'c7000000-0000-4000-8000-000000000002', true);
 select set_config(
   'request.jwt.claims',
