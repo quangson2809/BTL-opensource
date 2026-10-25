@@ -159,12 +159,16 @@ export default async function RolesPage({ searchParams }: RolesPageProps) {
                     </p>
                   </div>
                   <div className="actions">
-                    <Link
-                      className="button-link button-secondary"
-                      href={"/admin/roles/" + role.id + "/edit"}
-                    >
-                      Quản lý quyền
-                    </Link>
+                    {role.ma_vai_tro === "ADMIN" ? (
+                      <p className="secondary-text">Vai trò tối cao; không thể chỉnh sửa quyền.</p>
+                    ) : (
+                      <Link
+                        className="button-link button-secondary"
+                        href={"/admin/roles/" + role.id + "/edit"}
+                      >
+                        Quản lý quyền
+                      </Link>
+                    )}
                   </div>
                 </article>
               );
