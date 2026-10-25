@@ -24,7 +24,8 @@ type EditRolePageProps = {
 const errorMessages: Record<string, string> = {
   invalid: "Tên vai trò hoặc danh sách quyền không hợp lệ.",
   duplicate: "Tên vai trò đã tồn tại.",
-  save: "Không thể cập nhật vai trò. Hãy kiểm tra dữ liệu rồi thử lại.",
+  forbidden: "Máy chủ từ chối thay đổi quyền cho vai trò này. Vai trò ADMIN là bất biến; hãy kiểm tra quyền quản trị và migration đã được áp dụng.",
+  save: "Không thể cập nhật vai trò. Hãy kiểm tra trạng thái migration và nhật ký lỗi rồi thử lại.",
 };
 
 export default async function EditRolePage({
@@ -112,7 +113,7 @@ export default async function EditRolePage({
           <fieldset className="form-section">
             <legend>Quyền được gán</legend>
             <p className="field-help">
-              Lưu thay đổi sẽ thay thế tập quyền hiện tại trong cùng một transaction. Áp dụng cho mọi vai trò, bao gồm ADMIN, DM, UM và SA.
+              Lưu thay đổi sẽ thay thế tập quyền hiện tại trong cùng một transaction. Áp dụng cho DM, UM, SA và vai trò tùy chỉnh. Vai trò ADMIN và tập quyền của ADMIN không thể chỉnh sửa.
               Các permission chỉ có tác dụng ở policy/RPC kiểm tra permission tương ứng.
             </p>
             <SearchableCheckboxPicker
