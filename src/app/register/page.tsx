@@ -4,7 +4,7 @@ import { GuardedForm } from "@/components/guarded-form";
 import { FormDraftPersistence } from "@/components/form-draft-persistence";
 import { PendingSubmitButton } from "@/components/pending-submit-button";
 
-import { deletePendingProfile, register } from "@/app/auth/actions";
+import { register } from "@/app/auth/actions";
 import {
   REGISTRATION_ERROR_MESSAGES,
   REGISTRATION_STATUS_MESSAGES,
@@ -68,24 +68,6 @@ export default async function RegisterPage({ searchParams }: RegisterPageProps) 
           <PendingSubmitButton pendingLabel="Đang tạo tài khoản…">Tạo tài khoản</PendingSubmitButton>
         </GuardedForm>
 
-        <details className="form-section">
-          <summary>Đã đăng ký sai thông tin và tài khoản đang chờ duyệt?</summary>
-          <p className="secondary-text">
-            Xác thực bằng email và mật khẩu của chính tài khoản. Chỉ hồ sơ đang chờ duyệt mới được xóa;
-            tài khoản đã kích hoạt hoặc có dữ liệu nghiệp vụ không thể tự xóa.
-          </p>
-          <form action={deletePendingProfile} className="stack">
-            <label>
-              Email tài khoản chờ duyệt
-              <input name="email" type="email" autoComplete="email" required />
-            </label>
-            <label>
-              Mật khẩu tài khoản
-              <input name="password" type="password" autoComplete="current-password" required />
-            </label>
-            <button className="button-secondary" type="submit">Xác thực và xóa hồ sơ chờ duyệt</button>
-          </form>
-        </details>
 
         <p className="secondary-text">
           Đã có tài khoản? <Link href="/login">Đăng nhập</Link>
