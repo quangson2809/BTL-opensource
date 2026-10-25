@@ -55,9 +55,9 @@ select ok(
       and c.conname = 'tai_khoan_auth_user_fk'
       and rn.nspname = 'auth'
       and rt.relname = 'users'
-      and c.confdeltype = 'r'
+      and c.confdeltype = 'c'
   ),
-  'tai_khoan.id references auth.users(id) with RESTRICT delete behavior'
+  'tai_khoan.id references auth.users(id) with CASCADE delete behavior'
 );
 
 select ok(
