@@ -4,6 +4,35 @@ create extension if not exists pgtap with schema extensions;
 set local search_path = public, extensions;
 select * from no_plan();
 
+-- Runtime permissions used by the profile server action must be present after
+-- migrations, while system-controlled account fields remain protected.
+select ok(
+  has_column_privilege('authenticated', 'public.tai_khoan', 'ho_ten', 'UPDATE'),
+  'authenticated users can update their own profile name'
+);
+select ok(
+  has_column_privilege('authenticated', 'public.tai_khoan', 'so_dien_thoai', 'UPDATE'),
+  'authenticated users can update their own profile phone'
+);
+select ok(
+  not has_column_privilege('authenticated', 'public.tai_khoan', 'manager_id', 'UPDATE'),
+  'authenticated users cannot directly change manager hierarchy'
+);
+select ok(
+  not has_column_privilege('authenticated', 'public.tai_khoan', 'trang_thai', 'UPDATE'),
+  'authenticated users cannot directly change account status'
+);
+select ok(
+  exists (
+    select 1 from pg_policies
+    where schemaname = 'public'
+      and tablename = 'tai_khoan'
+      and policyname = 'tai_khoan_update_own_profile'
+      and cmd = 'UPDATE'
+  ),
+  'own-profile update is constrained by an RLS policy'
+);
+
 select throws_ok(
   $$ update public.vai_tro set ma_vai_tro = 'ADMIN_RENAMED' where ma_vai_tro = 'ADMIN' $$,
   '42501',
