@@ -59,6 +59,14 @@ join public.quyen q on q.ma_quyen = 'NOTIFICATION_MANAGE'
 where vt.ma_vai_tro = 'DM'
 on conflict (vai_tro_id, quyen_id) do nothing;
 
+-- Simulate ADMIN explicitly granting notification management to the DM fixture.
+insert into public.phan_quyen_vai_tro (vai_tro_id, quyen_id, nguoi_gan_id)
+select vt.id, q.id, 'c7000000-0000-4000-8000-000000000009'::uuid
+from public.vai_tro vt
+join public.quyen q on q.ma_quyen = 'NOTIFICATION_MANAGE'
+where vt.ma_vai_tro = 'DM'
+on conflict (vai_tro_id, quyen_id) do nothing;
+
 insert into public.khach_hang (
   id, chu_so_huu_id, ma_khach_hang, ho_ten, so_dien_thoai, gioi_tinh,
   ngay_sinh, dia_chi, so_thich, ghi_chu, loai_khach_hang, tinh_trang,
