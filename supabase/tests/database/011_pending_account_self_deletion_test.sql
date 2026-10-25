@@ -63,6 +63,7 @@ select throws_ok(
   'Only pending accounts may self-delete',
   'active accounts cannot use pending-account self-deletion'
 );
+reset role;
 select is(
   (select count(*)::bigint from public.tai_khoan where id = 'c7000000-0000-4000-8000-000000000002'),
   1::bigint,
