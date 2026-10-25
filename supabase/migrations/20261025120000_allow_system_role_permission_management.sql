@@ -30,6 +30,10 @@ begin
     raise exception using errcode = '22023', message = 'Role does not exist';
   end if;
 
+  if target_role_code = 'ADMIN' then
+    raise exception using errcode = '42501', message = 'ADMIN role is immutable';
+  end if;
+
   if array_position(normalized_permission_ids, null) is not null
      or exists (
        select 1
