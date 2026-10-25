@@ -99,21 +99,21 @@ select set_config(
   ),
   true
 );
-select lives_ok(
-  $
-    select public.admin_update_role(
-      (select id from public.vai_tro where ma_vai_tro = 'ADMIN'),
-      'Modified system role',
-      'Must remain protected',
-      array['20000000-0000-0000-0000-000000000001'::uuid]
-    )
-  $,
-  'Admin can update permission assignments for a system role'
+select throws_ok(
+  $$ select public.admin_update_role(
+    (select id from public.vai_tro where ma_vai_tro = 'ADMIN'),
+    'Modified system role',
+    'Must remain protected',
+    array['20000000-0000-0000-0000-000000000001'::uuid]
+  ) $$,
+  '42501',
+  'ADMIN role is immutable',
+  'Even an administrator cannot modify the ADMIN role or its permission assignments'
 );
 select is(
   (select ten_vai_tro from public.vai_tro where ma_vai_tro = 'ADMIN'),
   current_setting('test.admin_role_name_before'),
-  'system-role display name remains immutable during permission updates'
+  'ADMIN display name remains unchanged'
 );
 select is(
   (
@@ -121,10 +121,9 @@ select is(
     from public.phan_quyen_vai_tro pq
     join public.vai_tro vt on vt.id = pq.vai_tro_id
     where vt.ma_vai_tro = 'ADMIN'
-      and pq.quyen_id = '20000000-0000-0000-0000-000000000001'::uuid
   ),
-  '1',
-  'system-role permission mapping is updated'
+  current_setting('test.admin_role_permission_count_before'),
+  'ADMIN permission mappings remain unchanged'
 );
 
 
