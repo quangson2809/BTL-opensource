@@ -129,24 +129,24 @@ select is(
 
 -- System-role permission mappings are editable by ADMIN, except ADMIN itself.
 select lives_ok(
-  $ select public.admin_update_role(
+  $q$ select public.admin_update_role(
     (select id from public.vai_tro where ma_vai_tro = 'DM'),
     'DM', null, array['20000000-0000-0000-0000-000000000001'::uuid]
-  ) $,
+  ) $q$,
   'ADMIN can update the DM permission mapping'
 );
 select lives_ok(
-  $ select public.admin_update_role(
+  $q$ select public.admin_update_role(
     (select id from public.vai_tro where ma_vai_tro = 'UM'),
     'UM', null, array['20000000-0000-0000-0000-000000000001'::uuid]
-  ) $,
+  ) $q$,
   'ADMIN can update the UM permission mapping'
 );
 select lives_ok(
-  $ select public.admin_update_role(
+  $q$ select public.admin_update_role(
     (select id from public.vai_tro where ma_vai_tro = 'SA'),
     'SA', null, array['20000000-0000-0000-0000-000000000001'::uuid]
-  ) $,
+  ) $q$,
   'ADMIN can update the SA permission mapping'
 );
 select is(
@@ -160,7 +160,7 @@ select is(
 );
 
 select throws_ok(
-  $ select public.admin_create_role('invalid-code', 'Invalid code', null, array[]::uuid[]) $,
+  $q$ select public.admin_create_role('invalid-code', 'Invalid code', null, array[]::uuid[]) $q$,
   '22023',
   null,
   'role code must use the canonical uppercase identifier format'
