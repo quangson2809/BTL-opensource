@@ -29,8 +29,15 @@ export async function updateAgencyProfile(formData: FormData) {
 
   if (error || !data) {
     if (error?.code === "23505") redirect("/profile?error=phone-taken");
-    // Avoid sending database/provider details to the user.
-    redirect("/profile?error=save");
+    // Give the user an actionable category without exposing SQL/provider details.
+    if (error?.code === "42501" || error?.code === "PGRST301") {
+      redirect("/profile?error=permission");
+    }
+    if (error?.code === "23514" || error?.code === "22P02" || error?.code === "22001") {
+      redirect("/profile?error=invalid-data");
+    }
+    if (!error && !data) redirect("/profile?error=not-updated");
+    redirect("/profile?error=service");
   }
 
   redirect("/profile?status=saved");
