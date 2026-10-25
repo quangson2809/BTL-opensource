@@ -79,8 +79,17 @@ export async function updateNotificationDraft(formData: FormData) {
   });
 
   if (error) {
+    const errorCode =
+      error.code === "42501"
+        ? "forbidden"
+        : error.code === "22023"
+          ? "not-draft"
+          : "update";
     redirect(
-      "/notifications/" + encodeURIComponent(notificationId) + "/edit?error=update",
+      "/notifications/" +
+        encodeURIComponent(notificationId) +
+        "/edit?error=" +
+        errorCode,
     );
   }
 
