@@ -310,7 +310,7 @@ export async function changePassword(formData: FormData) {
   // Supabase reauthentication OTPs are 8 digits in this application's contract.
   // Reject malformed input before calling Auth; the nonce is still verified by
   // Supabase itself when updateUser is executed below.
-  if (!/^\\d{8}$/.test(otp)) {
+  if (!/^\d{8}$/.test(otp)) {
     redirect("/password/change?error=otp");
   }
 
