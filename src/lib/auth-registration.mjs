@@ -26,7 +26,7 @@ export const REGISTRATION_ERROR_MESSAGES = Object.freeze({
   "delete-pending-auth": "Email hoặc mật khẩu không chính xác; chưa có hồ sơ nào bị xóa.",
   "delete-pending-not-found": "Không tìm thấy hồ sơ ứng với tài khoản này.",
   "delete-pending-status": "Chỉ tài khoản đang chờ phê duyệt mới được tự xóa hồ sơ.",
-  "delete-pending-has-data": "Không thể tự xóa vì tài khoản đã có dữ liệu nghiệp vụ. Vui lòng liên hệ quản trị viên.",
+  "delete-pending-has-data": "Không thể tự xóa vì tài khoản đã có dữ liệu nghiệp vụ hoặc nằm trong lịch sử người nhận thông báo. Vui lòng liên hệ quản trị viên.",
   "delete-pending-failed": "Không thể xóa hồ sơ lúc này. Vui lòng thử lại sau.",
 });
 
