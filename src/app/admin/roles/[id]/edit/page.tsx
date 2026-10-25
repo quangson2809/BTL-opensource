@@ -94,10 +94,12 @@ export default async function EditRolePage({
               <label>
                 Tên vai trò
                 <input readOnly value={roleResult.data.ten_vai_tro} />
+                <input name="ten_vai_tro" type="hidden" value={roleResult.data.ten_vai_tro} />
               </label>
               <label className="field-full">
                 Mô tả
                 <textarea readOnly value={roleResult.data.mo_ta ?? ""} />
+                <input name="mo_ta" type="hidden" value={roleResult.data.mo_ta ?? ""} />
               </label>
             </div>
             <p className="field-help">
