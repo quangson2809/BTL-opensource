@@ -152,13 +152,16 @@ export async function register(formData: FormData) {
           const { data, error } = await supabase.auth.signUp({
             email,
             password,
-            options: { data: metadata, emailRedirectTo: getAuthCallbackUrl({
-              configuredSiteUrl: process.env.NEXT_PUBLIC_SITE_URL,
-              projectProductionUrl: process.env.VERCEL_PROJECT_PRODUCTION_URL,
-              deploymentUrl: process.env.VERCEL_URL,
-              nodeEnv: process.env.NODE_ENV,
-              vercelEnvironment: process.env.VERCEL_ENV,
-            }) },
+            options: {
+              data: metadata,
+              emailRedirectTo: getAuthCallbackUrl({
+                configuredSiteUrl: process.env.NEXT_PUBLIC_SITE_URL,
+                projectProductionUrl: process.env.VERCEL_PROJECT_PRODUCTION_URL,
+                deploymentUrl: process.env.VERCEL_URL,
+                nodeEnv: process.env.NODE_ENV,
+                vercelEnvironment: process.env.VERCEL_ENV,
+              }),
+            },
           });
           return {
             user: data.user
