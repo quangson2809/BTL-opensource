@@ -4,7 +4,12 @@ function normalizeOrigin(value) {
   const withProtocol = /^https?:\/\//i.test(candidate)
     ? candidate
     : `https://${candidate}`;
-  const parsed = new URL(withProtocol);
+  let parsed;
+  try {
+    parsed = new URL(withProtocol);
+  } catch {
+    throw new Error("Invalid site URL configuration.");
+  }
 
   if (
     !["http:", "https:"].includes(parsed.protocol) ||
