@@ -31,11 +31,18 @@ export const REGISTRATION_ERROR_MESSAGES = Object.freeze({
   "rate-limited": "Bạn đã gửi quá nhiều yêu cầu đăng ký. Vui lòng chờ rồi thử lại.",
   service: "Hiện không thể kiểm tra hoặc tạo tài khoản do sự cố dịch vụ. Vui lòng thử lại sau.",
   provisioning: "Không thể tạo hồ sơ đại lý do lỗi liên kết dữ liệu. Vui lòng thử lại sau; nếu lỗi tiếp diễn, hãy liên hệ quản trị viên.",
+  "delete-pending-missing": "Nhập email và mật khẩu của tài khoản đang chờ duyệt để xác nhận xóa hồ sơ.",
+  "delete-pending-auth": "Email hoặc mật khẩu không chính xác; chưa có hồ sơ nào bị xóa.",
+  "delete-pending-not-found": "Không tìm thấy hồ sơ ứng với tài khoản này.",
+  "delete-pending-status": "Chỉ tài khoản đang chờ phê duyệt mới được tự xóa hồ sơ.",
+  "delete-pending-has-data": "Không thể tự xóa vì tài khoản đã có dữ liệu nghiệp vụ hoặc nằm trong lịch sử người nhận thông báo. Vui lòng liên hệ quản trị viên.",
+  "delete-pending-failed": "Không thể xóa hồ sơ lúc này. Vui lòng thử lại sau.",
 });
 
 export const REGISTRATION_STATUS_MESSAGES = Object.freeze({
   registered: "Đăng ký thành công. Tài khoản đang chờ quản trị viên phê duyệt. Bạn có thể đăng nhập sau khi được kích hoạt.",
   "verify-email": "Thông tin đăng ký đã được tiếp nhận. Vui lòng xác minh email theo hướng dẫn trong hộp thư trước khi đăng nhập. Tài khoản vẫn cần quản trị viên phê duyệt.",
+  "profile-deleted": "Đã xóa hồ sơ chờ duyệt và tài khoản đăng nhập. Bạn có thể đăng ký lại bằng thông tin chính xác.",
 });
 
 const RATE_LIMIT_CODES = new Set([

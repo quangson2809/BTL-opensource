@@ -73,13 +73,13 @@ const dm = await createFixture("dm", DM_ROLE_ID);
 const sa = await createFixture("sa", SA_ROLE_ID, dm.id);
 const outsider = await createFixture("outsider", SA_ROLE_ID);
 
-const customerCode = "P46-KH-" + suffix;
+const submittedCustomerCode = "CLIENT-FORGED-CODE-" + suffix;
 const customerPhone = "05" + String(Date.now()).slice(-8);
 const { data: customer, error: customerError } = await sa.client
   .from("khach_hang")
   .insert({
     chu_so_huu_id: sa.id,
-    ma_khach_hang: customerCode,
+    ma_khach_hang: submittedCustomerCode,
     ho_ten: "Khách Phase 4",
     so_dien_thoai: customerPhone,
     gioi_tinh: "Nam",
@@ -91,10 +91,14 @@ const { data: customer, error: customerError } = await sa.client
     tinh_trang: "BẠN",
     nhom_tinh_cach: "D",
   })
-  .select("id")
+  .select("id,ma_khach_hang")
   .single();
 assertNoError(customerError, "SA create owned customer");
 assert.ok(customer?.id, "created customer must have id");
+assert.match(customer.ma_khach_hang, /^KH-\d{6,}$/, "customer code must use generated format");
+assert.notEqual(customer.ma_khach_hang, submittedCustomerCode, "database must ignore a client-supplied code");
+
+
 
 const { data: dmCustomers, error: dmCustomersError } = await dm.client
   .from("khach_hang")
@@ -142,6 +146,56 @@ const { error: outsiderSummaryError } = await outsider.client.rpc(
   { target_account_id: sa.id },
 );
 assert.ok(outsiderSummaryError, "out-of-scope SA cannot request personnel summary");
+
+// Concurrent inserts omit ma_khach_hang altogether. The BEFORE INSERT trigger
+// supplies distinct codes even when requests execute at the same time.
+const concurrentCustomers = await Promise.all(
+  [0, 1].map(async (index) => {
+    const { data, error } = await sa.client
+      .from("khach_hang")
+      .insert({
+        chu_so_huu_id: sa.id,
+        ho_ten: "Khách đồng thời " + index + " " + suffix,
+        so_dien_thoai: "07" + String(Date.now() + index + 1000).slice(-8),
+        gioi_tinh: "Nam",
+        ngay_sinh: "1990-01-01",
+        dia_chi: "Hà Nội",
+        so_thich: "Đọc sách",
+        ghi_chu: "Concurrent code-generation integration test",
+        loai_khach_hang: "MUC_TIEU",
+        tinh_trang: "BẠN",
+        nhom_tinh_cach: "D",
+      })
+      .select("id,ma_khach_hang")
+      .single();
+    assertNoError(error, "concurrent customer insert " + index);
+    assert.ok(data?.id, "concurrent customer " + index + " must exist");
+    assert.match(data.ma_khach_hang, /^KH-\d{6,}$/, "omitted code must be generated");
+    return data;
+  }),
+);
+const generatedCodes = [customer.ma_khach_hang, ...concurrentCustomers.map((item) => item.ma_khach_hang)];
+assert.equal(new Set(generatedCodes).size, 3, "sequential and concurrent requests must receive unique codes");
+
+// This integration test uses the shipped DM role configuration, not a
+// privileged fixture-side permission grant. A clean deployment must enable the
+// notification feature for DM by applying migrations.
+const { data: notificationPermission, error: notificationPermissionError } = await setup
+  .from("quyen")
+  .select("id")
+  .eq("ma_quyen", "NOTIFICATION_MANAGE")
+  .single();
+assertNoError(notificationPermissionError, "notification management permission catalog entry");
+assert.ok(notificationPermission?.id, "notification management permission must exist");
+
+const { data: dmPermissionMapping, error: dmPermissionMappingError } = await setup
+  .from("phan_quyen_vai_tro")
+  .select("quyen_id")
+  .eq("vai_tro_id", DM_ROLE_ID)
+  .eq("quyen_id", notificationPermission.id)
+  .maybeSingle();
+assertNoError(dmPermissionMappingError, "DM notification permission mapping query");
+assert.ok(dmPermissionMapping, "DM role must be granted notification management by default");
 
 const title = "Phase 6 integration " + suffix;
 const { data: notificationId, error: notificationCreateError } =

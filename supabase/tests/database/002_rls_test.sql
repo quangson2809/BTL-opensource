@@ -101,12 +101,17 @@ select is(
 );
 
 select ok(
-  exists (select 1 from public.khach_hang where ma_khach_hang = 'KH-SA-001'),
-  'customer owner can read own customer'
+  exists (
+    select 1
+    from public.khach_hang
+    where id = '40000000-0000-4000-8000-000000000001'
+      and ma_khach_hang ~ '^KH-[0-9]{6,}$'
+  ),
+  'customer owner can read own customer with generated code'
 );
 
 select ok(
-  not exists (select 1 from public.khach_hang where ma_khach_hang = 'KH-OTHER-001'),
+  not exists (select 1 from public.khach_hang where id = '40000000-0000-4000-8000-000000000002'),
   'customer owner cannot read another account customer'
 );
 
@@ -118,6 +123,21 @@ select is(
   (select ghi_chu from public.khach_hang where id = '40000000-0000-4000-8000-000000000001'),
   'Owner updated'::text,
   'customer owner can update own customer'
+);
+
+select results_eq(
+  $$
+    update public.khach_hang
+    set ma_khach_hang = 'CLIENT-FORGED-CODE'
+    where id = '40000000-0000-4000-8000-000000000001'
+    returning ma_khach_hang
+  $$,
+  $$
+    select ma_khach_hang
+    from public.khach_hang
+    where id = '40000000-0000-4000-8000-000000000001'
+  $$,
+  'customer code is immutable even when a client attempts to change it'
 );
 
 select results_eq(

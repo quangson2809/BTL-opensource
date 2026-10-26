@@ -14,7 +14,7 @@ import { isUuid } from "@/lib/input-validation.mjs";
 
 export const dynamic = "force-dynamic";
 
-const SYSTEM_ROLE_CODES = new Set(["ADMIN", "DM", "UM", "SA"]);
+const IMMUTABLE_ROLE_CODES = new Set(["ADMIN"]);
 
 type EditRolePageProps = {
   params: Promise<{ id: string }>;
@@ -24,7 +24,8 @@ type EditRolePageProps = {
 const errorMessages: Record<string, string> = {
   invalid: "Tên vai trò hoặc danh sách quyền không hợp lệ.",
   duplicate: "Tên vai trò đã tồn tại.",
-  save: "Không thể cập nhật vai trò. Hãy kiểm tra dữ liệu rồi thử lại.",
+  forbidden: "Máy chủ từ chối thay đổi quyền cho vai trò này. Vai trò ADMIN là bất biến; hãy kiểm tra quyền quản trị và migration đã được áp dụng.",
+  save: "Không thể cập nhật vai trò. Hãy kiểm tra trạng thái migration và nhật ký lỗi rồi thử lại.",
 };
 
 export default async function EditRolePage({
@@ -54,7 +55,7 @@ export default async function EditRolePage({
   if (roleResult.error) {
     throw new Error("Không thể tải vai trò cần chỉnh sửa.");
   }
-  if (!roleResult.data || SYSTEM_ROLE_CODES.has(roleResult.data.ma_vai_tro)) {
+  if (!roleResult.data || IMMUTABLE_ROLE_CODES.has(roleResult.data.ma_vai_tro)) {
     notFound();
   }
   if (permissionsResult.error || mappingResult.error) {
@@ -70,7 +71,7 @@ export default async function EditRolePage({
       <section className="page-content">
         <PageHeader
           title="Sửa vai trò và quyền"
-          description="Cập nhật tên, mô tả và tập quyền đã chọn. Mã vai trò là định danh cố định."
+          description="Cập nhật tập quyền của vai trò bất cứ lúc nào. Mã vai trò luôn cố định."
           actions={
             <DraftCancelLink className="button-link button-secondary" href="/admin/roles" scopeKey={accountId} persistKeys={["role-edit-" + roleResult.data.id]}>
               Quay lại vai trò & quyền
@@ -94,29 +95,25 @@ export default async function EditRolePage({
                 <input readOnly value={roleResult.data.ma_vai_tro} />
               </label>
               <label>
-                Tên vai trò <span aria-hidden="true" className="required-indicator">*</span>
-                <input
-                  autoComplete="off"
-                  defaultValue={roleResult.data.ten_vai_tro}
-                  name="ten_vai_tro"
-                  required
-                />
+                Tên vai trò
+                <input readOnly value={roleResult.data.ten_vai_tro} />
+                <input name="ten_vai_tro" type="hidden" value={roleResult.data.ten_vai_tro} />
               </label>
               <label className="field-full">
                 Mô tả
-                <textarea defaultValue={roleResult.data.mo_ta ?? ""} name="mo_ta" />
+                <textarea readOnly value={roleResult.data.mo_ta ?? ""} />
+                <input name="mo_ta" type="hidden" value={roleResult.data.mo_ta ?? ""} />
               </label>
             </div>
             <p className="field-help">
-              Giữ nguyên mã giúp các mapping tài khoản và quy tắc ứng dụng không bị
-              thay đổi ngoài ý muốn. Không thể xóa vai trò hệ thống.
+              Mã, tên và mô tả vai trò không được thay đổi tại màn hình này. Bạn có thể cập nhật tập quyền bên dưới, kể cả với vai trò hệ thống.
             </p>
           </fieldset>
 
           <fieldset className="form-section">
             <legend>Quyền được gán</legend>
             <p className="field-help">
-              Lưu thay đổi sẽ thay thế tập quyền hiện tại trong cùng một transaction.
+              Lưu thay đổi sẽ thay thế tập quyền hiện tại trong cùng một transaction. Áp dụng cho DM, UM, SA và vai trò tùy chỉnh. Vai trò ADMIN và tập quyền của ADMIN không thể chỉnh sửa.
               Các permission chỉ có tác dụng ở policy/RPC kiểm tra permission tương ứng.
             </p>
             <SearchableCheckboxPicker

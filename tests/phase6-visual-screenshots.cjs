@@ -120,6 +120,7 @@ async function main() {
 
     const pages = [
       { name: "dashboard", path: "/dashboard", expectedHeading: "Xin chào," },
+      ...(captureOnly ? [] : [{ name: "agency-profile", path: "/profile", expectedHeading: "Hồ sơ đại lý" }]),
       { name: "customer-list", path: "/customers", expectedHeading: "Khách hàng" },
       { name: "customer-detail", path: "/customers/" + customer.id, expectedHeading: customerName },
       { name: "customer-form", path: "/customers/new", expectedHeading: "Thêm khách hàng" },
@@ -144,6 +145,25 @@ async function main() {
         const response = await page.goto(baseURL + route.path, { waitUntil: "domcontentloaded" });
         assert.ok(response?.ok(), route.name + " returned a non-2xx response");
         await page.locator("main h1").first().waitFor();
+
+        // Wait for the reports route to leave its streaming loading boundary before
+        // taking screenshots; otherwise fast DOMContentLoaded can capture skeletons.
+        if (route.name === "reports") {
+          await page.waitForFunction(
+            () => {
+              const main = document.querySelector("main");
+              const hasSummary = Boolean(main?.querySelector(".report-cards h2"));
+              const hasChart = Boolean(main?.querySelector("#report-charts-title"));
+              const hasEmptyState = [...(main?.querySelectorAll("h2, h3") ?? [])].some((heading) =>
+                heading.textContent?.includes("Chưa có dữ liệu biểu đồ"),
+              );
+              const hasError = Boolean(main?.querySelector('[role="alert"]'));
+              return hasSummary || hasChart || hasEmptyState || hasError;
+            },
+            null,
+            { timeout: 20_000 },
+          );
+        }
 
         const heading = (await page.locator("main h1").first().innerText()).trim();
         assert.ok(
@@ -177,21 +197,41 @@ async function main() {
         layouts.push({ page: route.name, viewport: viewport.label, heading, horizontalOverflow: hasHorizontalOverflow });
 
         if (!captureOnly && route.name === "reports" && viewport.width <= 768) {
+          // Personal-only roles (including SA without subordinate scope) correctly
+          // hide the team comparison table. Test horizontal scrolling only when that
+          // table is present; otherwise assert that the personal chart/empty state
+          // is rendered instead of waiting forever for a deliberately hidden table.
           const comparison = page.locator(".report-comparison-scroll");
-          await comparison.waitFor();
-          const tableWidth = await comparison.evaluate((element) => ({
-            clientWidth: element.clientWidth,
-            scrollWidth: element.scrollWidth,
-          }));
-          assert.ok(
-            tableWidth.scrollWidth > tableWidth.clientWidth,
-            "report comparison table must scroll within its container at " + viewport.label + ": " + JSON.stringify(tableWidth),
-          );
-          assert.equal(
-            await page.locator(".table-scroll-hint").isVisible(),
-            true,
-            "mobile report table must display its horizontal-scroll hint at " + viewport.label,
-          );
+          if (await comparison.count()) {
+            await comparison.waitFor({ state: "visible" });
+            const tableWidth = await comparison.evaluate((element) => ({
+              clientWidth: element.clientWidth,
+              scrollWidth: element.scrollWidth,
+            }));
+            assert.ok(
+              tableWidth.scrollWidth > tableWidth.clientWidth,
+              "report comparison table must scroll within its container at " + viewport.label + ": " + JSON.stringify(tableWidth),
+            );
+            assert.equal(
+              await page.locator(".table-scroll-hint").isVisible(),
+              true,
+              "mobile report table must display its horizontal-scroll hint at " + viewport.label,
+            );
+          } else {
+            const personalChart = page.locator("#report-charts-title");
+            const emptyChart = page.getByText("Chưa có dữ liệu biểu đồ", { exact: false });
+            await page.waitForFunction(() =>
+              Boolean(document.querySelector("#report-charts-title")) ||
+              [...document.querySelectorAll("h2, h3")].some((heading) =>
+                heading.textContent?.includes("Chưa có dữ liệu biểu đồ"),
+              ) ||
+              Boolean(document.querySelector('main [role="alert"]')),
+            );
+            assert.ok(
+              (await personalChart.count()) > 0 || (await emptyChart.count()) > 0,
+              "personal-only report must show chart or truthful empty/error state at " + viewport.label,
+            );
+          }
         }
 
         await page.screenshot({

@@ -33,6 +33,14 @@ select 'b4000000-0000-4000-8000-000000000004', id from public.vai_tro where ma_v
 insert into public.phan_cong_vai_tro (tai_khoan_id, vai_tro_id)
 select 'b4000000-0000-4000-8000-000000000005', id from public.vai_tro where ma_vai_tro = 'ADMIN';
 
+-- Simulate ADMIN explicitly granting the notification-management capability to DM.
+insert into public.phan_quyen_vai_tro (vai_tro_id, quyen_id, nguoi_gan_id)
+select vt.id, q.id, 'b4000000-0000-4000-8000-000000000005'::uuid
+from public.vai_tro vt
+join public.quyen q on q.ma_quyen = 'NOTIFICATION_MANAGE'
+where vt.ma_vai_tro = 'DM'
+on conflict (vai_tro_id, quyen_id) do nothing;
+
 insert into public.khach_hang (
   id, chu_so_huu_id, ma_khach_hang, ho_ten, so_dien_thoai, gioi_tinh,
   ngay_sinh, dia_chi, so_thich, ghi_chu, loai_khach_hang, tinh_trang, nhom_tinh_cach
@@ -77,9 +85,9 @@ select lives_ok(
 select lives_ok(
   $$
     delete from public.khach_hang
-    where ma_khach_hang = 'BATCH-KH-2'
+    where so_dien_thoai = '0950000002'
   $$,
-  'SA can delete an owned customer'
+  'SA can delete an owned customer by a stable business field; generated code is not client-controlled'
 );
 
 select throws_ok(

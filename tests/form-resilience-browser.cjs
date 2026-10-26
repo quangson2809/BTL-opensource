@@ -153,11 +153,11 @@ async function readDraft(page, key) {
     await page.goto(baseURL + "/register");
     await page.locator('form[data-persist-key="register"][data-draft-persistence-ready="true"]').waitFor();
     await page.locator('input[name="ho_ten"]').fill("Draft User");
-    await page.locator('input[name="email"]').fill("draft-register@example.test");
+    await page.locator('form[data-persist-key="register"] input[name="email"]').fill("draft-register@example.test");
     await page.locator('input[name="so_dien_thoai"]').fill("0900000000");
     await page.locator('input[name="ma_dai_ly"]').fill("DRAFT-SA-001");
     await page.locator('input[name="ma_nguoi_quan_ly"]').fill("DRAFT-DM-001");
-    await page.locator('input[name="password"]').fill("RegisterSecretForTest123");
+    await page.locator('form[data-persist-key="register"] input[name="password"]').fill("RegisterSecretForTest123");
     await waitForDraft(page, registerKey, "email", "draft-register@example.test");
 
     draft = await readDraft(page, registerKey);
@@ -165,7 +165,7 @@ async function readDraft(page, key) {
     assert.equal(JSON.stringify(draft).includes("RegisterSecretForTest123"), false);
     await page.reload();
     await page.waitForFunction(() => document.querySelector('input[name="ho_ten"]')?.value === "Draft User");
-    assert.equal(await page.locator('input[name="password"]').inputValue(), "");
+    assert.equal(await page.locator('form[data-persist-key="register"] input[name="password"]').inputValue(), "");
 
     const verifyKey = draftPrefix + "password-recovery-verify";
     await page.goto(baseURL + "/password/recovery/verify?email=otp-user%40example.test&status=otp-sent");

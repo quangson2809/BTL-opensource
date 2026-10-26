@@ -68,6 +68,7 @@ export default async function RegisterPage({ searchParams }: RegisterPageProps) 
           <PendingSubmitButton pendingLabel="Đang tạo tài khoản…">Tạo tài khoản</PendingSubmitButton>
         </GuardedForm>
 
+
         <p className="secondary-text">
           Đã có tài khoản? <Link href="/login">Đăng nhập</Link>
         </p>
