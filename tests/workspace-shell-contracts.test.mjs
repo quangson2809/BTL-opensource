@@ -3,6 +3,7 @@ import { readFile } from "node:fs/promises";
 import { test } from "node:test";
 
 const appFrame = await readFile(new URL("../src/components/app-frame.tsx", import.meta.url), "utf8");
+const dashboard = await readFile(new URL("../src/app/dashboard/page.tsx", import.meta.url), "utf8");
 const workspaceCss = await readFile(new URL("../src/app/workspace.css", import.meta.url), "utf8");
 const globalCss = await readFile(new URL("../src/app/globals.css", import.meta.url), "utf8");
 const picker = await readFile(new URL("../src/components/searchable-checkbox-picker.tsx", import.meta.url), "utf8");
@@ -107,4 +108,12 @@ test("required checkbox groups use supported descriptions instead of invalid ari
   assert.match(picker, /id=\{id \+ "-required-help"\}/);
   assert.match(picker, /id=\{id \+ "-selection-error"\}/);
   assert.match(picker, /Bắt buộc chọn ít nhất một mục/);
+});
+
+
+test("dashboard uses the shared account menu as the single logout entry point", () => {
+  assert.match(appFrame, /<form action=\{logout\}>/);
+  assert.match(appFrame, /Đăng xuất/);
+  assert.doesNotMatch(dashboard, /import \{ logout \} from "@\/app\/auth\/actions"/);
+  assert.doesNotMatch(dashboard, /action=\{logout\}/);
 });
