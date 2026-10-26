@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 
 import { executeLogin } from "@/lib/auth-login-flow.mjs";
 import { getAuthCallbackUrl } from "@/lib/auth-callback-url.mjs";
+import { meetsPasswordPolicy } from "@/lib/password-policy.mjs";
 import {
   createLoginFailureLog,
   type LoginFailureCategory,
@@ -126,16 +127,6 @@ async function logOtpDeliveryFailure(flow: "password-change" | "password-recover
     requestId,
   }));
 }
-
-function meetsPasswordPolicy(password: string) {
-  return (
-    password.length >= 8 &&
-    /[a-z]/.test(password) &&
-    /[A-Z]/.test(password) &&
-    /[0-9]/.test(password)
-  );
-}
-
 
 export async function register(formData: FormData) {
   const destination = await executeRegistration({
