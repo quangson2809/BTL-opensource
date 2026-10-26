@@ -1,3 +1,4 @@
+import { meetsPasswordPolicy } from "./password-policy.mjs";
 import {
   asRecord,
   errorStringField,
@@ -46,15 +47,6 @@ const RATE_LIMIT_CODES = new Set([
   "too_many_requests",
 ]);
 
-function passwordMeetsPolicy(password) {
-  return (
-    password.length >= 8 &&
-    /[a-z]/.test(password) &&
-    /[A-Z]/.test(password) &&
-    /[0-9]/.test(password)
-  );
-}
-
 export function validateRegistrationInput({
   fullName,
   email,
@@ -78,7 +70,7 @@ export function validateRegistrationInput({
     return "/register?error=invalid-email";
   }
 
-  if (!passwordMeetsPolicy(password)) {
+  if (!meetsPasswordPolicy(password)) {
     return "/register?error=weak-password";
   }
 
