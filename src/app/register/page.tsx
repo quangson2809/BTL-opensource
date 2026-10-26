@@ -48,7 +48,18 @@ export default async function RegisterPage({ searchParams }: RegisterPageProps) 
           </label>
           <label>
             Số điện thoại
-            <input name="so_dien_thoai" autoComplete="tel" required />
+            <input
+              name="so_dien_thoai"
+              type="tel"
+              inputMode="numeric"
+              autoComplete="tel"
+              minLength={10}
+              maxLength={10}
+              pattern="0[35789][0-9]{8}"
+              title="Nhập số điện thoại Việt Nam gồm 10 chữ số, bắt đầu bằng 03, 05, 07, 08 hoặc 09."
+              required
+            />
+            <span className="secondary-text">Nhập 10 chữ số, ví dụ 0901234567.</span>
           </label>
           <label>
             Mã đại lý

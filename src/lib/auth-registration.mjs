@@ -23,6 +23,7 @@ export const REGISTRATION_FAILURE_CATEGORIES = Object.freeze({
 export const REGISTRATION_ERROR_MESSAGES = Object.freeze({
   missing: "Vui lòng điền đầy đủ thông tin bắt buộc.",
   "invalid-email": "Email chưa đúng định dạng. Vui lòng kiểm tra lại.",
+  "invalid-phone": "Số điện thoại phải gồm 10 chữ số, bắt đầu bằng 03, 05, 07, 08 hoặc 09.",
   "weak-password": "Mật khẩu phải có ít nhất 8 ký tự, gồm chữ thường, chữ hoa và số.",
   "email-unavailable": "Email này chưa thể sử dụng để đăng ký. Nếu bạn đã có tài khoản, vui lòng đăng nhập hoặc dùng Quên mật khẩu.",
   "phone-in-use": "Số điện thoại này đã được sử dụng. Vui lòng kiểm tra lại.",
@@ -75,6 +76,10 @@ export function validateRegistrationInput({
 
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
     return "/register?error=invalid-email";
+  }
+
+  if (!/^0[35789]\d{8}$/.test(phone.trim())) {
+    return "/register?error=invalid-phone";
   }
 
   if (!meetsPasswordPolicy(password)) {

@@ -94,16 +94,28 @@ function fixture({
   };
 }
 
-test("registration validates required fields, email, and password before touching services", async () => {
+test("registration validates required fields, email, phone format, and password before touching services", async () => {
   assert.equal(validateRegistrationInput({ ...validInput, phone: "" }), "/register?error=missing");
   assert.equal(validateRegistrationInput({ ...validInput, managerCode: "" }), "/register?error=missing");
   assert.equal(validateRegistrationInput({ ...validInput, email: "bad-email" }), "/register?error=invalid-email");
+  assert.equal(validateRegistrationInput({ ...validInput, phone: "1234567890" }), "/register?error=invalid-phone");
+  assert.equal(validateRegistrationInput({ ...validInput, phone: "090123456" }), "/register?error=invalid-phone");
+  assert.equal(validateRegistrationInput({ ...validInput, phone: "09012345678" }), "/register?error=invalid-phone");
+  assert.equal(validateRegistrationInput({ ...validInput, phone: "+84901234567" }), "/register?error=invalid-phone");
+  for (const phone of ["0312345678", "0512345678", "0712345678", "0812345678", "0912345678"]) {
+    assert.equal(validateRegistrationInput({ ...validInput, phone }), null);
+  }
   assert.equal(validateRegistrationInput({ ...validInput, password: "short" }), "/register?error=weak-password");
 
   const missing = fixture();
   assert.equal(await missing.run({ phone: "" }), "/register?error=missing");
   assert.equal(missing.calls.phoneChecks.length, 0);
   assert.equal(missing.calls.signUps.length, 0);
+
+  const invalidPhone = fixture();
+  assert.equal(await invalidPhone.run({ phone: "1234567890" }), "/register?error=invalid-phone");
+  assert.equal(invalidPhone.calls.phoneChecks.length, 0);
+  assert.equal(invalidPhone.calls.signUps.length, 0);
 });
 
 test("invalid manager is rejected before Auth signup", async () => {
