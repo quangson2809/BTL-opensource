@@ -479,8 +479,12 @@
   background: var(--color-brand-soft);
 }
 .searchable-picker-option-copy {
+  display: grid;
+  min-width: 0;
   flex: 1 1 auto;
+  gap: 0.15rem;
   line-height: 1.4;
+  overflow-wrap: anywhere;
 }
 .searchable-picker-option-copy strong,
 .searchable-picker-option-copy .secondary-text {
@@ -488,7 +492,6 @@
 }
 .searchable-picker-option[hidden],
 .searchable-picker-group[hidden] { display: none !important; }
-.searchable-picker-option-copy { display: grid; min-width: 0; gap: 0.15rem; overflow-wrap: anywhere; }
 .searchable-picker-option-copy strong { color: var(--color-ink); font-size: 0.9rem; }
 .searchable-picker-option-copy .secondary-text { font-size: 0.8rem; }
 .searchable-picker-empty { margin: 0; border-radius: var(--radius-sm); padding: 0.75rem; color: var(--color-muted); background: var(--color-canvas); }

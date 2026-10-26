@@ -76,7 +76,8 @@ test("dashboard, personnel, reports, and role catalogue show meaningful empty st
     readSource("../src/app/admin/roles/page.tsx"),
   ]);
 
-  assert.ok(dashboard.includes('EmptyState title="Chưa có hoạt động"'));
+  assert.ok(dashboard.includes("<EmptyState"));
+  assert.ok(dashboard.includes('title="Chưa có hoạt động"'));
   assert.ok(personnel.includes("visibleRows.length === 0") && personnel.includes("Chưa có nhân sự trong phạm vi"));
   assert.ok(reports.includes("leaderboard.length > 0") && reports.includes("Chưa có dữ liệu xếp hạng"));
   assert.ok(roles.includes("visibleRoles.length === 0") && roles.includes("Chưa có vai trò"));
@@ -95,7 +96,6 @@ test("Phase 1 duplicate-submit protection and sensitive draft exclusions remain 
   assert.ok(persistence.includes("sessionStorage.setItem"));
 });
 
-
 test("representative workspace pages preserve error, detail, and form contracts", async () => {
   const [dashboard, customers, detail, createForm, reports] = await Promise.all([
     readSource("../src/app/dashboard/page.tsx"),
@@ -105,8 +105,8 @@ test("representative workspace pages preserve error, detail, and form contracts"
     readSource("../src/app/reports/page.tsx"),
   ]);
 
-  assert.ok(dashboard.includes("customerCountResult.error"));
-  assert.ok(dashboard.includes("recentActivityResult.error"));
+  assert.ok(dashboard.includes("dashboardQueriesFailed"));
+  assert.ok(dashboard.includes("result.error"));
   assert.ok(dashboard.includes('className="page-content dashboard-content"'));
   assert.ok(dashboard.includes('aria-labelledby="dashboard-recent-title"'));
 

@@ -1,3 +1,12 @@
+import { meetsPasswordPolicy } from "./password-policy.mjs";
+import {
+  asRecord,
+  errorStringField,
+  normalizeOccurredAt,
+  normalizeProviderErrorStatus,
+  safeLogToken,
+} from "./safe-error-logging.mjs";
+
 export const REGISTRATION_FAILURE_CATEGORIES = Object.freeze({
   INVALID_EMAIL: "INVALID_EMAIL",
   WEAK_PASSWORD: "WEAK_PASSWORD",
@@ -38,37 +47,6 @@ const RATE_LIMIT_CODES = new Set([
   "too_many_requests",
 ]);
 
-function asRecord(value) {
-  return value !== null && typeof value === "object" ? value : null;
-}
-
-function safeLogToken(value, maxLength = 96) {
-  if (typeof value !== "string") return null;
-  const token = value.trim();
-  if (
-    token.length === 0 ||
-    token.length > maxLength ||
-    !/^[A-Za-z0-9._:-]+$/.test(token)
-  ) {
-    return null;
-  }
-  return token;
-}
-
-function errorField(error, key) {
-  const value = asRecord(error)?.[key];
-  return typeof value === "string" ? value : null;
-}
-
-function passwordMeetsPolicy(password) {
-  return (
-    password.length >= 8 &&
-    /[a-z]/.test(password) &&
-    /[A-Z]/.test(password) &&
-    /[0-9]/.test(password)
-  );
-}
-
 export function validateRegistrationInput({
   fullName,
   email,
@@ -92,7 +70,7 @@ export function validateRegistrationInput({
     return "/register?error=invalid-email";
   }
 
-  if (!passwordMeetsPolicy(password)) {
+  if (!meetsPasswordPolicy(password)) {
     return "/register?error=weak-password";
   }
 
@@ -173,13 +151,8 @@ export function createRegistrationFailureLog({
   occurredAt,
   event = "auth.registration.failed",
 }) {
-  const status = asRecord(error)?.status;
-  const providerErrorStatus =
-    Number.isInteger(status) && status >= 100 && status <= 599 ? status : null;
-  const timestamp =
-    typeof occurredAt === "string" && !Number.isNaN(Date.parse(occurredAt))
-      ? occurredAt
-      : new Date().toISOString();
+  const providerErrorStatus = normalizeProviderErrorStatus(error);
+  const timestamp = normalizeOccurredAt(occurredAt);
 
   return {
     timestamp,
@@ -187,8 +160,8 @@ export function createRegistrationFailureLog({
     category,
     source: safeLogToken(source) ?? "unknown",
     requestId: safeLogToken(requestId, 128),
-    providerErrorCode: safeLogToken(errorField(error, "code")),
-    providerErrorName: safeLogToken(errorField(error, "name")),
+    providerErrorCode: safeLogToken(errorStringField(error, "code")),
+    providerErrorName: safeLogToken(errorStringField(error, "name")),
     providerErrorStatus,
   };
 }
