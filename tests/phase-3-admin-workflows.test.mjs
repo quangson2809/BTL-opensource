@@ -57,12 +57,13 @@ test("role forms use searchable grouped permission selection without changing pe
   const helper = await readSource("../src/lib/permission-groups.mjs");
   const actions = await readSource("../src/app/admin/roles/actions.ts");
 
-  assert.match(create, /SearchableCheckboxPicker/);
-  assert.match(edit, /SearchableCheckboxPicker/);
-  assert.match(create, /permissionGroupForCode/);
-  assert.match(edit, /permissionGroupForCode/);
+  assert.match(create, /RolePermissionPicker/);
+  assert.match(edit, /RolePermissionPicker/);
   assert.match(edit, /selectedPermissionIds/);
   assert.match(helper, /ACTIVITY: "Hoạt động"/);
+  const sharedPicker = await readSource("../src/components/admin/role-permission-picker.tsx");
+  assert.match(sharedPicker, /SearchableCheckboxPicker/);
+  assert.match(sharedPicker, /permissionGroupForCode/);
   assert.match(actions, /admin_create_role/);
   assert.match(actions, /admin_update_role/);
 });

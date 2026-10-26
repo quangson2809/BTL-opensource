@@ -5,8 +5,7 @@ import { FormDraftPersistence } from "@/components/form-draft-persistence";
 import { GuardedForm } from "@/components/guarded-form";
 import { PageHeader } from "@/components/page-header";
 import { PendingSubmitButton } from "@/components/pending-submit-button";
-import { SearchableCheckboxPicker } from "@/components/searchable-checkbox-picker";
-import { permissionGroupForCode } from "@/lib/permission-groups.mjs";
+import { RolePermissionPicker } from "@/components/admin/role-permission-picker";
 
 import { updateRole } from "@/app/admin/roles/actions";
 import { requireAdmin } from "@/lib/admin";
@@ -119,21 +118,9 @@ export default async function EditRolePage({
               Lưu thay đổi sẽ thay thế tập quyền hiện tại trong cùng một transaction.
               Các permission chỉ có tác dụng ở policy/RPC kiểm tra permission tương ứng.
             </p>
-            <SearchableCheckboxPicker
-              name="permission_ids"
+            <RolePermissionPicker
+              permissions={permissionsResult.data ?? []}
               selectedIds={Array.from(selectedPermissionIds)}
-              options={(permissionsResult.data ?? []).map((permission) => ({
-                id: permission.id,
-                label: permission.ma_quyen + " — " + permission.ten_quyen,
-                detail: permission.mo_ta ?? undefined,
-                searchText: permission.ma_quyen + " " + permission.ten_quyen + " " + (permission.mo_ta ?? ""),
-                group: permissionGroupForCode(permission.ma_quyen),
-              }))}
-              searchLabel="Tìm quyền"
-              searchPlaceholder="Mã quyền, tên quyền hoặc mô tả"
-              selectedCountLabel="quyền"
-              emptyMessage="Danh mục chưa có quyền để gán."
-              noResultsMessage="Không tìm thấy quyền phù hợp."
             />
           </fieldset>
 

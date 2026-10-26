@@ -4,8 +4,7 @@ import { FormDraftPersistence } from "@/components/form-draft-persistence";
 import { GuardedForm } from "@/components/guarded-form";
 import { PageHeader } from "@/components/page-header";
 import { PendingSubmitButton } from "@/components/pending-submit-button";
-import { SearchableCheckboxPicker } from "@/components/searchable-checkbox-picker";
-import { permissionGroupForCode } from "@/lib/permission-groups.mjs";
+import { RolePermissionPicker } from "@/components/admin/role-permission-picker";
 
 import { createRole } from "@/app/admin/roles/actions";
 import { requireAdmin } from "@/lib/admin";
@@ -92,21 +91,7 @@ export default async function NewRolePage({ searchParams }: NewRolePageProps) {
               Chọn trong danh mục hiện có. Việc gán quyền chỉ ảnh hưởng ở các policy/RPC
               có kiểm tra permission tương ứng; không tự tạo quyền truy cập màn hình mới.
             </p>
-            <SearchableCheckboxPicker
-              name="permission_ids"
-              options={(permissions ?? []).map((permission) => ({
-                id: permission.id,
-                label: permission.ma_quyen + " — " + permission.ten_quyen,
-                detail: permission.mo_ta ?? undefined,
-                searchText: permission.ma_quyen + " " + permission.ten_quyen + " " + (permission.mo_ta ?? ""),
-                group: permissionGroupForCode(permission.ma_quyen),
-              }))}
-              searchLabel="Tìm quyền"
-              searchPlaceholder="Mã quyền, tên quyền hoặc mô tả"
-              selectedCountLabel="quyền"
-              emptyMessage="Danh mục chưa có quyền để gán."
-              noResultsMessage="Không tìm thấy quyền phù hợp."
-            />
+            <RolePermissionPicker permissions={permissions ?? []} />
           </fieldset>
 
           <div className="form-actions">
