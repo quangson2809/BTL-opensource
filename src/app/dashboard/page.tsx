@@ -1,6 +1,5 @@
 import Link from "next/link";
 
-import { logout } from "@/app/auth/actions";
 import { PageHeader } from "@/components/page-header";
 import { EmptyState } from "@/components/empty-state";
 import { StatusBadge } from "@/components/status-badge";
@@ -50,7 +49,6 @@ export default async function DashboardPage() {
         <PageHeader
           title={"Xin chào, " + account.ho_ten}
           description="Tổng quan công việc và dữ liệu trong phạm vi quyền truy cập của bạn."
-          actions={<form action={logout}><button className="button-secondary" type="submit">Đăng xuất</button></form>}
         />
         <div className="dashboard-profile">
           <div>
