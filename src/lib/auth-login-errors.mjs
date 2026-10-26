@@ -1,3 +1,11 @@
+import {
+  asRecord,
+  errorStringField,
+  normalizeOccurredAt,
+  normalizeProviderErrorStatus,
+  safeLogToken,
+} from "./safe-error-logging.mjs";
+
 export const LOGIN_FAILURE_CATEGORIES = Object.freeze({
   INVALID_CREDENTIALS: "INVALID_CREDENTIALS",
   TEMPORARY_LOCK: "TEMPORARY_LOCK",
@@ -39,10 +47,6 @@ const RATE_LIMIT_CODES = new Set([
   "rate_limit_exceeded",
   "too_many_requests",
 ]);
-
-function asRecord(value) {
-  return value !== null && typeof value === "object" ? value : null;
-}
 
 export function classifyLoginAuthError(error) {
   const value = asRecord(error);
@@ -97,24 +101,6 @@ export function getLoginErrorQueryCode(category) {
   }
 }
 
-function safeLogToken(value, maxLength = 96) {
-  if (typeof value !== "string") return null;
-  const token = value.trim();
-  if (
-    token.length === 0 ||
-    token.length > maxLength ||
-    !/^[A-Za-z0-9._:-]+$/.test(token)
-  ) {
-    return null;
-  }
-  return token;
-}
-
-function errorField(error, key) {
-  const value = asRecord(error)?.[key];
-  return typeof value === "string" ? value : null;
-}
-
 export function createLoginFailureLog({
   category,
   error,
@@ -122,14 +108,8 @@ export function createLoginFailureLog({
   source = "supabase-auth",
   occurredAt,
 }) {
-  const status = asRecord(error)?.status;
-  const providerErrorStatus =
-    Number.isInteger(status) && status >= 100 && status <= 599 ? status : null;
-
-  const timestamp =
-    typeof occurredAt === "string" && !Number.isNaN(Date.parse(occurredAt))
-      ? occurredAt
-      : new Date().toISOString();
+  const providerErrorStatus = normalizeProviderErrorStatus(error);
+  const timestamp = normalizeOccurredAt(occurredAt);
 
   return {
     timestamp,
@@ -137,8 +117,8 @@ export function createLoginFailureLog({
     category,
     source: safeLogToken(source) ?? "unknown",
     requestId: safeLogToken(requestId, 128),
-    providerErrorCode: safeLogToken(errorField(error, "code")),
-    providerErrorName: safeLogToken(errorField(error, "name")),
+    providerErrorCode: safeLogToken(errorStringField(error, "code")),
+    providerErrorName: safeLogToken(errorStringField(error, "name")),
     providerErrorStatus,
   };
 }
