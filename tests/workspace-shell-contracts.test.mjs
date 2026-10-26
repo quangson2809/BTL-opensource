@@ -117,3 +117,10 @@ test("dashboard uses the shared account menu as the single logout entry point", 
   assert.doesNotMatch(dashboard, /import \{ logout \} from "@\/app\/auth\/actions"/);
   assert.doesNotMatch(dashboard, /action=\{logout\}/);
 });
+
+
+test("recipient picker option-copy styles have one authoritative responsive rule", () => {
+  assert.equal([...workspaceCss.matchAll(/^\.searchable-picker-option-copy\s*\{/gm)].length, 1);
+  assert.match(workspaceCss, /\.searchable-picker-option-copy\s*\{[^}]*display: grid;[^}]*min-width: 0;[^}]*flex: 1 1 auto;[^}]*overflow-wrap: anywhere;/s);
+  assert.match(workspaceCss, /\.searchable-picker-selected-list li\s*\{[^}]*max-width: 100%;[^}]*flex-wrap: wrap;/s);
+});
