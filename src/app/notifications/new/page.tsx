@@ -9,14 +9,9 @@ import { SearchableCheckboxPicker } from "@/components/searchable-checkbox-picke
 
 import { createNotification } from "@/app/notifications/actions";
 import { requireDm } from "@/lib/business";
+import { toNotificationRecipientOptions } from "@/lib/notification-recipient-options.mjs";
 
 export const dynamic = "force-dynamic";
-
-const accountStatusLabels: Record<string, string> = {
-  CHO_PHE_DUYET: "Chờ phê duyệt",
-  DANG_HOAT_DONG: "Đang hoạt động",
-  KHOA: "Đã khóa",
-};
 
 type NewNotificationPageProps = {
   searchParams: Promise<{ error?: string }>;
@@ -71,13 +66,7 @@ export default async function NewNotificationPage({
             <legend>Phạm vi nhận</legend>
             <SearchableCheckboxPicker
               name="recipient_ids"
-              options={(recipients ?? []).map((recipient) => ({
-                id: recipient.id,
-                label: recipient.ho_ten,
-                detail: recipient.ma_dai_ly + " · " + (accountStatusLabels[recipient.trang_thai] ?? "Chưa xác định trạng thái"),
-                searchText: recipient.ho_ten + " " + recipient.ma_dai_ly + " " + recipient.trang_thai,
-                group: "Người nhận trong phạm vi",
-              }))}
+              options={toNotificationRecipientOptions(recipients)}
               searchLabel="Tìm người nhận"
               searchPlaceholder="Tên hoặc mã đại lý"
               selectedCountLabel="người nhận"

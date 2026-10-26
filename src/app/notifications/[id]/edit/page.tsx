@@ -11,6 +11,7 @@ import { PendingSubmitButton } from "@/components/pending-submit-button";
 import { updateNotificationDraft } from "@/app/notifications/actions";
 import { requireDm } from "@/lib/business";
 import { isUuid } from "@/lib/input-validation.mjs";
+import { toNotificationRecipientOptions } from "@/lib/notification-recipient-options.mjs";
 
 export const dynamic = "force-dynamic";
 
@@ -65,12 +66,6 @@ export default async function EditNotificationPage({
   const unavailableSelectedRecipientCount = selectedRecipients.filter(
     (recipientId) => !availableRecipientIds.has(recipientId),
   ).length;
-  const accountStatusLabels: Record<string, string> = {
-    CHO_PHE_DUYET: "Chờ phê duyệt",
-    DANG_HOAT_DONG: "Đang hoạt động",
-    KHOA: "Đã khóa",
-  };
-
   return (
     <main>
       <section className="page-content">
@@ -130,13 +125,7 @@ export default async function EditNotificationPage({
             <SearchableCheckboxPicker
               name="recipient_ids"
               selectedIds={selectedRecipients}
-              options={(accountsResult.data ?? []).map((recipient) => ({
-                id: recipient.id,
-                label: recipient.ho_ten,
-                detail: recipient.ma_dai_ly + " · " + (accountStatusLabels[recipient.trang_thai] ?? "Chưa xác định trạng thái"),
-                searchText: recipient.ho_ten + " " + recipient.ma_dai_ly + " " + recipient.trang_thai,
-                group: "Người nhận trong phạm vi",
-              }))}
+              options={toNotificationRecipientOptions(accountsResult.data)}
               searchLabel="Tìm người nhận"
               searchPlaceholder="Tên hoặc mã đại lý"
               selectedCountLabel="người nhận"
