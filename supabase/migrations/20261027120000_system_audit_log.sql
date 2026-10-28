@@ -4,11 +4,22 @@
 create table if not exists public.nhat_ky_he_thong (
   id bigint generated always as identity primary key,
   actor_id uuid references public.tai_khoan(id) on delete set null,
-  action text not null check (action in ('INSERT', 'UPDATE', 'DELETE')),
+  action text not null,
   entity text not null,
   entity_id text,
   occurred_at timestamptz not null default now()
 );
+
+-- Keep this migration safe if the table was created by an earlier version.
+alter table public.nhat_ky_he_thong
+  drop constraint if exists nhat_ky_he_thong_action_check;
+alter table public.nhat_ky_he_thong
+  add constraint nhat_ky_he_thong_action_check
+  check (action in (
+    'INSERT', 'UPDATE', 'DELETE',
+    'LOGIN_SUCCESS', 'LOGIN_FAILURE', 'LOGOUT',
+    'AUTH_USER_CREATED', 'AUTH_USER_UPDATED'
+  ));
 
 create index if not exists nhat_ky_he_thong_occurred_at_idx
   on public.nhat_ky_he_thong (occurred_at desc, id desc);
@@ -56,6 +67,58 @@ end;
 $$;
 
 revoke all on function app_private.capture_system_audit_log() from public, anon, authenticated;
+
+-- Supabase Auth owns auth.users. This trigger captures user creation and
+-- meaningful identity/security changes, but deliberately does not copy email,
+-- phone, metadata, password hashes, tokens, or other user payloads.
+create or replace function app_private.capture_auth_user_audit_log()
+returns trigger
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  v_action text;
+  v_user_id text;
+begin
+  if tg_op = 'INSERT' then
+    v_action := 'AUTH_USER_CREATED';
+    v_user_id := new.id::text;
+  else
+    v_action := 'AUTH_USER_UPDATED';
+    v_user_id := new.id::text;
+  end if;
+
+  insert into public.nhat_ky_he_thong (actor_id, action, entity, entity_id)
+  values (null, v_action, 'auth.users', v_user_id);
+
+  if tg_op = 'DELETE' then
+    return old;
+  end if;
+  return new;
+end;
+$$;
+
+revoke all on function app_private.capture_auth_user_audit_log() from public, anon, authenticated;
+
+drop trigger if exists trg_audit_auth_users_insert on auth.users;
+create trigger trg_audit_auth_users_insert
+  after insert on auth.users
+  for each row execute function app_private.capture_auth_user_audit_log();
+
+drop trigger if exists trg_audit_auth_users_update on auth.users;
+create trigger trg_audit_auth_users_update
+  after update on auth.users
+  for each row
+  when (
+    old.email is distinct from new.email
+    or old.phone is distinct from new.phone
+    or old.raw_user_meta_data is distinct from new.raw_user_meta_data
+    or old.email_confirmed_at is distinct from new.email_confirmed_at
+    or old.phone_confirmed_at is distinct from new.phone_confirmed_at
+    or old.banned_until is distinct from new.banned_until
+  )
+  execute function app_private.capture_auth_user_audit_log();
 
 do $$
 declare
