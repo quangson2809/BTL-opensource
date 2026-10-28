@@ -33,6 +33,12 @@ const navigation: NavigationItem[] = [
     description: "Quản trị tài khoản",
     roles: ["ADMIN"],
   },
+  {
+    href: "/admin/audit-logs",
+    label: "Nhật ký hệ thống",
+    description: "Theo dõi thao tác hệ thống",
+    roles: ["ADMIN"],
+  },
 ];
 
 const workspacePrefixes = [
@@ -56,6 +62,7 @@ const routeLabels: Record<string, string> = {
   reports: "Báo cáo",
   admin: "Quản trị",
   accounts: "Tài khoản",
+  "audit-logs": "Nhật ký hệ thống",
   roles: "Vai trò và quyền",
   new: "Tạo mới",
   edit: "Chỉnh sửa",
