@@ -20,6 +20,26 @@ import { requireActiveBusinessAccount } from "@/lib/business";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 
+type AuthAuditAction = "LOGIN_SUCCESS" | "LOGIN_FAILURE" | "LOGOUT";
+
+async function recordAuthAuditEvent(action: AuthAuditAction, actorId: string | null) {
+  try {
+    const admin = createAdminClient();
+    const { error } = await admin.from("nhat_ky_he_thong").insert({
+      actor_id: actorId,
+      action,
+      entity: "auth",
+      entity_id: actorId,
+    });
+    if (error) {
+      console.warn(JSON.stringify({ event: "auth.audit_log.write_failed", action, code: error.code ?? null }));
+    }
+  } catch {
+    // Audit logging must never change the authentication result.
+    console.warn(JSON.stringify({ event: "auth.audit_log.write_failed", action }));
+  }
+}
+
 function field(formData: FormData, name: string) {
   const value = formData.get(name);
   return typeof value === "string" ? value.trim() : "";
@@ -47,6 +67,7 @@ async function logLoginFailure(
     // Logging must not break the authentication response if request context is unavailable.
   }
 
+  await recordAuthAuditEvent("LOGIN_FAILURE", null);
   console.warn(
     JSON.stringify(createLoginFailureLog({ category, error, requestId, source })),
   );
@@ -216,6 +237,7 @@ export async function login(formData: FormData) {
     redirect("/login?error=missing");
   }
 
+  let authenticatedUserId: string | null = null;
   const destination = await executeLogin({
     email,
     password,
@@ -224,6 +246,7 @@ export async function login(formData: FormData) {
       return {
         signInWithPassword: async (credentials) => {
           const result = await supabase.auth.signInWithPassword(credentials);
+          authenticatedUserId = result.data.user?.id ?? null;
           return {
             data: {
               user: result.data.user ? { id: result.data.user.id } : null,
@@ -256,6 +279,9 @@ export async function login(formData: FormData) {
     logFailure: logLoginFailure,
   });
 
+  if (destination === "/dashboard" && authenticatedUserId) {
+    await recordAuthAuditEvent("LOGIN_SUCCESS", authenticatedUserId);
+  }
   redirect(destination);
 }
 
@@ -389,6 +415,10 @@ export async function verifyRecoveryOtp(formData: FormData) {
 
 export async function logout() {
   const supabase = await createClient();
-  await supabase.auth.signOut({ scope: "local" });
+  const { data } = await supabase.auth.getUser();
+  const { error } = await supabase.auth.signOut({ scope: "local" });
+  if (!error) {
+    await recordAuthAuditEvent("LOGOUT", data.user?.id ?? null);
+  }
   redirect("/login");
 }
