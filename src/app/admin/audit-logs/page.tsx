@@ -12,16 +12,21 @@ type AuditLogPageProps = {
 type AuditLogRow = {
   id: number;
   actor_id: string | null;
-  action: "INSERT" | "UPDATE" | "DELETE";
+  action: string;
   entity: string;
   entity_id: string | null;
   occurred_at: string;
 };
 
-const actionLabels: Record<AuditLogRow["action"], string> = {
+const actionLabels: Record<string, string> = {
   INSERT: "Tạo",
   UPDATE: "Cập nhật",
   DELETE: "Xóa",
+  LOGIN_SUCCESS: "Đăng nhập thành công",
+  LOGIN_FAILURE: "Đăng nhập thất bại",
+  LOGOUT: "Đăng xuất",
+  AUTH_USER_CREATED: "Tạo tài khoản Auth",
+  AUTH_USER_UPDATED: "Cập nhật tài khoản Auth",
 };
 
 export default async function AuditLogPage({ searchParams }: AuditLogPageProps) {
@@ -57,12 +62,12 @@ export default async function AuditLogPage({ searchParams }: AuditLogPageProps) 
       <section className="page-content">
         <PageHeader
           title="Nhật ký hệ thống"
-          description="Theo dõi các thao tác tạo, cập nhật và xóa dữ liệu. Nhật ký không lưu bản sao thông tin khách hàng."
+          description="Theo dõi thao tác dữ liệu và sự kiện xác thực. Nhật ký không lưu mật khẩu, OTP, token hoặc bản sao thông tin khách hàng."
         />
         <form className="filter-grid" method="get" role="search">
           <label>
-            Tìm theo bảng, thao tác hoặc mã bản ghi
-            <input autoComplete="off" defaultValue={params.q ?? ""} name="q" placeholder="Ví dụ: tai_khoan, UPDATE" />
+            Tìm theo đối tượng, thao tác hoặc mã bản ghi
+            <input autoComplete="off" defaultValue={params.q ?? ""} name="q" placeholder="Ví dụ: tai_khoan, LOGIN_SUCCESS" />
           </label>
           <button type="submit">Tìm kiếm</button>
         </form>
@@ -72,7 +77,7 @@ export default async function AuditLogPage({ searchParams }: AuditLogPageProps) 
         {rows.length === 0 ? (
           <EmptyState
             title={search ? "Không tìm thấy nhật ký phù hợp" : "Chưa có nhật ký"}
-            description={search ? "Thử từ khóa khác." : "Nhật ký sẽ xuất hiện khi dữ liệu hệ thống được tạo, cập nhật hoặc xóa."}
+            description={search ? "Thử từ khóa khác." : "Nhật ký xuất hiện khi có thao tác dữ liệu hoặc sự kiện xác thực được ghi nhận."}
           />
         ) : (
           <div className="table-scroll">
@@ -91,7 +96,7 @@ export default async function AuditLogPage({ searchParams }: AuditLogPageProps) 
                   <tr key={row.id}>
                     <td>{new Date(row.occurred_at).toLocaleString("vi-VN", { dateStyle: "short", timeStyle: "medium", timeZone: "Asia/Ho_Chi_Minh" })}</td>
                     <td>{row.actor_id ?? "Tác vụ hệ thống / không xác định"}</td>
-                    <td>{actionLabels[row.action]}</td>
+                    <td>{actionLabels[row.action] ?? row.action}</td>
                     <td><code>{row.entity}</code></td>
                     <td>{row.entity_id ?? "—"}</td>
                   </tr>
