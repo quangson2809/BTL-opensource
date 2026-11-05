@@ -1,6 +1,6 @@
 # Kế hoạch hoàn thiện IDAILY
 
-Ngày lập: 06/11/2026 (Asia/Saigon). Trạng thái: kế hoạch đề xuất, chưa triển khai các thay đổi nghiệp vụ bên dưới.
+Ngày lập: 06/11/2026 (Asia/Saigon). Trạng thái: đang triển khai theo yêu cầu người dùng; tuyệt đối không tự merge vào `main`.
 
 ## 1. Mục tiêu và cơ sở
 
@@ -15,7 +15,7 @@ Ngày lập: 06/11/2026 (Asia/Saigon). Trạng thái: kế hoạch đề xuất,
 
 1. Mọi thay đổi nằm trên nhánh `fix/*`, `feature/*`, `test/*`, `chore/*` hoặc `docs/*`; không phát triển hay commit trực tiếp trên `main`.
 2. Mỗi nhánh có một mục tiêu và một PR riêng, mặc định base PR là `main`.
-3. Tạo nhánh mới từ `origin/main` vừa fetch. Nếu có phụ thuộc, chờ PR phụ thuộc merge vào `main`, fetch lại rồi mới tạo nhánh tiếp theo. Không lấy nhánh feature chưa merge làm base theo mặc định.
+3. Theo yêu cầu triển khai liên tục mà không tự merge, các nhánh được xếp chồng theo thứ tự R0–R11: nhánh sau bắt đầu từ commit đã kiểm chứng của nhánh trước. Nhánh đầu dựa trên baseline `origin/main`. Ghi rõ base/commit và phạm vi riêng của từng nhánh trong sổ triển khai; PR phụ thuộc trỏ vào nhánh trước để tránh diff trộn. Chỉ đổi base sang `main` sau khi người dùng merge các PR phụ thuộc.
 4. Không tạo trước toàn bộ nhánh ở baseline cũ; tên nhánh trong bảng là tên dự kiến.
 5. Dùng checkout hiện có trong môi trường cloud; không tạo Git worktree nếu người dùng chưa yêu cầu.
 6. Trước khi đổi nhánh, kiểm tra working tree và giữ nguyên thay đổi của người dùng; không dùng reset/clean để làm sạch ép buộc.
@@ -31,7 +31,7 @@ git fetch --no-tags origin main
 git switch -c fix/notification-permission-revocation FETCH_HEAD
 ```
 
-Không chạy `git switch main` để triển khai. Khi PR phụ thuộc đã merge, lặp lại quy trình fetch/tạo nhánh từ `main` cho phần việc tiếp theo. Không commit/push/merge/deploy tự động chỉ vì tài liệu có kế hoạch thực hiện chúng.
+Không chạy `git switch main` để triển khai. Người dùng đã cho phép triển khai tự động theo thứ tự và yêu cầu không tự merge. Cho phép lưu commit trên các nhánh công việc để bảo toàn từng phần; không merge hoặc push lên `main`. Hosted production không được coi là sẵn sàng nếu thiếu credential/cấu hình và bằng chứng thực tế.
 
 ## 3. Danh sách nhánh và thứ tự thực hiện
 
