@@ -17,6 +17,7 @@ type CustomersPageProps = {
     loai?: string;
     tinh_trang?: string;
     nhom?: string;
+    gioi_tinh?: string;
     status?: string;
     error?: string;
     page?: string;
@@ -26,6 +27,7 @@ type CustomersPageProps = {
 const customerTypes = new Set(["MUC_TIEU", "NUOI_DUONG", "DOI_TAC"]);
 const customerStatuses = new Set(["BẠN", "BÀN", "BÁN", "BÁM"]);
 const personalityGroups = new Set(["D", "I", "S", "C"]);
+const genders = new Set(["Nam", "Nữ", "Khác"]);
 
 export default async function CustomersPage({ searchParams }: CustomersPageProps) {
   const query = await searchParams;
@@ -35,18 +37,20 @@ export default async function CustomersPage({ searchParams }: CustomersPageProps
   const type = query.loai && customerTypes.has(query.loai) ? query.loai : "";
   const status = query.tinh_trang && customerStatuses.has(query.tinh_trang) ? query.tinh_trang : "";
   const group = query.nhom && personalityGroups.has(query.nhom) ? query.nhom : "";
+  const gender = query.gioi_tinh && genders.has(query.gioi_tinh) ? query.gioi_tinh : "";
 
   let countQuery = supabase
     .from("khach_hang")
     .select("id", { count: "exact", head: true });
   if (search) {
     countQuery = countQuery.or(
-      buildLiteralSearch(["ho_ten", "ma_khach_hang", "so_dien_thoai"], search),
+      buildLiteralSearch(["ho_ten", "ma_khach_hang", "so_dien_thoai", "dia_chi"], search),
     );
   }
   if (type) countQuery = countQuery.eq("loai_khach_hang", type);
   if (status) countQuery = countQuery.eq("tinh_trang", status);
   if (group) countQuery = countQuery.eq("nhom_tinh_cach", group);
+  if (gender) countQuery = countQuery.eq("gioi_tinh", gender);
 
   const { count, error: countError } = await countQuery;
   if (countError) {
@@ -69,20 +73,21 @@ export default async function CustomersPage({ searchParams }: CustomersPageProps
     .range(firstRow, firstRow + pageSize - 1);
   if (search) {
     customersQuery = customersQuery.or(
-      buildLiteralSearch(["ho_ten", "ma_khach_hang", "so_dien_thoai"], search),
+      buildLiteralSearch(["ho_ten", "ma_khach_hang", "so_dien_thoai", "dia_chi"], search),
     );
   }
   if (type) customersQuery = customersQuery.eq("loai_khach_hang", type);
   if (status) customersQuery = customersQuery.eq("tinh_trang", status);
   if (group) customersQuery = customersQuery.eq("nhom_tinh_cach", group);
+  if (gender) customersQuery = customersQuery.eq("gioi_tinh", gender);
 
   const { data: customers, error } = await customersQuery;
   if (error) {
     throw new Error("Không thể tải danh sách khách hàng.");
   }
 
-  const filterParams = { q: search, loai: type, tinh_trang: status, nhom: group };
-  const hasFilters = Boolean(search || type || status || group);
+  const filterParams = { q: search, loai: type, tinh_trang: status, nhom: group, gioi_tinh: gender };
+  const hasFilters = Boolean(search || type || status || group || gender);
 
   return (
     <main>
@@ -106,7 +111,7 @@ export default async function CustomersPage({ searchParams }: CustomersPageProps
             <input
               defaultValue={query.q ?? ""}
               name="q"
-              placeholder="Tên, mã hoặc số điện thoại"
+              placeholder="Tên, mã, số điện thoại hoặc địa chỉ"
             />
           </label>
           <label>
@@ -138,6 +143,15 @@ export default async function CustomersPage({ searchParams }: CustomersPageProps
               <option value="C">C</option>
             </select>
           </label>
+          <label>
+            Giới tính
+            <select defaultValue={gender} name="gioi_tinh">
+              <option value="">Tất cả</option>
+              <option value="Nam">Nam</option>
+              <option value="Nữ">Nữ</option>
+              <option value="Khác">Khác</option>
+            </select>
+          </label>
           <button type="submit">Lọc</button>
         </form>
 
@@ -154,6 +168,7 @@ export default async function CustomersPage({ searchParams }: CustomersPageProps
             ...(type ? [{ key: "loai", label: "Loại", value: type === "MUC_TIEU" ? "Mục tiêu" : type === "NUOI_DUONG" ? "Nuôi dưỡng" : "Đối tác" }] : []),
             ...(status ? [{ key: "tinh_trang", label: "Tình trạng", value: status }] : []),
             ...(group ? [{ key: "nhom", label: "Nhóm tính cách", value: group }] : []),
+            ...(gender ? [{ key: "gioi_tinh", label: "Giới tính", value: gender }] : []),
           ]}
         />
 

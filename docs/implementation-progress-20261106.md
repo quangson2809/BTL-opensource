@@ -11,3 +11,5 @@ Không merge/push lên main. Các nhánh xếp chồng; base của mỗi phần 
 R1 — Business impact: NO, khôi phục enforcement đã có trong contract. Regression mới thất bại 3 ca trên baseline trước sửa và đạt 9/9 sau migration. Các thay đổi nằm trong migration forward `20261106010000_notification_permission_revocation.sql`; không sửa migration cũ. Hosted chưa áp dụng.
 
 R2 — `fix/search-literal-handling`, base R1. Business impact: NO, sửa tìm kiếm theo literal. PASS: 125 contracts, type/lint/security/build và integration PostgREST thật cho email, mã, dấu nháy/ngoặc/backslash/wildcard, count và anonymous denial. Chuyển query OR sang regex imatch đã escape literal, quote giá trị PostgREST độc lập; caller không đưa tên cột từ input.
+
+R3 — `feature/customer-search-filters`, base R2. Business impact: NO, hoàn thiện PDF 3.6/3.7. PASS: truy vấn thật địa chỉ + giới tính + DISC, count trước phân trang; 125 contracts, lint/type/security/build. Giới tính được kiểm tra allow-list, count/list và filter chips giữ cùng tham số.

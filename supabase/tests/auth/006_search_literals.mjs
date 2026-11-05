@@ -35,3 +35,12 @@ const denied = await createClient(process.env.API_URL, process.env.ANON_KEY, opt
 assert.equal(denied.error?.code, "42501", "anonymous requests remain denied at the table boundary");
 assert.equal(denied.data, null);
 console.log("Literal search integration: email, codes, punctuation, regex/wildcards, counts and anonymous isolation PASS.");
+
+const address = `Địa chỉ riêng ${suffix}`;
+assert.equal((await client.from("khach_hang").insert(["Nam", "Nữ", "Nữ"].map((gender, index) => ({ chu_so_huu_id: accountId, ho_ten: "Filter fixture", so_dien_thoai: `GF-${suffix}-${index}`, gioi_tinh: gender, ngay_sinh: "1990-01-01", dia_chi: address, so_thich: "Sách", ghi_chu: "Filter test", loai_khach_hang: "MUC_TIEU", tinh_trang: "BẠN", nhom_tinh_cach: "D" })))).error, null);
+const filtered = await client.from("khach_hang").select("id,gioi_tinh", { count: "exact" }).or(buildLiteralSearch(["ho_ten", "dia_chi"], address)).eq("gioi_tinh", "Nữ").eq("nhom_tinh_cach", "D").order("id").range(0, 0);
+assert.equal(filtered.error, null);
+assert.equal(filtered.count, 2, "count covers the combined filters before pagination");
+assert.equal(filtered.data.length, 1);
+assert.equal(filtered.data[0].gioi_tinh, "Nữ");
+console.log("Customer filters integration: address + gender + DISC with count and pagination PASS.");
