@@ -65,13 +65,14 @@ export default async function EditRolePage({
   const selectedPermissionIds = new Set(
     (mappingResult.data ?? []).map((mapping) => mapping.quyen_id),
   );
+  const isSystemRole = ["ADMIN", "DM", "UM", "SA"].includes(roleResult.data.ma_vai_tro);
 
   return (
     <main>
       <section className="page-content">
         <PageHeader
           title="Sửa vai trò và quyền"
-          description="Cập nhật tập quyền của vai trò bất cứ lúc nào. Mã vai trò luôn cố định."
+          description="Cập nhật thông tin vai trò tùy chỉnh và tập quyền được phép quản lý. Mã vai trò luôn cố định."
           actions={
             <DraftCancelLink className="button-link button-secondary" href="/admin/roles" scopeKey={accountId} persistKeys={["role-edit-" + roleResult.data.id]}>
               Quay lại vai trò & quyền
@@ -96,17 +97,16 @@ export default async function EditRolePage({
               </label>
               <label>
                 Tên vai trò
-                <input readOnly value={roleResult.data.ten_vai_tro} />
-                <input name="ten_vai_tro" type="hidden" value={roleResult.data.ten_vai_tro} />
+                <input name="ten_vai_tro" readOnly={isSystemRole} defaultValue={roleResult.data.ten_vai_tro} required />
               </label>
               <label className="field-full">
                 Mô tả
-                <textarea readOnly value={roleResult.data.mo_ta ?? ""} />
-                <input name="mo_ta" type="hidden" value={roleResult.data.mo_ta ?? ""} />
+                <textarea name="mo_ta" readOnly={isSystemRole} defaultValue={roleResult.data.mo_ta ?? ""} />
               </label>
             </div>
             <p className="field-help">
-              Mã, tên và mô tả vai trò không được thay đổi tại màn hình này. Bạn có thể cập nhật tập quyền bên dưới, kể cả với vai trò hệ thống.
+              Mã vai trò luôn cố định. Vai trò tùy chỉnh được sửa tên và mô tả;
+              DM, UM và SA chỉ được cập nhật tập quyền, giữ nguyên tên và mô tả.
             </p>
           </fieldset>
 

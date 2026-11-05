@@ -17,3 +17,5 @@ R3 — `feature/customer-search-filters`, base R2. Business impact: NO, hoàn th
 R4 — `fix/checkbox-picker-accessibility`, base R3. Business impact: NO. PASS: lint không còn cảnh báo ARIA; 125 contracts/type/security/build; Chromium thật ở 375/768/1024/1440px cho required error/focus, Space toggle, giữ lựa chọn khi lọc, bỏ chọn và picker permission. Chưa thực hiện smoke bằng phần mềm screen reader, không coi accessibility toàn hệ thống là PASS chỉ từ các kiểm tra này.
 
 R5 — `chore/dependency-security-updates`, base R4. Business impact: NO. PASS: frozen install, 0 vulnerabilities full audit, projectService allow/deny trên minimatch 11.0.1; lint/type/contracts/security/build. Xem dependency-security-20261106.md để biết phạm vi override parser.
+
+R6 — `fix/role-editor-contract`, base R5. Business impact: NO, khớp giao diện với RPC sẵn có. PASS: 126 contracts/lint/type/security/build; browser lưu metadata custom role, metadata DM read-only, ADMIN không có editor và SA bị từ chối. Bảng contract hiện hành nằm trong role-editor-contract.md; không viết lại lịch sử quyết định BC-005.

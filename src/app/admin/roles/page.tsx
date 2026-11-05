@@ -86,7 +86,7 @@ export default async function RolesPage({ searchParams }: RolesPageProps) {
       <section className="page-content">
         <PageHeader
           title="Vai trò & quyền"
-          description="Xem danh mục quyền và quản lý tập quyền của mọi vai trò, bao gồm vai trò hệ thống."
+          description="Quản lý vai trò tùy chỉnh và tập quyền của DM, UM, SA. Vai trò ADMIN được bảo vệ."
           actions={
             <>
               <Link className="button-link" href="/admin/roles/new">
