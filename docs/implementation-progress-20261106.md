@@ -15,3 +15,5 @@ R2 — `fix/search-literal-handling`, base R1. Business impact: NO, sửa tìm k
 R3 — `feature/customer-search-filters`, base R2. Business impact: NO, hoàn thiện PDF 3.6/3.7. PASS: truy vấn thật địa chỉ + giới tính + DISC, count trước phân trang; 125 contracts, lint/type/security/build. Giới tính được kiểm tra allow-list, count/list và filter chips giữ cùng tham số.
 
 R4 — `fix/checkbox-picker-accessibility`, base R3. Business impact: NO. PASS: lint không còn cảnh báo ARIA; 125 contracts/type/security/build; Chromium thật ở 375/768/1024/1440px cho required error/focus, Space toggle, giữ lựa chọn khi lọc, bỏ chọn và picker permission. Chưa thực hiện smoke bằng phần mềm screen reader, không coi accessibility toàn hệ thống là PASS chỉ từ các kiểm tra này.
+
+R5 — `chore/dependency-security-updates`, base R4. Business impact: NO. PASS: frozen install, 0 vulnerabilities full audit, projectService allow/deny trên minimatch 11.0.1; lint/type/contracts/security/build. Xem dependency-security-20261106.md để biết phạm vi override parser.
