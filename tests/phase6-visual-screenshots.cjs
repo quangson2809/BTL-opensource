@@ -105,7 +105,7 @@ async function main() {
     so_khach_hang_ket_noi: 1,
   }, "create temporary visual activity");
 
-  const browser = await chromium.launch({ headless: true });
+  const browser = await chromium.launch({ headless: true, executablePath: process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH });
   const page = await browser.newPage({ viewport: { width: 1440, height: 900 } });
   page.setDefaultTimeout(15_000);
   page.on("pageerror", (error) => console.error("PHASE6_VISUAL_PAGE_ERROR", error.stack || error.message));

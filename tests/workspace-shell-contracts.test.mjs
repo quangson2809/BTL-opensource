@@ -103,7 +103,8 @@ test("required checkbox groups use supported descriptions instead of invalid ari
   assert.doesNotMatch(picker, /aria-required=/);
   assert.match(picker, /required \? id \+ "-required-help" : null/);
   assert.match(picker, /selectionError \? id \+ "-selection-error" : null/);
-  assert.match(picker, /aria-invalid=\{selectionError \|\| undefined\}/);
+  assert.doesNotMatch(picker, /aria-invalid=/);
+  assert.match(picker, /aria-describedby=\{selectionError \? id \+ "-selection-error"/);
   assert.match(picker, /aria-controls=\{id \+ "-list"\}/);
   assert.match(picker, /id=\{id \+ "-required-help"\}/);
   assert.match(picker, /id=\{id \+ "-selection-error"\}/);

@@ -115,6 +115,7 @@ export function SearchableCheckboxPicker({
         <input
           autoComplete="off"
           aria-controls={id + "-list"}
+          aria-describedby={selectionError ? id + "-selection-error" : undefined}
           id={id + "-search"}
           onChange={(event) => setQuery(event.target.value)}
           placeholder={searchPlaceholder}
@@ -142,7 +143,6 @@ export function SearchableCheckboxPicker({
               required ? id + "-required-help" : null,
               selectionError ? id + "-selection-error" : null,
             ].filter(Boolean).join(" ") || undefined}
-            aria-invalid={selectionError || undefined}
             aria-label={searchLabel}
             className="searchable-picker-list"
             id={id + "-list"}

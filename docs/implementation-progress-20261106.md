@@ -13,3 +13,5 @@ R1 — Business impact: NO, khôi phục enforcement đã có trong contract. Re
 R2 — `fix/search-literal-handling`, base R1. Business impact: NO, sửa tìm kiếm theo literal. PASS: 125 contracts, type/lint/security/build và integration PostgREST thật cho email, mã, dấu nháy/ngoặc/backslash/wildcard, count và anonymous denial. Chuyển query OR sang regex imatch đã escape literal, quote giá trị PostgREST độc lập; caller không đưa tên cột từ input.
 
 R3 — `feature/customer-search-filters`, base R2. Business impact: NO, hoàn thiện PDF 3.6/3.7. PASS: truy vấn thật địa chỉ + giới tính + DISC, count trước phân trang; 125 contracts, lint/type/security/build. Giới tính được kiểm tra allow-list, count/list và filter chips giữ cùng tham số.
+
+R4 — `fix/checkbox-picker-accessibility`, base R3. Business impact: NO. PASS: lint không còn cảnh báo ARIA; 125 contracts/type/security/build; Chromium thật ở 375/768/1024/1440px cho required error/focus, Space toggle, giữ lựa chọn khi lọc, bỏ chọn và picker permission. Chưa thực hiện smoke bằng phần mềm screen reader, không coi accessibility toàn hệ thống là PASS chỉ từ các kiểm tra này.
