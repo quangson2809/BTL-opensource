@@ -7,7 +7,7 @@ import { StatusBadge } from "@/components/status-badge";
 import { ListPagination, ResultSummary } from "@/components/list-controls";
 
 import { requireBusinessAccount } from "@/lib/business";
-import { parsePositivePage, sanitizePostgrestOrSearch } from "@/lib/list-query.mjs";
+import { buildLiteralSearch, parsePositivePage, sanitizePostgrestOrSearch } from "@/lib/list-query.mjs";
 
 export const dynamic = "force-dynamic";
 
@@ -41,7 +41,7 @@ export default async function CustomersPage({ searchParams }: CustomersPageProps
     .select("id", { count: "exact", head: true });
   if (search) {
     countQuery = countQuery.or(
-      `ho_ten.ilike.%${search}%,ma_khach_hang.ilike.%${search}%,so_dien_thoai.ilike.%${search}%`,
+      buildLiteralSearch(["ho_ten", "ma_khach_hang", "so_dien_thoai"], search),
     );
   }
   if (type) countQuery = countQuery.eq("loai_khach_hang", type);
@@ -69,7 +69,7 @@ export default async function CustomersPage({ searchParams }: CustomersPageProps
     .range(firstRow, firstRow + pageSize - 1);
   if (search) {
     customersQuery = customersQuery.or(
-      `ho_ten.ilike.%${search}%,ma_khach_hang.ilike.%${search}%,so_dien_thoai.ilike.%${search}%`,
+      buildLiteralSearch(["ho_ten", "ma_khach_hang", "so_dien_thoai"], search),
     );
   }
   if (type) customersQuery = customersQuery.eq("loai_khach_hang", type);

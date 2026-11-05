@@ -15,7 +15,7 @@ import {
   sendNotification,
 } from "@/app/notifications/actions";
 import { requireBusinessAccount } from "@/lib/business";
-import { parsePositivePage, sanitizePostgrestOrSearch } from "@/lib/list-query.mjs";
+import { buildLiteralSearch, parsePositivePage, sanitizePostgrestOrSearch } from "@/lib/list-query.mjs";
 
 export const dynamic = "force-dynamic";
 
@@ -51,7 +51,7 @@ export default async function NotificationsPage({
         .from("thong_bao")
         .select("id", { count: "exact", head: true });
       if (search) {
-        countQuery = countQuery.or(`tieu_de.ilike.%${search}%,noi_dung.ilike.%${search}%`);
+        countQuery = countQuery.or(buildLiteralSearch(["tieu_de", "noi_dung"], search));
       }
       if (type) countQuery = countQuery.eq("loai", type);
       if (status) countQuery = countQuery.eq("trang_thai", status);
@@ -77,7 +77,7 @@ export default async function NotificationsPage({
     .range(firstRow, firstRow + pageSize - 1);
   if (search) {
     notificationQuery = notificationQuery.or(
-      `tieu_de.ilike.%${search}%,noi_dung.ilike.%${search}%`,
+      buildLiteralSearch(["tieu_de", "noi_dung"], search),
     );
   }
   if (type) notificationQuery = notificationQuery.eq("loai", type);

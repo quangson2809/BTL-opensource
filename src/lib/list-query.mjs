@@ -1,6 +1,16 @@
 export function sanitizePostgrestOrSearch(value) {
-  // A conservative allow-list prevents user input from becoming PostgREST filter syntax.
-  return (value ?? "").trim().replace(/[^\p{L}\p{N}\s@+-]/gu, " ").trim();
+  return (value ?? "").replace(/[\u0000-\u001f\u007f-\u009f]/gu, " ").trim().slice(0, 200);
+}
+
+// Quote the PostgREST value separately from escaping the PostgreSQL regex.
+// imatch avoids the '*' alias expansion performed by PostgREST's ilike parser.
+export function buildLiteralSearch(columns, search) {
+  if (!columns.length || columns.some((column) => !/^[a-z][a-z0-9_]*$/i.test(column))) {
+    throw new Error("Search columns must be trusted identifiers");
+  }
+  const pattern = search.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const quoted = '"' + pattern.replace(/\\/g, "\\\\").replace(/"/g, '\\"') + '"';
+  return columns.map((column) => `${column}.imatch.${quoted}`).join(",");
 }
 
 export function parsePositivePage(value) {

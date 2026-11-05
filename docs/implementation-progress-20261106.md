@@ -9,3 +9,5 @@ Không merge/push lên main. Các nhánh xếp chồng; base của mỗi phần 
 | R1 | fix/notification-permission-revocation | docs/requirements-acceptance-baseline | PASS: 338 pgTAP assertions sau reset; 5 Auth suites; 123 contracts; lint/type/security/build. Cảnh báo ARIA cũ dành cho R4. Browser đa vai trò sẽ xác minh thêm tại R10 |
 
 R1 — Business impact: NO, khôi phục enforcement đã có trong contract. Regression mới thất bại 3 ca trên baseline trước sửa và đạt 9/9 sau migration. Các thay đổi nằm trong migration forward `20261106010000_notification_permission_revocation.sql`; không sửa migration cũ. Hosted chưa áp dụng.
+
+R2 — `fix/search-literal-handling`, base R1. Business impact: NO, sửa tìm kiếm theo literal. PASS: 125 contracts, type/lint/security/build và integration PostgREST thật cho email, mã, dấu nháy/ngoặc/backslash/wildcard, count và anonymous denial. Chuyển query OR sang regex imatch đã escape literal, quote giá trị PostgREST độc lập; caller không đưa tên cột từ input.

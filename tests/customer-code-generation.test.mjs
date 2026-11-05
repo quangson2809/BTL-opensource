@@ -55,5 +55,5 @@ test("edit form keeps the code read-only while detail and list still use it", ()
   assert.doesNotMatch(editForm, /name=["']ma_khach_hang["']/);
   assert.match(editForm, /customer\.ma_khach_hang/);
   assert.match(detail, /customer\.ma_khach_hang/);
-  assert.match(list, /ma_khach_hang\.ilike/);
+  assert.match(list, /buildLiteralSearch\(\["ho_ten", "ma_khach_hang", "so_dien_thoai"\]/);
 });

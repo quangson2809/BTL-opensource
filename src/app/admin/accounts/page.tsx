@@ -5,7 +5,7 @@ import { PageHeader } from "@/components/page-header";
 import { StatusBadge } from "@/components/status-badge";
 import { ListPagination, ResultSummary } from "@/components/list-controls";
 import { EmptyState } from "@/components/empty-state";
-import { parsePositivePage, sanitizePostgrestOrSearch } from "@/lib/list-query.mjs";
+import { buildLiteralSearch, parsePositivePage, sanitizePostgrestOrSearch } from "@/lib/list-query.mjs";
 
 export const dynamic = "force-dynamic";
 
@@ -26,7 +26,7 @@ export default async function AccountsPage({ searchParams }: AccountsPageProps) 
     .select("id", { count: "exact", head: true });
   if (search) {
     countQuery = countQuery.or(
-      `ho_ten.ilike.%${search}%,email.ilike.%${search}%,ma_dai_ly.ilike.%${search}%`,
+      buildLiteralSearch(["ho_ten", "email", "ma_dai_ly"], search),
     );
   }
   if (status) countQuery = countQuery.eq("trang_thai", status);
@@ -50,7 +50,7 @@ export default async function AccountsPage({ searchParams }: AccountsPageProps) 
     .range(firstRow, firstRow + pageSize - 1);
   if (search) {
     accountsQuery = accountsQuery.or(
-      `ho_ten.ilike.%${search}%,email.ilike.%${search}%,ma_dai_ly.ilike.%${search}%`,
+      buildLiteralSearch(["ho_ten", "email", "ma_dai_ly"], search),
     );
   }
   if (status) accountsQuery = accountsQuery.eq("trang_thai", status);
