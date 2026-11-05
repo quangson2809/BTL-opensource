@@ -45,7 +45,7 @@ test("notification create and edit use the same recipient picker and preserve dr
 test("sent notifications remain read-only in the listing and only owned drafts expose edit/delete/send", async () => {
   const source = await readSource("../src/app/notifications/page.tsx");
   assert.match(source, /const isDraft = notification\.trang_thai === "CHƯA_GỬI"/);
-  assert.match(source, /owned && isDraft/);
+  assert.match(source, /owned && isDraft && canManage/);
   assert.match(source, /Sửa bản nháp/);
   assert.match(source, /Xóa bản nháp/);
   assert.match(source, /Gửi thông báo/);

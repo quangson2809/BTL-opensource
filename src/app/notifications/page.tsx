@@ -43,8 +43,9 @@ export default async function NotificationsPage({
   const search = sanitizePostgrestOrSearch(query.q);
   const type = query.loai && notificationTypes.has(query.loai) ? query.loai : "";
   const status = query.trang_thai && notificationStatuses.has(query.trang_thai) ? query.trang_thai : "";
-  const [dmResult, countResult] = await Promise.all([
+  const [dmResult, permissionResult, countResult] = await Promise.all([
     supabase.rpc("has_role", { role_code: "DM" }),
+    supabase.rpc("has_permission", { permission_code: "NOTIFICATION_MANAGE" }),
     (async () => {
       let countQuery = supabase
         .from("thong_bao")
@@ -58,7 +59,7 @@ export default async function NotificationsPage({
     })(),
   ]);
 
-  if (dmResult.error || countResult.error) {
+  if (dmResult.error || permissionResult.error || countResult.error) {
     throw new Error("Không thể tải thông báo trong phạm vi được cấp quyền.");
   }
 
@@ -101,6 +102,7 @@ export default async function NotificationsPage({
   }
 
   const isDm = dmResult.data === true;
+  const canManage = isDm && permissionResult.data === true;
   const recipientRows = recipientResult.data ?? [];
   const rowsByNotification = new Map<string, typeof recipientRows>();
   for (const row of recipientRows) {
@@ -118,7 +120,7 @@ export default async function NotificationsPage({
       <section className="card wide-card">
         <PageHeader
           actions={
-            isDm ? (
+            canManage ? (
               <Link className="button-link" href="/notifications/new">
                 Tạo thông báo
               </Link>
@@ -174,10 +176,10 @@ export default async function NotificationsPage({
         <div className="stack">
           {total === 0 ? (
             <EmptyState
-              actionHref={isDm && !hasFilters ? "/notifications/new" : undefined}
-              actionLabel={isDm && !hasFilters ? "Tạo thông báo đầu tiên" : undefined}
+              actionHref={canManage && !hasFilters ? "/notifications/new" : undefined}
+              actionLabel={canManage && !hasFilters ? "Tạo thông báo đầu tiên" : undefined}
               description={
-                isDm && !hasFilters
+                canManage && !hasFilters
                   ? "Tạo bản nháp rồi kiểm tra người nhận trước khi gửi."
                   : "Thông báo sẽ xuất hiện tại đây khi có thông báo trong phạm vi của bạn. Thử thay đổi bộ lọc nếu đang tìm kiếm."
               }
@@ -206,7 +208,7 @@ export default async function NotificationsPage({
                     Người nhận: {recipientRowsForNotification.length}
                   </p>
                 ) : null}
-                {owned && isDraft ? (
+                {owned && isDraft && canManage ? (
                   <div className="actions">
                     <Link href={"/notifications/" + notification.id + "/edit"}>
                       Sửa bản nháp

@@ -54,7 +54,7 @@ test("successful empty lists distinguish no-results and have query-error guards"
   const cases = [
     ["../src/app/customers/page.tsx", "if (countError)", 'title={!hasFilters ? "Chưa có khách hàng" : "Không tìm thấy kết quả"}'],
     ["../src/app/activities/page.tsx", "if (countError)", 'title={!hasFilters ? "Chưa có hoạt động" : "Không tìm thấy kết quả"}'],
-    ["../src/app/notifications/page.tsx", "if (dmResult.error || countResult.error)", 'title={hasFilters ? "Không tìm thấy kết quả"'],
+    ["../src/app/notifications/page.tsx", "if (dmResult.error || permissionResult.error || countResult.error)", 'title={hasFilters ? "Không tìm thấy kết quả"'],
     ["../src/app/admin/accounts/page.tsx", "if (countError)", 'title={hasFilters ? "Không tìm thấy kết quả"'],
   ];
 
