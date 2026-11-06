@@ -20,7 +20,8 @@
     "next": "16.4.2",
     "react": "19.3.0",
     "react-dom": "19.3.0",
-    "server-only": "0.0.1"
+    "server-only": "0.0.1",
+    "write-excel-file": "4.1.1"
   },
   "overrides": {
     "@typescript-eslint/typescript-estree": {
@@ -33,6 +34,7 @@
     "@types/react-dom": "^19.3.0",
     "eslint": "9.37.0",
     "eslint-config-next": "16.4.2",
+    "read-excel-file": "9.3.14",
     "typescript": "6.0.3"
   }
 }

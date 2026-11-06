@@ -165,7 +165,7 @@ export default async function ReportsPage({ searchParams }: ReportsPageProps) {
             actions={
               <>
                 <Link className="button-link button-secondary" href="/dashboard">Dashboard</Link>
-                <Link className="button-link" href={`/reports/export?${exportQuery}`}>Xuất Excel (.csv)</Link>
+                <><Link className="button-link" href={`/reports/export-options?${exportQuery}`}>Xuất Excel (.xlsx)</Link><Link className="button-link button-secondary" href={`/reports/export?${exportQuery}`}>Xuất CSV</Link></>
               </>
             }
           />
@@ -212,7 +212,7 @@ export default async function ReportsPage({ searchParams }: ReportsPageProps) {
           actions={
             <>
               <Link className="button-link button-secondary" href="/dashboard">Dashboard</Link>
-              <Link className="button-link" href={`/reports/export?${exportQuery}`}>Xuất Excel (.csv)</Link>
+              <><Link className="button-link" href={`/reports/export-options?${exportQuery}`}>Xuất Excel (.xlsx)</Link><Link className="button-link button-secondary" href={`/reports/export?${exportQuery}`}>Xuất CSV</Link></>
             </>
           }
         />
