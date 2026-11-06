@@ -1,3 +1,8 @@
+/**
+ * Khai báo kiểu TypeScript cho report-leaderboard.mjs; mô tả đầu vào/kết quả của module
+ * JavaScript và cần đồng bộ khi thay đổi API của module đó.
+ */
+
 export type ReportLeaderboardRow = {
   account_id: string;
   ho_ten: string;

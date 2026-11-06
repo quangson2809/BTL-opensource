@@ -1,5 +1,10 @@
 "use server";
 
+/**
+ * Server Action cập nhật họ tên và số điện thoại của tài khoản trong phiên; chuyển lỗi database
+ * thành mã phản hồi cho trang hồ sơ.
+ */
+
 import { redirect } from "next/navigation";
 
 import { requireActiveBusinessAccount } from "@/lib/business";

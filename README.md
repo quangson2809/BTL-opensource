@@ -13,6 +13,8 @@ PDF là source of truth. `PROJECT_PLAN.md`, GitHub Issues, migrations, tests và
 
 Master implementation scope được theo dõi trong `PROJECT_PLAN.md`.
 
+Hướng dẫn đọc code và nhiệm vụ từng file/thư mục: [Bản đồ source dự án](docs/project-structure.md).
+
 ## Tech stack
 
 - Next.js 16 + React 19

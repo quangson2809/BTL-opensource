@@ -1,3 +1,7 @@
+/**
+ * Trang ADMIN xem chi tiết tài khoản, phê duyệt/khóa/mở khóa và gán/thu hồi vai trò.
+ */
+
 import Link from "next/link";
 import { notFound } from "next/navigation";
 

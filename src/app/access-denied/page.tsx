@@ -1,3 +1,7 @@
+/**
+ * Trang giải thích việc truy cập bị từ chối và cung cấp đường quay về cho người dùng.
+ */
+
 import { logout } from "@/app/auth/actions";
 
 export default function AccessDeniedPage() {

@@ -1,3 +1,7 @@
+/**
+ * Nhãn trạng thái tải dùng chung để thông báo ứng dụng đang chờ dữ liệu.
+ */
+
 type LoadingStateProps = {
   label?: string;
 };

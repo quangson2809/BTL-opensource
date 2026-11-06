@@ -1,3 +1,7 @@
+/**
+ * Form ADMIN tạo vai trò tùy chỉnh và chọn tập quyền, có tìm kiếm/nhóm quyền và lưu nháp.
+ */
+
 import { DraftCancelLink } from "@/components/draft-cancel-link";
 import { FormDraftPersistence } from "@/components/form-draft-persistence";
 import { GuardedForm } from "@/components/guarded-form";

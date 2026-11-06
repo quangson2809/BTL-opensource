@@ -1,3 +1,8 @@
+/**
+ * Quy định các tiền tố route cần đăng nhập và ngoại lệ export phải tự trả HTTP 401 thay vì bị
+ * redirect về trang login.
+ */
+
 const PROTECTED_ROUTE_PREFIXES = Object.freeze([
   "/dashboard",
   "/customers",

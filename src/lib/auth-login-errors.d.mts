@@ -1,3 +1,8 @@
+/**
+ * Khai báo kiểu TypeScript cho auth-login-errors.mjs; mô tả đầu vào/kết quả của module
+ * JavaScript và cần đồng bộ khi thay đổi API của module đó.
+ */
+
 export type LoginFailureCategory =
   | "INVALID_CREDENTIALS"
   | "TEMPORARY_LOCK"

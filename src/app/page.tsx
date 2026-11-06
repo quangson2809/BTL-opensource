@@ -1,3 +1,7 @@
+/**
+ * Trang giới thiệu công khai của IDAILY, cung cấp lối vào đăng nhập và đăng ký đại lý.
+ */
+
 import Link from "next/link";
 
 import { PublicHeader } from "@/components/public-header";

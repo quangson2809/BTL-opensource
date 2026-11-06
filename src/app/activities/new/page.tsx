@@ -1,3 +1,8 @@
+/**
+ * Form ghi nhận hoạt động kinh doanh, địa điểm, thời gian và số lượt khách kết nối; hỗ trợ lưu
+ * nháp.
+ */
+
 import { DraftCancelLink } from "@/components/draft-cancel-link";
 import { GuardedForm } from "@/components/guarded-form";
 import { ActionFeedback } from "@/components/action-feedback";

@@ -1,5 +1,10 @@
 "use client";
 
+/**
+ * Component không hiển thị UI, xóa các bản nháp được chỉ định khi trang xác nhận thao tác đã
+ * thành công.
+ */
+
 import { useEffect } from "react";
 
 type FormDraftClearProps = {

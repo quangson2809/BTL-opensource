@@ -1,3 +1,8 @@
+/**
+ * Làm mới claims/cookie Supabase và chuyển người chưa đăng nhập về login ở route được bảo vệ,
+ * giữ cookie đã làm mới khi redirect.
+ */
+
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
@@ -7,6 +12,8 @@ import { shouldRedirectUnauthenticated } from "@/lib/supabase/proxy-route-policy
 export async function updateSession(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request });
   // Preserve cookie refresh/cleanup even when an unauthenticated request is redirected.
+  // Giữ các thao tác ghi cookie để áp dụng lại nếu response đi tiếp được thay bằng response
+  // redirect.
   const refreshedCookieWriters = new Map<string, (response: NextResponse) => void>();
   const { url, publishableKey } = getSupabasePublicConfig();
 

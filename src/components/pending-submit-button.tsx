@@ -1,5 +1,10 @@
 "use client";
 
+/**
+ * Nút submit đọc trạng thái form để khóa/đổi nhãn khi đang gửi và hỏi xác nhận nếu được truyền
+ * confirmMessage.
+ */
+
 import { useFormStatus } from "react-dom";
 import type { ReactNode } from "react";
 

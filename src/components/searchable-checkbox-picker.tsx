@@ -1,5 +1,10 @@
 "use client";
 
+/**
+ * Bộ chọn nhiều mục có tìm kiếm/nhóm, giữ lựa chọn khi lọc, kiểm tra lựa chọn bắt buộc và đồng
+ * bộ sau khi khôi phục nháp.
+ */
+
 import { useEffect, useId, useMemo, useRef, useState } from "react";
 
 export type SearchableCheckboxOption = {
@@ -79,11 +84,14 @@ export function SearchableCheckboxPicker({
     const form = root?.closest("form");
     if (!form) return;
 
+    // Bộ lưu nháp phục hồi DOM trước; sự kiện này đồng bộ lại state để React không ghi đè các
+    // checkbox đã khôi phục.
     const syncAfterDraftRestore = () => {
       setSelectedIds(checkedIdsInForm(form, name));
       setSelectionError(false);
     };
 
+    // Bắt submit ở capture phase để chặn form trước khi GuardedForm khóa gửi khi chưa chọn đủ mục.
     const validateRequiredSelection = (event: Event) => {
       if (!required || checkedIdsInForm(form, name).length > 0) {
         setSelectionError(false);

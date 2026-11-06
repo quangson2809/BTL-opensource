@@ -1,3 +1,8 @@
+/**
+ * Các khối dùng chung cho tổng số kết quả, bộ lọc đang áp dụng và liên kết phân trang giữ nguyên
+ * tham số lọc.
+ */
+
 import Link from "next/link";
 
 import { buildFilterHref } from "@/lib/list-query.mjs";
@@ -19,6 +24,10 @@ type ResultSummaryProps = {
   filterParams?: Record<string, string | undefined>;
 };
 
+/**
+ * Nhận tổng số từ trang server; component chỉ tính khoảng đang hiển thị và tạo liên kết bỏ bộ
+ * lọc.
+ */
 export function ResultSummary({
   label,
   total,
@@ -76,6 +85,9 @@ type ListPaginationProps = {
   params: Record<string, string | undefined>;
 };
 
+/**
+ * Giữ các tham số lọc khi đổi trang, chỉ thay giá trị page trong URL.
+ */
 export function ListPagination({ basePath, currentPage, pageCount, params }: ListPaginationProps) {
   if (pageCount <= 1) return null;
   function pageHref(page: number) {

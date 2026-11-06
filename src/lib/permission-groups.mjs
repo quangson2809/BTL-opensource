@@ -1,3 +1,8 @@
+/**
+ * Nhóm mã quyền theo tiền tố nghiệp vụ để danh sách quyền dễ tìm và có nhóm dự phòng cho mã chưa
+ * biết.
+ */
+
 const PERMISSION_GROUPS = Object.freeze({
   ACTIVITY: "Hoạt động",
   ACCOUNT: "Tài khoản",

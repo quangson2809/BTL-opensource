@@ -1,3 +1,7 @@
+/**
+ * Form sửa nội dung/người nhận của bản nháp do chính DM tạo; không mở form cho thông báo đã gửi.
+ */
+
 import { notFound } from "next/navigation";
 
 import { GuardedForm } from "@/components/guarded-form";

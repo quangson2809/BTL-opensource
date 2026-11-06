@@ -1,3 +1,8 @@
+/**
+ * Khai báo kiểu TypeScript cho interaction-contracts.mjs; mô tả đầu vào/kết quả của module
+ * JavaScript và cần đồng bộ khi thay đổi API của module đó.
+ */
+
 export type ActionFeedbackResult =
   | { kind: "error"; message: string }
   | { kind: "success"; message: string };

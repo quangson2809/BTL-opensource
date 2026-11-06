@@ -1,3 +1,8 @@
+/**
+ * Danh sách hoạt động trong phạm vi được cấp quyền, có bộ lọc, phân trang, tên người thực hiện
+ * và thao tác xóa hoạt động của mình.
+ */
+
 import Link from "next/link";
 
 import { GuardedForm } from "@/components/guarded-form";
@@ -35,6 +40,7 @@ export default async function ActivitiesPage({ searchParams }: ActivitiesPagePro
   const { supabase, accountId } = await requireBusinessAccount();
   const type = query.loai && activityTypes.has(query.loai) ? query.loai : "";
 
+  // Đếm theo cùng điều kiện với danh sách để tính trang; quyền xem hoạt động do RLS quyết định.
   let countQuery = supabase.from("hoat_dong").select("id", { count: "exact", head: true });
   if (type) countQuery = countQuery.eq("loai_hoat_dong", type);
   if (search) countQuery = countQuery.ilike("dia_diem", "%" + search + "%");

@@ -1,3 +1,8 @@
+/**
+ * Trang cây nhân sự cho DM/UM: dựng cây từ các tài khoản RLS cho phép đọc và giữ tổ tiên khi lọc
+ * kết quả tìm kiếm.
+ */
+
 import Link from "next/link";
 
 import { EmptyState } from "@/components/empty-state";
@@ -20,6 +25,10 @@ type AccountRow = {
   trang_thai: string;
 };
 
+/**
+ * Duyệt từ tài khoản quản lý thành danh sách có depth để hiển thị thụt cấp; visited ngăn lặp khi
+ * dữ liệu có chu trình.
+ */
 function flattenTree(accounts: AccountRow[], rootId: string) {
   const byManager = new Map<string, AccountRow[]>();
   for (const account of accounts) {
@@ -72,6 +81,8 @@ export default async function PersonnelPage({ searchParams }: PersonnelPageProps
         );
         const visibleIds = new Set<string>();
 
+        // Khi một nhân sự khớp tìm kiếm, giữ cả chuỗi tổ tiên trong dữ liệu đã được phép đọc để không
+        // làm đứt cây.
         for (const account of accounts) {
           const searchableText = [account.ho_ten, account.email, account.ma_dai_ly]
             .join(" ")

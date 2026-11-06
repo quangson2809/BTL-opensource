@@ -1,3 +1,7 @@
+/**
+ * Trang 404 dùng khi route hoặc bản ghi mà trang yêu cầu không tồn tại.
+ */
+
 import { EmptyState } from "@/components/empty-state";
 
 export default function NotFound() {

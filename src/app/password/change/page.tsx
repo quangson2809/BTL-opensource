@@ -1,3 +1,8 @@
+/**
+ * Trang đổi mật khẩu cho tài khoản đang hoạt động, gồm yêu cầu OTP xác thực lại và gửi mật khẩu
+ * mới kèm OTP.
+ */
+
 import Link from "next/link";
 
 import { GuardedForm } from "@/components/guarded-form";

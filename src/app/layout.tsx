@@ -1,3 +1,8 @@
+/**
+ * Layout gốc: khai báo metadata, ngôn ngữ tiếng Việt, nạp CSS chung và bọc nội dung trang trong
+ * AppFrame.
+ */
+
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
 

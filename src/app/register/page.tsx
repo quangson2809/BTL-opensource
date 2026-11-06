@@ -1,3 +1,8 @@
+/**
+ * Form tự đăng ký đại lý SA, gồm mã đại lý và mã người quản lý; hiển thị kết quả đăng ký hoặc
+ * yêu cầu xác nhận email.
+ */
+
 import Link from "next/link";
 
 import { PublicHeader } from "@/components/public-header";

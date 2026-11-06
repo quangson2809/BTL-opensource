@@ -1,3 +1,8 @@
+/**
+ * Form đăng nhập email/mật khẩu; đọc mã lỗi và trạng thái trên URL để hiển thị phản hồi từ
+ * Server Action.
+ */
+
 import Link from "next/link";
 
 import { PublicHeader } from "@/components/public-header";

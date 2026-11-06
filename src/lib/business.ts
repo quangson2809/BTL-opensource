@@ -1,8 +1,17 @@
+/**
+ * Các guard phía server cho tài khoản nghiệp vụ, tài khoản hoạt động, người quản lý và DM có
+ * quyền quản lý thông báo.
+ */
+
 import { redirect } from "next/navigation";
 
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentRoleCodes } from "@/lib/role-access";
 
+/**
+ * Xác thực JWT và tải hồ sơ hiện tại. Guard này không tự kiểm tra trạng thái hoạt động; truy vấn
+ * vẫn chịu RLS.
+ */
 export async function requireBusinessAccount() {
   const supabase = await createClient();
   const { data: claimsData, error: claimsError } = await supabase.auth.getClaims();
@@ -25,6 +34,9 @@ export async function requireBusinessAccount() {
   return { supabase, accountId, account };
 }
 
+/**
+ * Bổ sung kiểm tra trạng thái hoạt động cho các thao tác hồ sơ và đổi mật khẩu.
+ */
 export async function requireActiveBusinessAccount() {
   const context = await requireBusinessAccount();
 
@@ -41,6 +53,9 @@ export async function requireActiveBusinessAccount() {
   return context;
 }
 
+/**
+ * Chỉ cho vai trò DM/UM qua bước kiểm tra trang; RLS tiếp tục giới hạn cây nhân sự được đọc.
+ */
 export async function requireManager() {
   const context = await requireBusinessAccount();
   const roleCodes = await getCurrentRoleCodes(context.supabase, context.accountId);
@@ -56,6 +71,9 @@ export async function requireManager() {
   };
 }
 
+/**
+ * Cần đồng thời vai trò DM và quyền NOTIFICATION_MANAGE; có vai trò DM riêng lẻ chưa đủ.
+ */
 export async function requireDm() {
   const context = await requireBusinessAccount();
   const roleCodes = await getCurrentRoleCodes(context.supabase, context.accountId);

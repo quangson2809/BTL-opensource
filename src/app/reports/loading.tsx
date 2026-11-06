@@ -1,3 +1,7 @@
+/**
+ * Giao diện chờ riêng cho khu vực báo cáo, hiển thị khung tải trong lúc trang đang lấy số liệu.
+ */
+
 export default function ReportsLoading() {
   return (
     <main>

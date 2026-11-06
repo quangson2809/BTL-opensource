@@ -1,5 +1,10 @@
 "use server";
 
+/**
+ * Server Action kiểm tra dữ liệu và tạo/sửa/xóa khách hàng; database quản lý mã khách hàng và
+ * quyền thao tác trên bản ghi.
+ */
+
 import { redirect } from "next/navigation";
 
 import { requireBusinessAccount } from "@/lib/business";
@@ -14,6 +19,10 @@ function field(formData: FormData, name: string) {
   return typeof value === "string" ? value.trim() : "";
 }
 
+/**
+ * Chỉ nhận các trường được phép sửa; trả null khi thiếu dữ liệu, ngày sai hoặc giá trị ngoài
+ * danh mục.
+ */
 function customerPayload(formData: FormData) {
   const payload = {
     ho_ten: field(formData, "ho_ten"),
@@ -43,6 +52,10 @@ function customerPayload(formData: FormData) {
   return payload;
 }
 
+/**
+ * Gắn chủ sở hữu từ phiên; trigger sinh mã khách hàng. Chỉ thử lại khi xung đột đúng khóa mã
+ * khách hàng.
+ */
 export async function createCustomer(formData: FormData) {
   const payload = customerPayload(formData);
   if (!payload) {
@@ -81,6 +94,10 @@ export async function createCustomer(formData: FormData) {
   redirect("/customers/" + encodeURIComponent(createdCustomerId) + "?status=created");
 }
 
+/**
+ * Cập nhật theo UUID; select lại id để phân biệt cập nhật thành công với trường hợp RLS không
+ * cho sửa dòng nào.
+ */
 export async function updateCustomer(formData: FormData) {
   const customerId = field(formData, "customer_id");
   const payload = customerPayload(formData);
@@ -106,6 +123,9 @@ export async function updateCustomer(formData: FormData) {
   redirect("/customers/" + encodeURIComponent(customerId) + "?status=updated");
 }
 
+/**
+ * Xóa theo UUID dưới quyền người gọi; chỉ báo thành công khi database trả lại id đã xóa.
+ */
 export async function deleteCustomer(formData: FormData) {
   const customerId = field(formData, "customer_id");
   if (!isUuid(customerId)) {

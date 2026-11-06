@@ -1,3 +1,8 @@
+/**
+ * Form ADMIN chỉnh tập quyền của vai trò; giữ thông tin định danh chỉ đọc và không cho mở sửa
+ * vai trò ADMIN.
+ */
+
 import { notFound } from "next/navigation";
 
 import { DraftCancelLink } from "@/components/draft-cancel-link";

@@ -1,3 +1,7 @@
+/**
+ * Trang chi tiết khách hàng được phép xem, hiển thị mã do database sinh và các thao tác sửa/xóa.
+ */
+
 import Link from "next/link";
 import { notFound } from "next/navigation";
 

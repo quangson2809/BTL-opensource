@@ -1,5 +1,9 @@
 "use client";
 
+/**
+ * Màn hình dự phòng khi một trang bên dưới layout gặp lỗi; cho phép gọi reset để thử render lại.
+ */
+
 import { ErrorState } from "@/components/error-state";
 
 type AppErrorProps = {

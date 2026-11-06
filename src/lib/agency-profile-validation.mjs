@@ -1,3 +1,8 @@
+/**
+ * Kiểm tra họ tên và số điện thoại được phép tự sửa trong hồ sơ; trả kết quả hoặc mã lỗi để
+ * Server Action xử lý.
+ */
+
 export function validateAgencyProfileName(value) {
   if (typeof value !== "string") {
     return { ok: false, code: "missing" };

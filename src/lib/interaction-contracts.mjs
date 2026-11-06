@@ -1,3 +1,8 @@
+/**
+ * Quy tắc UI thuần cho mã phản hồi action, nhãn/trạng thái nút submit và việc hủy thao tác khi
+ * người dùng không xác nhận.
+ */
+
 const errorMessages = Object.freeze({
   invalid: "Vui lòng kiểm tra lại các trường đã nhập.",
   missing: "Vui lòng điền đầy đủ thông tin bắt buộc.",

@@ -1,3 +1,8 @@
+/**
+ * Form để DM có quyền quản lý thông báo soạn bản nháp và chọn người nhận trong phạm vi được
+ * phép.
+ */
+
 import { DraftCancelLink } from "@/components/draft-cancel-link";
 import { GuardedForm } from "@/components/guarded-form";
 import { ActionFeedback } from "@/components/action-feedback";

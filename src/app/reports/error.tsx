@@ -1,5 +1,10 @@
 "use client";
 
+/**
+ * Màn hình lỗi riêng cho báo cáo, cho phép thử lại và không đưa số liệu thay thế khi dữ liệu
+ * chưa được xác nhận.
+ */
+
 export default function ReportsError({
   reset,
 }: {

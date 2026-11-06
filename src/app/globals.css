@@ -1,3 +1,9 @@
+/**
+ * Kiểu nền tảng toàn ứng dụng: biến thiết kế, trang công khai, form, bảng, trạng thái UI và các
+ * điều chỉnh responsive dùng chung.
+ */
+
+/* Biến thiết kế dùng chung: đổi tại đây để các trang sử dụng cùng bảng màu và khoảng cách. */
 :root {
   color-scheme: light;
   --color-ink: #18231f;
@@ -1085,6 +1091,7 @@ tbody tr:hover {
   color: var(--color-danger);
   font-weight: 900;
 }
+/* Bố cục form dùng chung; các media query phía dưới điều chỉnh số cột trên màn hình hẹp. */
 .form-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));

@@ -1,3 +1,8 @@
+/**
+ * Route tải báo cáo CSV theo cùng khoảng thời gian và RPC với trang báo cáo; trả HTTP 401/403
+ * khi xác thực/phạm vi bị từ chối.
+ */
+
 import { NextResponse } from "next/server";
 
 import { resolveReportRange } from "@/lib/reporting";
@@ -14,12 +19,20 @@ type ReportRow = {
   connected_customer_count: number;
 };
 
+/**
+ * Escape dấu nháy và chặn tiền tố công thức bảng tính; dữ liệu người dùng không được chạy thành
+ * công thức khi mở CSV.
+ */
 function csvCell(value: unknown) {
   const text = String(value ?? "");
   const safeText = /^[=+\-@\t\r]/.test(text) ? "'" + text : text;
   return `"${safeText.replaceAll('"', '""')}"`;
 }
 
+/**
+ * Route tự trả 401/403 để giữ hợp đồng HTTP tải file; report_scope xác định các dòng mà JWT
+ * người gọi được phép xuất.
+ */
 export async function GET(request: Request) {
   const url = new URL(request.url);
   const range = resolveReportRange(

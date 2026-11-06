@@ -1,3 +1,8 @@
+/**
+ * Khai báo kiểu TypeScript cho report-metrics.mjs; mô tả đầu vào/kết quả của module JavaScript
+ * và cần đồng bộ khi thay đổi API của module đó.
+ */
+
 export type ReportMetricKey = "customer_count" | "activity_count" | "connected_customer_count";
 
 export type ReportMetric = {

@@ -1,3 +1,8 @@
+/**
+ * Tính khoảng báo cáo theo lịch Việt Nam, tuần bắt đầu thứ Hai và chuyển ranh giới khoảng sang
+ * UTC cho RPC.
+ */
+
 export type ReportPeriod = "day" | "week" | "month";
 
 const VIETNAM_OFFSET_MS = 7 * 60 * 60 * 1000;
@@ -44,10 +49,17 @@ function toAnchor({ year, month, day }: { year: number; month: number; day: numb
   ].join("-");
 }
 
+/**
+ * Nửa đêm theo lịch Việt Nam là 17:00 UTC ngày trước; không dùng timezone mặc định của máy chủ.
+ */
 function vietnamMidnightUtc(year: number, month: number, day: number) {
   return new Date(Date.UTC(year, month - 1, day) - VIETNAM_OFFSET_MS);
 }
 
+/**
+ * Trả khoảng [start, end) theo lịch Việt Nam: gồm đầu khoảng, không gồm đầu ngày/tuần/tháng kế
+ * tiếp.
+ */
 export function resolveReportRange(
   periodInput: string | undefined,
   anchorInput: string | undefined,

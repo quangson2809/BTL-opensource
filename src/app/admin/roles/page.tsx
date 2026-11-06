@@ -1,3 +1,8 @@
+/**
+ * Trang ADMIN xem danh mục vai trò, quyền được gán và số tài khoản theo vai trò; cung cấp lối
+ * vào tạo/sửa.
+ */
+
 import Link from "next/link";
 
 import { FormDraftClear } from "@/components/form-draft-clear";

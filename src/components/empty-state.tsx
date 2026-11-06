@@ -1,3 +1,7 @@
+/**
+ * Khối thông báo danh sách trống, có mô tả và liên kết hành động tùy chọn.
+ */
+
 import Link from "next/link";
 
 type EmptyStateProps = {

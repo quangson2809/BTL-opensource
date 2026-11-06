@@ -1,5 +1,10 @@
 "use client";
 
+/**
+ * Form phía client khóa submit đồng bộ để chặn gửi lặp từ nhấp đúp/phím Enter; mở lại khi action
+ * hoàn tất mà không điều hướng.
+ */
+
 import { useCallback, useEffect, useRef, type ComponentProps, type ReactNode } from "react";
 import { useFormStatus } from "react-dom";
 
@@ -10,6 +15,10 @@ type GuardedFormProps = Omit<ComponentProps<"form">, "action" | "onSubmit"> & {
   children: ReactNode;
 };
 
+/**
+ * Chỉ mở khóa sau khi đã quan sát pending chuyển từ true về false, tránh mở khóa ngay lần render
+ * đầu.
+ */
 function PendingReset({ onComplete }: { onComplete: () => void }) {
   const { pending } = useFormStatus();
   const observedPending = useRef(false);

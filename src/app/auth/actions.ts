@@ -1,5 +1,10 @@
 "use server";
 
+/**
+ * Các Server Action nối form với Supabase Auth: đăng ký, đăng nhập, OTP đổi/khôi phục mật khẩu
+ * và đăng xuất.
+ */
+
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 
@@ -21,6 +26,10 @@ function field(formData: FormData, name: string) {
   return typeof value === "string" ? value.trim() : "";
 }
 
+/**
+ * Giữ nguyên mật khẩu, kể cả khoảng trắng; chỉ các trường văn bản thông thường mới được trim
+ * bằng field.
+ */
 function rawField(formData: FormData, name: string) {
   const value = formData.get(name);
   return typeof value === "string" ? value : "";
@@ -68,6 +77,10 @@ async function logRegistrationFailure({
   );
 }
 
+/**
+ * Gom lỗi gửi OTP thành mã UI; không trả nguyên thông điệp Auth hoặc tiết lộ email có tài khoản
+ * hay không.
+ */
 function classifyOtpDeliveryError(
   error: unknown,
 ): "rate-limited" | "email-not-authorized" | "email-provider" | "service" {
@@ -131,6 +144,10 @@ async function logOtpDeliveryFailure(
   );
 }
 
+/**
+ * Cung cấp adapter Supabase cho luồng đăng ký, rồi redirect theo kết quả; trigger database tạo
+ * hồ sơ SA.
+ */
 export async function register(formData: FormData) {
   const destination = await executeRegistration({
     fullName: field(formData, "ho_ten"),
@@ -225,6 +242,10 @@ export async function register(formData: FormData) {
   redirect(destination);
 }
 
+/**
+ * Nối form với executeLogin; chỉ điều hướng vào dashboard khi cả Auth và trạng thái hồ sơ đều
+ * chấp nhận.
+ */
 export async function login(formData: FormData) {
   const email = field(formData, "email").toLowerCase();
   const password = rawField(formData, "password");
@@ -274,6 +295,9 @@ export async function login(formData: FormData) {
   redirect(destination);
 }
 
+/**
+ * Tài khoản hoạt động yêu cầu Auth gửi OTP xác thực lại trước khi đổi mật khẩu.
+ */
 export async function requestPasswordChangeOtp() {
   const { supabase } = await requireActiveBusinessAccount();
   const { error } = await supabase.auth.reauthenticate();
@@ -287,6 +311,10 @@ export async function requestPasswordChangeOtp() {
   redirect("/password/change?status=otp-sent");
 }
 
+/**
+ * Kiểm tra OTP 8 số/mật khẩu, đổi mật khẩu bằng nonce do Auth xác minh, rồi kết thúc phiên cục
+ * bộ.
+ */
 export async function changePassword(formData: FormData) {
   const otp = field(formData, "otp");
   const password = rawField(formData, "new_password");
@@ -329,6 +357,10 @@ export async function changePassword(formData: FormData) {
   redirect("/login?status=password-changed");
 }
 
+/**
+ * Yêu cầu email khôi phục; phản hồi thành công không phụ thuộc việc địa chỉ đã được đăng ký hay
+ * chưa.
+ */
 export async function requestPasswordRecovery(formData: FormData) {
   const email = field(formData, "email").toLowerCase();
 
@@ -351,6 +383,10 @@ export async function requestPasswordRecovery(formData: FormData) {
   redirect("/password/recovery/verify?email=" + encodeURIComponent(email) + "&status=otp-sent");
 }
 
+/**
+ * Dùng phiên recovery tạm để đổi mật khẩu, sau đó đăng xuất; phiên này không thay thế đăng nhập
+ * bằng mật khẩu.
+ */
 export async function verifyRecoveryOtp(formData: FormData) {
   const email = field(formData, "email").toLowerCase();
   const otp = field(formData, "otp");
@@ -400,6 +436,9 @@ export async function verifyRecoveryOtp(formData: FormData) {
   redirect("/login?status=password-reset");
 }
 
+/**
+ * Kết thúc phiên Supabase hiện tại và đưa người dùng về trang đăng nhập.
+ */
 export async function logout() {
   const supabase = await createClient();
   await supabase.auth.signOut({ scope: "local" });

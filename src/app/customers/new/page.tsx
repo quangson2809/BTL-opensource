@@ -1,3 +1,7 @@
+/**
+ * Form tạo hồ sơ khách hàng, lưu nháp trong phiên trình duyệt và gửi dữ liệu tới createCustomer.
+ */
+
 import { DraftCancelLink } from "@/components/draft-cancel-link";
 import { GuardedForm } from "@/components/guarded-form";
 import { ActionFeedback } from "@/components/action-feedback";

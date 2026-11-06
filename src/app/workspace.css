@@ -1,3 +1,8 @@
+/**
+ * Kiểu dành cho khu vực làm việc: sidebar, thanh đầu trang, menu tài khoản, dashboard và bố cục
+ * hồ sơ trên các kích thước màn hình.
+ */
+
 /* Authenticated application shell */
 .skip-link {
   position: fixed;
@@ -14,6 +19,7 @@
   transform: translateY(0);
 }
 
+/* Khung workspace; các quy tắc phía sau bổ sung sidebar, header và cách thu gọn trên mobile. */
 .workspace-shell {
   display: grid;
   grid-template-columns: 16.5rem minmax(0, 1fr);

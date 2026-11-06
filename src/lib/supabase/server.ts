@@ -1,3 +1,7 @@
+/**
+ * Tạo Supabase server client gắn với cookie của request để query/RPC chạy dưới phiên người dùng.
+ */
+
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 

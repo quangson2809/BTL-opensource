@@ -1,4 +1,9 @@
 /**
+ * Xếp hạng các dòng cấp dưới đã nằm trong phạm vi báo cáo theo số hoạt động, với thứ tự ổn định
+ * khi bằng điểm.
+ */
+
+/**
  * Rank only subordinate rows already returned by the caller-scoped report RPC.
  * Activity count is the explicit ranking metric; customer count is displayed
  * for context and used only to make ordering within a tie deterministic.

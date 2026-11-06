@@ -1,3 +1,8 @@
+/**
+ * Đọc mã vai trò của tài khoản từ bảng phân công bằng client của người dùng, để RLS kiểm soát dữ
+ * liệu trả về.
+ */
+
 import "server-only";
 
 import { createClient } from "@/lib/supabase/server";

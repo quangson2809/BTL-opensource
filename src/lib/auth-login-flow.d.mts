@@ -1,3 +1,8 @@
+/**
+ * Khai báo kiểu TypeScript cho auth-login-flow.mjs; mô tả đầu vào/kết quả của module JavaScript
+ * và cần đồng bộ khi thay đổi API của module đó.
+ */
+
 import type { LoginFailureCategory } from "./auth-login-errors.mjs";
 
 type AuthFlowClient = {

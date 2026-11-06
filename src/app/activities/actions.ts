@@ -1,5 +1,10 @@
 "use server";
 
+/**
+ * Server Action kiểm tra dữ liệu hoạt động, chuẩn hóa thời gian và tạo/sửa/xóa với tài khoản lấy
+ * từ phiên đăng nhập.
+ */
+
 import { redirect } from "next/navigation";
 
 import { requireBusinessAccount } from "@/lib/business";
@@ -16,6 +21,10 @@ function field(formData: FormData, name: string) {
   return typeof value === "string" ? value.trim() : "";
 }
 
+/**
+ * Kiểm tra loại/địa điểm/số khách và đổi giờ Việt Nam từ form thành ISO UTC trước khi ghi
+ * database.
+ */
 function activityPayload(formData: FormData) {
   const loaiHoatDong = field(formData, "loai_hoat_dong");
   const diaDiem = field(formData, "dia_diem");
@@ -35,6 +44,10 @@ function activityPayload(formData: FormData) {
   };
 }
 
+/**
+ * Lấy người thực hiện từ phiên đăng nhập để form không thể tạo hoạt động thay cho tài khoản
+ * khác.
+ */
 export async function createActivity(formData: FormData) {
   const payload = activityPayload(formData);
   if (!payload) {
@@ -54,6 +67,10 @@ export async function createActivity(formData: FormData) {
   redirect("/activities?status=created");
 }
 
+/**
+ * Cần khớp cả id hoạt động và id người đang đăng nhập; quyền xem hoạt động cấp dưới không đồng
+ * nghĩa quyền sửa.
+ */
 export async function updateActivity(formData: FormData) {
   const activityId = field(formData, "activity_id");
   const payload = activityPayload(formData);
@@ -80,6 +97,10 @@ export async function updateActivity(formData: FormData) {
   redirect("/activities?status=updated&id=" + encodeURIComponent(activityId));
 }
 
+/**
+ * Chỉ xóa hoạt động của chính người gọi; kiểm tra id trả về để tránh báo thành công khi không có
+ * dòng bị xóa.
+ */
 export async function deleteActivity(formData: FormData) {
   const activityId = field(formData, "activity_id");
   if (!isUuid(activityId)) {

@@ -1,3 +1,8 @@
+/**
+ * Hiển thị phản hồi thành công/lỗi thống nhất từ mã URL, dùng role và aria-live phù hợp để trình
+ * đọc màn hình thông báo.
+ */
+
 import { resolveActionFeedback } from "@/lib/interaction-contracts.mjs";
 
 type ActionFeedbackProps = {

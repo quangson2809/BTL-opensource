@@ -1,3 +1,8 @@
+/**
+ * Điều phối đăng nhập độc lập với Next.js: xác thực mật khẩu, kiểm tra trạng thái tài khoản và
+ * dọn phiên khi quyền vào ứng dụng bị từ chối.
+ */
+
 import {
   classifyLoginAuthError,
   getLoginErrorQueryCode,
@@ -16,6 +21,9 @@ async function logSafely(logFailure, category, error, source) {
   }
 }
 
+/**
+ * Auth đã tạo phiên nhưng hồ sơ bị từ chối: dọn phiên cục bộ trước khi trả URL lỗi.
+ */
 async function rejectAuthenticatedUser({ authClient, category, error, source, logFailure }) {
   try {
     const result = await authClient.signOutLocal();

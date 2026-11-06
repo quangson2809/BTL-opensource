@@ -1,3 +1,8 @@
+/**
+ * Trang thông tin nhân sự trong phạm vi quản lý và số liệu tổng hợp lấy qua RPC
+ * personnel_summary.
+ */
+
 import Link from "next/link";
 import { notFound } from "next/navigation";
 

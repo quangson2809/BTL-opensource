@@ -1,3 +1,8 @@
+/**
+ * Danh sách thông báo theo phạm vi truy cập, kèm lọc/phân trang, trạng thái người nhận và thao
+ * tác bản nháp/gửi/đánh dấu đã đọc.
+ */
+
 import Link from "next/link";
 
 import { GuardedForm } from "@/components/guarded-form";
@@ -101,6 +106,7 @@ export default async function NotificationsPage({ searchParams }: NotificationsP
 
   const isDm = dmResult.data === true;
   const recipientRows = recipientResult.data ?? [];
+  // Gom các dòng người nhận đã được RLS lọc theo từng thông báo để hiển thị trạng thái đọc/gửi.
   const rowsByNotification = new Map<string, typeof recipientRows>();
   for (const row of recipientRows) {
     rowsByNotification.set(row.thong_bao_id, [

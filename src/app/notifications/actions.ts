@@ -1,5 +1,10 @@
 "use server";
 
+/**
+ * Server Action tạo/sửa/xóa/gửi bản nháp qua RPC; người nhận chỉ đánh dấu đã đọc trên dòng thuộc
+ * tài khoản mình.
+ */
+
 import { redirect } from "next/navigation";
 
 import { requireBusinessAccount, requireDm } from "@/lib/business";
@@ -12,6 +17,10 @@ function field(formData: FormData, name: string) {
   return typeof value === "string" ? value.trim() : "";
 }
 
+/**
+ * Kiểm tra nội dung/loại/UUID người nhận và loại UUID trùng; RPC tiếp tục kiểm tra phạm vi người
+ * nhận.
+ */
 function notificationDraftPayload(formData: FormData) {
   const title = field(formData, "tieu_de");
   const content = field(formData, "noi_dung");
@@ -34,6 +43,9 @@ function notificationDraftPayload(formData: FormData) {
   return { title, content, type, recipients: [...new Set(recipients)] };
 }
 
+/**
+ * Tạo thông báo ở trạng thái bản nháp; việc gửi là thao tác riêng qua sendNotification.
+ */
 export async function createNotification(formData: FormData) {
   const payload = notificationDraftPayload(formData);
   if (!payload) {
@@ -55,6 +67,10 @@ export async function createNotification(formData: FormData) {
   redirect("/notifications?status=created&id=" + encodeURIComponent(data));
 }
 
+/**
+ * RPC kiểm tra chủ sở hữu và trạng thái bản nháp trong transaction trước khi thay nội dung và
+ * người nhận.
+ */
 export async function updateNotificationDraft(formData: FormData) {
   const notificationId = field(formData, "notification_id");
   const payload = notificationDraftPayload(formData);
@@ -84,6 +100,9 @@ export async function updateNotificationDraft(formData: FormData) {
   redirect("/notifications?status=updated&id=" + encodeURIComponent(notificationId));
 }
 
+/**
+ * RPC chỉ cho xóa bản nháp thuộc người tạo, không xóa thông báo đã gửi.
+ */
 export async function deleteNotificationDraft(formData: FormData) {
   const notificationId = field(formData, "notification_id");
   if (!isUuid(notificationId)) {
@@ -102,6 +121,9 @@ export async function deleteNotificationDraft(formData: FormData) {
   redirect("/notifications?status=deleted");
 }
 
+/**
+ * Yêu cầu RPC chuyển bản nháp sang đã gửi sau khi kiểm tra trạng thái và quyền trong database.
+ */
 export async function sendNotification(formData: FormData) {
   const notificationId = field(formData, "notification_id");
   if (!isUuid(notificationId)) {
@@ -120,6 +142,10 @@ export async function sendNotification(formData: FormData) {
   redirect("/notifications?status=sent");
 }
 
+/**
+ * Cập nhật dòng người nhận thuộc accountId trong phiên, không thay trạng thái đọc của người
+ * khác.
+ */
 export async function markNotificationRead(formData: FormData) {
   const recipientRowId = field(formData, "recipient_row_id");
   if (!isUuid(recipientRowId)) {

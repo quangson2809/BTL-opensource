@@ -1,3 +1,8 @@
+/**
+ * Điều phối tự đăng ký SA: kiểm tra đầu vào/người quản lý/trùng định danh, gọi Auth và xử lý chế
+ * độ xác nhận email hoặc dọn phiên sau đăng ký.
+ */
+
 import { meetsPasswordPolicy } from "./password-policy.mjs";
 import {
   asRecord,
@@ -61,6 +66,10 @@ const RATE_LIMIT_CODES = new Set([
   "too_many_requests",
 ]);
 
+/**
+ * Kiểm tra trường bắt buộc/email/mật khẩu trước khi gọi dịch vụ; null nghĩa là có thể tiếp tục
+ * đăng ký.
+ */
 export function validateRegistrationInput({
   fullName,
   email,
@@ -91,6 +100,10 @@ export function validateRegistrationInput({
   return null;
 }
 
+/**
+ * Phân loại lỗi Auth, kể cả lỗi trigger cấp hồ sơ bị Auth bọc lại, để chọn thông báo đăng ký phù
+ * hợp.
+ */
 export function classifyRegistrationAuthError(error) {
   const value = asRecord(error);
   if (!value) return REGISTRATION_FAILURE_CATEGORIES.AUTH_SERVICE_ERROR;
@@ -157,6 +170,10 @@ export function getRegistrationErrorQueryCode(category) {
   }
 }
 
+/**
+ * Tạo log có cấu trúc bằng các trường được lọc; không lưu dữ liệu đăng ký hay thông điệp lỗi
+ * nguyên bản.
+ */
 export function createRegistrationFailureLog({
   category,
   error,
@@ -193,6 +210,10 @@ async function fail(logFailure, category, error, source) {
   return "/register?error=" + getRegistrationErrorQueryCode(category);
 }
 
+/**
+ * Kiểm tra manager và định danh trước Auth; database vẫn là nơi xác nhận cuối cùng khi tạo hồ sơ
+ * SA.
+ */
 export async function executeRegistration({
   fullName,
   email,
@@ -258,6 +279,8 @@ export async function executeRegistration({
       "manager-code-precheck",
     );
   }
+  // Precheck cho phản hồi dễ hiểu; unique constraint và trigger vẫn xử lý trường hợp hai request
+  // đăng ký đồng thời.
   const identifierChecks = [
     {
       check: () => admin.findExistingPhone(normalizedPhone),

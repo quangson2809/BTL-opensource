@@ -1,5 +1,10 @@
 "use client";
 
+/**
+ * Lưu/khôi phục trường form không nhạy cảm trong sessionStorage theo tài khoản và form; bỏ qua
+ * mật khẩu, OTP, token và trường ẩn.
+ */
+
 import { useEffect } from "react";
 
 type FormDraftPersistenceProps = {
@@ -25,12 +30,19 @@ function isDraftValue(value: unknown): value is DraftValue {
   );
 }
 
+/**
+ * Chặn trường nhạy cảm theo cả tên và loại input trước khi đọc hoặc ghi bản nháp.
+ */
 function canPersist(control: HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement) {
   if (!control.name || SENSITIVE_NAME.test(control.name)) return false;
   if (control instanceof HTMLInputElement && SENSITIVE_TYPE.has(control.type)) return false;
   return true;
 }
 
+/**
+ * So giá trị hiện tại với mặc định để không ghi đè dữ liệu người dùng đã nhập trước khi effect
+ * gắn listener.
+ */
 function hasEditedControls(form: HTMLFormElement) {
   const controls = Array.from(
     form.querySelectorAll<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>(
@@ -58,6 +70,9 @@ function hasEditedControls(form: HTMLFormElement) {
   });
 }
 
+/**
+ * Khôi phục theo loại control: checkbox/multi-select là mảng, radio/text là một chuỗi.
+ */
 function restoreDraft(form: HTMLFormElement, values: DraftValues) {
   const controls = Array.from(
     form.querySelectorAll<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>(
@@ -100,6 +115,10 @@ function restoreDraft(form: HTMLFormElement, values: DraftValues) {
   }
 }
 
+/**
+ * Coi sessionStorage là dữ liệu không tin cậy: kiểm tra phiên bản/kích thước/kiểu và loại các
+ * khóa prototype.
+ */
 function readDraft(storageKey: string): DraftValues | null {
   try {
     const stored = sessionStorage.getItem(storageKey);

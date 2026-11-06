@@ -1,3 +1,8 @@
+/**
+ * Trang hồ sơ của tài khoản đang hoạt động: hiển thị vai trò/người quản lý và form sửa họ tên,
+ * số điện thoại của chính mình.
+ */
+
 import { ErrorState } from "@/components/error-state";
 import { PageHeader } from "@/components/page-header";
 import { PendingSubmitButton } from "@/components/pending-submit-button";

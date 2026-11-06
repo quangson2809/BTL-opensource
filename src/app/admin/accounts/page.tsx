@@ -1,3 +1,7 @@
+/**
+ * Trang ADMIN tra cứu, lọc trạng thái và phân trang danh sách tài khoản.
+ */
+
 import Link from "next/link";
 
 import { requireAdmin } from "@/lib/admin";

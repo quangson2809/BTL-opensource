@@ -1,5 +1,10 @@
 "use server";
 
+/**
+ * Server Action tạo vai trò tùy chỉnh hoặc cập nhật vai trò bằng RPC; kiểm tra mã vai trò và
+ * danh sách UUID quyền trước khi gọi.
+ */
+
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
@@ -13,6 +18,9 @@ function field(formData: FormData, name: string) {
   return typeof value === "string" ? value.trim() : "";
 }
 
+/**
+ * Trả tập UUID không trùng; null báo dữ liệu không hợp lệ, còn mảng rỗng là tập quyền rỗng.
+ */
 function permissionIds(formData: FormData) {
   const ids: string[] = [];
   for (const value of formData.getAll("permission_ids")) {
@@ -33,6 +41,10 @@ function refreshRolePages() {
   revalidatePath("/admin/accounts");
 }
 
+/**
+ * Tạo mã vai trò tùy chỉnh ngoài danh mục hệ thống; RPC ghi vai trò và tập quyền trong cùng
+ * transaction.
+ */
 export async function createRole(formData: FormData) {
   const roleCode = field(formData, "ma_vai_tro").toUpperCase();
   const roleName = field(formData, "ten_vai_tro");
@@ -77,6 +89,10 @@ export async function createRole(formData: FormData) {
   redirect("/admin/roles?status=created");
 }
 
+/**
+ * RPC quyết định trường/quyền nào được thay đổi; mã lỗi database được chuyển thành phản hồi URL
+ * an toàn.
+ */
 export async function updateRole(formData: FormData) {
   const roleId = field(formData, "role_id");
   const roleName = field(formData, "ten_vai_tro");

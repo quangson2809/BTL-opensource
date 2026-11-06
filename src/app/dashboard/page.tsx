@@ -1,3 +1,8 @@
+/**
+ * Trang tổng quan: tải số liệu theo phạm vi truy cập, việc cần xử lý và hoạt động gần đây; bổ
+ * sung số tài khoản cho ADMIN.
+ */
+
 import Link from "next/link";
 
 import { EmptyState } from "@/components/empty-state";

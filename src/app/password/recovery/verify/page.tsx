@@ -1,3 +1,7 @@
+/**
+ * Form xác minh email/OTP khôi phục và đặt mật khẩu mới; chuyển dữ liệu tới verifyRecoveryOtp.
+ */
+
 import Link from "next/link";
 
 import { GuardedForm } from "@/components/guarded-form";

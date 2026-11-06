@@ -1,3 +1,8 @@
+/**
+ * Chuyển mã trạng thái/loại dữ liệu thành nhãn tiếng Việt và màu hiển thị; có cách hiển thị dự
+ * phòng cho mã chưa biết.
+ */
+
 type StatusBadgeProps = { value: string | null | undefined };
 
 const labels: Record<string, string> = {

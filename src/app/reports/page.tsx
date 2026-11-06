@@ -1,3 +1,8 @@
+/**
+ * Trang báo cáo ngày/tuần/tháng: dùng dữ liệu report_scope cho tổng hợp, biểu đồ so sánh, bảng
+ * xếp hạng và liên kết xuất CSV.
+ */
+
 import Link from "next/link";
 
 import { EmptyState } from "@/components/empty-state";
@@ -239,6 +244,8 @@ export default async function ReportsPage({ searchParams }: ReportsPageProps) {
     );
   }
 
+  // Tất cả tổng số, biểu đồ và xếp hạng đều lấy từ cùng kết quả RPC; không mở rộng phạm vi bằng
+  // query khác.
   const rows = (data ?? []) as ReportRow[];
   const personal = rows.find((row) => row.is_self);
   const teamRows = rows.filter((row) => !row.is_self);

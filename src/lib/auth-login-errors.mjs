@@ -1,3 +1,8 @@
+/**
+ * Phân loại lỗi đăng nhập, ánh xạ mã phản hồi công khai và tạo log chỉ chứa các trường chẩn đoán
+ * được giới hạn.
+ */
+
 import {
   asRecord,
   errorStringField,
@@ -47,6 +52,10 @@ const RATE_LIMIT_CODES = new Set([
   "too_many_requests",
 ]);
 
+/**
+ * Ưu tiên tín hiệu khóa tạm của password hook, sau đó phân loại theo code/status; lỗi lạ được
+ * coi là lỗi dịch vụ.
+ */
 export function classifyLoginAuthError(error) {
   const value = asRecord(error);
   if (!value) return LOGIN_FAILURE_CATEGORIES.AUTH_SERVICE_ERROR;
@@ -72,6 +81,10 @@ export function classifyLoginAuthError(error) {
   return LOGIN_FAILURE_CATEGORIES.AUTH_SERVICE_ERROR;
 }
 
+/**
+ * Ánh xạ nhóm lỗi nội bộ sang mã URL; email chưa xác nhận và sai mật khẩu dùng chung phản hồi
+ * công khai.
+ */
 export function getLoginErrorQueryCode(category) {
   switch (category) {
     case LOGIN_FAILURE_CATEGORIES.TEMPORARY_LOCK:
@@ -97,6 +110,9 @@ export function getLoginErrorQueryCode(category) {
   }
 }
 
+/**
+ * Chỉ lấy trường log cho phép; không đưa email, mật khẩu, token hoặc raw message vào kết quả.
+ */
 export function createLoginFailureLog({
   category,
   error,

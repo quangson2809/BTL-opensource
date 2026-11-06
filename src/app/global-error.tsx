@@ -1,5 +1,10 @@
 "use client";
 
+/**
+ * Màn hình dự phòng cho lỗi ở layout gốc; tự dựng lại html/body vì layout thông thường không còn
+ * dùng được.
+ */
+
 import { ErrorState } from "@/components/error-state";
 
 import "./globals.css";

@@ -1,5 +1,9 @@
 "use client";
 
+/**
+ * Khối lỗi dùng chung với nội dung an toàn, nút thử lại tùy chọn và liên kết quay về.
+ */
+
 import { useRouter } from "next/navigation";
 
 type ErrorStateProps = {

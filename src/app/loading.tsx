@@ -1,3 +1,7 @@
+/**
+ * Giao diện chờ mặc định của App Router trong lúc nội dung route đang được tải.
+ */
+
 import { LoadingState } from "@/components/loading-state";
 
 export default function Loading() {

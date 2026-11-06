@@ -1,3 +1,8 @@
+/**
+ * Danh sách khách hàng theo RLS: tìm kiếm, lọc loại/trạng thái/nhóm tính cách và phân trang trên
+ * máy chủ.
+ */
+
 import Link from "next/link";
 
 import { ActionFeedback } from "@/components/action-feedback";
@@ -36,6 +41,8 @@ export default async function CustomersPage({ searchParams }: CustomersPageProps
   const status = query.tinh_trang && customerStatuses.has(query.tinh_trang) ? query.tinh_trang : "";
   const group = query.nhom && personalityGroups.has(query.nhom) ? query.nhom : "";
 
+  // Truy vấn đếm và truy vấn lấy dòng phải dùng cùng bộ lọc; RLS giới hạn phạm vi ở cả hai truy
+  // vấn.
   let countQuery = supabase.from("khach_hang").select("id", { count: "exact", head: true });
   if (search) {
     countQuery = countQuery.or(

@@ -1,3 +1,7 @@
+/**
+ * Form công khai yêu cầu gửi email OTP để khôi phục mật khẩu.
+ */
+
 import Link from "next/link";
 
 import { GuardedForm } from "@/components/guarded-form";

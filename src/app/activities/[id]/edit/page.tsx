@@ -1,3 +1,8 @@
+/**
+ * Form sửa hoạt động của chính tài khoản hiện tại; chuyển thời gian đã lưu thành giờ Việt Nam
+ * cho input datetime-local.
+ */
+
 import { notFound } from "next/navigation";
 
 import { DraftCancelLink } from "@/components/draft-cancel-link";
@@ -18,6 +23,10 @@ type EditActivityPageProps = {
   searchParams: Promise<{ error?: string }>;
 };
 
+/**
+ * Giá trị cho datetime-local không kèm offset, nên phải định dạng rõ theo Asia/Ho_Chi_Minh trước
+ * khi đưa vào form.
+ */
 function localDateTime(value: string) {
   const parts = new Intl.DateTimeFormat("en-CA", {
     timeZone: "Asia/Ho_Chi_Minh",

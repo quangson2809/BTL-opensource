@@ -1,3 +1,8 @@
+/**
+ * Tải khách hàng theo id để điền form sửa; giữ mã khách hàng cố định và gửi phần dữ liệu cho
+ * phép tới updateCustomer.
+ */
+
 import { notFound } from "next/navigation";
 
 import { DraftCancelLink } from "@/components/draft-cancel-link";

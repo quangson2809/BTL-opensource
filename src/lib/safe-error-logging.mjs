@@ -1,7 +1,15 @@
+/**
+ * Giới hạn token chẩn đoán, mã HTTP và thời điểm log; cung cấp hàm đọc trường lỗi mà không ghi
+ * nguyên thông điệp của nhà cung cấp.
+ */
+
 export function asRecord(value) {
   return value !== null && typeof value === "object" ? value : null;
 }
 
+/**
+ * Allow-list này dành cho mã chẩn đoán ngắn, không phải bộ lọc cho phép log mọi chuỗi đầu vào.
+ */
 export function safeLogToken(value, maxLength = 96) {
   if (typeof value !== "string") return null;
   const token = value.trim();

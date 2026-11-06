@@ -1,4 +1,9 @@
 /**
+ * Cộng số liệu và dựng chuỗi so sánh cá nhân/nhóm từ chính các dòng report_scope, có chuyển
+ * bigint dạng chuỗi sang số.
+ */
+
+/**
  * Aggregate only rows returned by the caller-scoped report_scope RPC.
  * Counts are returned by PostgreSQL as bigint and may arrive as strings.
  */

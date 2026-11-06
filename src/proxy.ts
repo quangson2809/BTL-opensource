@@ -1,3 +1,8 @@
+/**
+ * Điểm vào Proxy của Next.js: chuyển các request phù hợp sang bước làm mới phiên và kiểm tra
+ * route đăng nhập.
+ */
+
 import type { NextRequest } from "next/server";
 
 import { updateSession } from "@/lib/supabase/proxy";

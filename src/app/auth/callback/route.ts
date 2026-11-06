@@ -1,3 +1,8 @@
+/**
+ * Nhận authorization code từ email xác nhận, đổi code lấy phiên tạm rồi đăng xuất để quay lại
+ * luồng đăng nhập thông thường.
+ */
+
 import { NextResponse } from "next/server";
 
 import { createClient } from "@/lib/supabase/server";

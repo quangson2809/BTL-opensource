@@ -1,3 +1,8 @@
+/**
+ * Chọn origin callback từ cấu hình site/Vercel, hỗ trợ preview và từ chối cấu hình localhost
+ * trong production.
+ */
+
 function normalizeOrigin(value) {
   if (typeof value !== "string" || !value.trim()) {
     return null;
@@ -32,6 +37,10 @@ function isLoopbackHost(hostname) {
   );
 }
 
+/**
+ * Ưu tiên site URL cấu hình tường minh; nếu thiếu thì chọn domain Vercel theo
+ * preview/production, rồi thêm /auth/callback.
+ */
 export function getAuthCallbackUrl({
   configuredSiteUrl,
   projectProductionUrl,

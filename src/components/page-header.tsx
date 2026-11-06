@@ -1,3 +1,7 @@
+/**
+ * Tiêu đề trang thống nhất gồm tên trang, mô tả và vùng chứa các hành động tùy chọn.
+ */
+
 import type { ReactNode } from "react";
 
 type PageHeaderProps = {

@@ -1,5 +1,10 @@
 "use client";
 
+/**
+ * Khung client cho khu vực làm việc: điều hướng theo vai trò, breadcrumb, ngữ cảnh tài khoản và
+ * menu mobile có quản lý focus.
+ */
+
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
@@ -141,6 +146,8 @@ export function AppFrame({ children }: Readonly<{ children: ReactNode }>) {
     return () => document.removeEventListener("pointerdown", closeAccountMenuOutside);
   }, []);
 
+  // Chỉ tải ngữ cảnh ở khu vực làm việc; cờ cancelled ngăn response cũ cập nhật component đã rời
+  // trang.
   useEffect(() => {
     if (!showWorkspace) return;
 
@@ -214,6 +221,8 @@ export function AppFrame({ children }: Readonly<{ children: ReactNode }>) {
     };
   }, [showWorkspace, accountLoadAttempt]);
 
+  // Drawer mobile giữ Tab trong menu, hỗ trợ Escape và trả focus khi đóng; cleanup cũng khôi phục
+  // cuộn trang.
   useEffect(() => {
     if (!drawerActive) return;
 
@@ -273,6 +282,7 @@ export function AppFrame({ children }: Readonly<{ children: ReactNode }>) {
 
   if (!showWorkspace) return children;
 
+  // Lọc menu phục vụ hiển thị; quyền đọc/ghi dữ liệu vẫn phải được server và database kiểm tra.
   const visibleNavigation = navigation.filter(
     (item) => !item.roles || item.roles.some((role) => roles.has(role)),
   );

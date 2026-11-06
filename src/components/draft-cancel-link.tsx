@@ -1,5 +1,10 @@
 "use client";
 
+/**
+ * Liên kết hủy form: xóa đúng bản nháp của tài khoản/form khi điều hướng thông thường, giữ hành
+ * vi mở tab mới của trình duyệt.
+ */
+
 import Link from "next/link";
 import type { ComponentProps, MouseEvent } from "react";
 

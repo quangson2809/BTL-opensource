@@ -1,3 +1,8 @@
+/**
+ * Header các trang công khai, chọn liên kết trang chủ/đăng nhập/đăng ký theo trang đang hiển
+ * thị.
+ */
+
 import Link from "next/link";
 
 type PublicHeaderProps = { mode: "landing" | "login" | "register" };
