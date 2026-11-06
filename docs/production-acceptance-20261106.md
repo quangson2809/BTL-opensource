@@ -2,6 +2,15 @@
 
 Ngày: 06/11/2026 (Asia/Saigon). Business impact: NO — runbook, recovery rehearsal và ghi đúng trạng thái nghiệm thu. Không merge main hoặc áp dụng migrations lên hosted trong đợt này.
 
+## Đích Vercel đã được cung cấp
+
+- Dashboard project: https://vercel.com/quangson2809s-projects/btl-opensource, do người dùng cung cấp khi tiếp tục R11.
+- Team slug: `quangson2809s-projects`; project slug: `btl-opensource`. Đây không phải numeric project/team IDs hoặc URL deployment; chưa tạo file `.vercel/project.json` giả từ các slug.
+- Đã thử đọc dashboard và `GET https://api.vercel.com/v9/projects/btl-opensource?slug=quangson2809s-projects`: proxy từ chối CONNECT bằng HTTP 403. Không có response từ Vercel để đánh giá quyền tài khoản hoặc deployment.
+- Runtime tại lúc kiểm tra: restricted/enforced, custom hosts chưa áp dụng; không có credential binding, VERCEL_TOKEN/SUPABASE_ACCESS_TOKEN hoặc CLI auth profile Vercel đã biết. Không đọc nội dung credential files và không yêu cầu token qua chat.
+- Draft giữ api.github.com đã đề xuất, thêm vercel.com/api.vercel.com/api.supabase.com và requirements VERCEL_TOKEN/SUPABASE_ACCESS_TOKEN tới đúng API tương ứng. Draft save không áp dụng runtime hoặc tạo secret values.
+- Sau khi cấu hình được áp dụng: đọc project/deployment metadata, xác định deployment URL và Supabase liên quan từ cấu hình công khai được phép đọc; chỉ bổ sung hostname runtime thực tế sau khi xác định. Chưa cho phép wildcard vercel.app/supabase.co hoặc suy đoán production alias.
+
 ## Trạng thái
 
 | Phần | Gate | Bằng chứng / prerequisite |
@@ -9,7 +18,7 @@ Ngày: 06/11/2026 (Asia/Saigon). Business impact: NO — runbook, recovery rehea
 | Release candidate local | PASS | R10: 348 assertions/18 database files, 7 Auth scripts, 137 contracts, static/build và 7 browser suites |
 | Local backup/restore | PASS | scripts/verify-local-restore.sh: dump 4 schema vào file private, checksum, restore scratch, đối chiếu 9 bảng/Auth count/history/sequence/owners/RLS/ACL và 19/19 assertions trên database đã restore |
 | Hosted Supabase project/config | BLOCKED | Chưa xác nhận target thực tế hoặc binding hosted trong môi trường; local keys không chứng minh hosted access |
-| Vercel preview/production | BLOCKED | Chưa có project link, deployment URL/ID và cấu hình truy cập được xác minh |
+| Vercel preview/production | BLOCKED | Đã có dashboard project ở trên; chưa đọc được deployment URL/ID do proxy 403 và thiếu binding truy cập |
 | Hosted OTP/SMTP | BLOCKED | Cần readback 8 chữ số/600 giây và reauthentication/recovery với mailbox hợp lệ; không gửi email hay đổi settings trong đợt này |
 | Hosted migrations | NOT_RUN | Ba migration mới chỉ áp dụng local; chưa xác minh migration history hosted |
 | Hosted backup/restore | BLOCKED | Local rehearsal không chứng minh managed backup/PITR hoặc khả năng khôi phục sang cluster mới |
