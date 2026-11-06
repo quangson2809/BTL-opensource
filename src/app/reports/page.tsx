@@ -8,6 +8,10 @@ import { resolveReportRange } from "@/lib/reporting";
 import { rankReportRows } from "@/lib/report-leaderboard.mjs";
 import { buildReportComparisonMetrics, reportTotals } from "@/lib/report-metrics.mjs";
 import type { ReportMetric } from "@/lib/report-metrics.mjs";
+import { getCurrentRoleCodes } from "@/lib/role-access";
+import { parseTeamReportRows } from "@/lib/team-report.mjs";
+import type { TeamReportRow } from "@/lib/team-report.mjs";
+import { TeamReportTable } from "@/components/team-report-table";
 
 export const dynamic = "force-dynamic";
 
@@ -144,7 +148,7 @@ function ReportComparisonCharts({ metrics, hasTeamRows }: { metrics: ReportMetri
 export default async function ReportsPage({ searchParams }: ReportsPageProps) {
   const query = await searchParams;
   const range = resolveReportRange(query.period, query.anchor);
-  const { supabase } = await requireBusinessAccount();
+  const { supabase, accountId } = await requireBusinessAccount();
   const { data, error } = await supabase.rpc("report_scope", {
     period_start: range.start,
     period_end: range.end,
@@ -200,6 +204,15 @@ export default async function ReportsPage({ searchParams }: ReportsPageProps) {
   const overview = reportTotals(rows);
   const personalTotals = reportTotals(personal ? [personal] : []);
   const chartMetrics = buildReportComparisonMetrics(rows);
+  const roleCodes = await getCurrentRoleCodes(supabase, accountId);
+  if (!roleCodes) throw new Error("Không thể xác định quyền xem nhóm.");
+  const isManager = roleCodes.some((role) => ["DM", "UM"].includes(role));
+  let groups: TeamReportRow[] = [];
+  if (isManager) {
+    const groupResult = await supabase.rpc("report_team_scope", { period_start: range.start, period_end: range.end });
+    if (groupResult.error) throw new Error("Không thể tải báo cáo nhóm.");
+    groups = parseTeamReportRows(groupResult.data);
+  }
 
   return (
     <main>
@@ -333,6 +346,7 @@ export default async function ReportsPage({ searchParams }: ReportsPageProps) {
         </div>
           </>
         ) : null}
+        {isManager ? <TeamReportTable rows={groups} exportQuery={exportQuery} /> : null}
       </section>
     </main>
   );

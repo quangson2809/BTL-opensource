@@ -1,4 +1,5 @@
 import writeExcelFile from "write-excel-file/node";
+import { isUuid } from "./input-validation.mjs";
 
 export const REPORT_COLUMNS = [
   { key: "ho_ten", label: "Nhân sự" }, { key: "ma_dai_ly", label: "Mã đại lý" },
@@ -6,24 +7,37 @@ export const REPORT_COLUMNS = [
   { key: "activity_count", label: "Hoạt động" }, { key: "connected_customer_count", label: "Lượt khách kết nối" },
   { key: "range", label: "Khoảng báo cáo" },
 ];
-const numeric = new Set(["customer_count", "activity_count", "connected_customer_count"]);
+export const TEAM_REPORT_COLUMNS = [
+  { key: "team_name", label: "Nhóm UM" }, { key: "team_code", label: "Mã đại lý UM" },
+  { key: "member_count", label: "Nhân sự" }, { key: "customer_count", label: "Khách hàng mới" },
+  { key: "activity_count", label: "Hoạt động" }, { key: "range", label: "Khoảng báo cáo" },
+];
+const numeric = new Set(["customer_count", "activity_count", "connected_customer_count", "member_count"]);
 
 export function resolveExportOptions(params) {
   const format = params.get("format") ?? "csv";
   const scope = params.get("scope") ?? "all";
+  const dataset = params.get("dataset") ?? "people";
+  const catalog = dataset === "teams" ? TEAM_REPORT_COLUMNS : REPORT_COLUMNS;
   const requested = params.getAll("columns");
-  const columns = requested.length || params.get("custom") === "1" ? [...new Set(requested)] : REPORT_COLUMNS.map((column) => column.key);
+  const columns = requested.length || params.get("custom") === "1" ? [...new Set(requested)] : catalog.map((column) => column.key);
   if (!["csv", "xlsx"].includes(format) || !["all", "self", "team"].includes(scope) || !columns.length ||
-      columns.some((key) => !REPORT_COLUMNS.some((column) => column.key === key))) throw new Error("Invalid export options");
-  return { format, scope, columns };
+      !["people", "teams"].includes(dataset) || (dataset === "teams" && scope !== "all") ||
+      columns.some((key) => !catalog.some((column) => column.key === key))) throw new Error("Invalid export options");
+  return { format, scope, columns, dataset };
 }
 export function exportTable(data, rangeLabel, options) {
   if (!Array.isArray(data)) throw new Error("Invalid report data");
   const rows = data.filter((row) => {
+    if (options.dataset === "teams") {
+      if (!row || typeof row !== "object" || !isUuid(row.team_id)) throw new Error("Invalid team report row");
+      return true;
+    }
     if (!row || typeof row !== "object" || typeof row.is_self !== "boolean") throw new Error("Invalid report row");
     return options.scope === "all" || (options.scope === "self" ? row.is_self : !row.is_self);
   });
-  return [options.columns.map((key) => REPORT_COLUMNS.find((column) => column.key === key).label), ...rows.map((row) => options.columns.map((key) => {
+  const catalog = options.dataset === "teams" ? TEAM_REPORT_COLUMNS : REPORT_COLUMNS;
+  return [options.columns.map((key) => catalog.find((column) => column.key === key).label), ...rows.map((row) => options.columns.map((key) => {
     if (key === "range") return rangeLabel;
     if (key === "scope") return row.is_self ? "Cá nhân" : "Cấp dưới";
     if (numeric.has(key)) {

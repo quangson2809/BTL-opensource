@@ -114,3 +114,12 @@ Người sở hữu tài liệu sau khi mở `docs/source/Bao-cao-mon-opensource
 | Không thay đổi | Role SA do trigger gán; tài khoản mới vẫn `CHO_PHE_DUYET`; phê duyệt tiếp tục do Admin; không thêm chuyển quản lý/tái cơ cấu cây. |
 | Source/PDF mapping | Quyết định được chốt trong yêu cầu triển khai ngày 2026-10-17; trang/section PDF cụ thể: **UNVERIFIED**. Không coi đây là trích dẫn nguyên văn PDF. |
 | Acceptance | Kiểm thử manager DM/UM hợp lệ, mã không tồn tại, manager inactive/SA, thiếu mã và không tạo Auth user khi database validation thất bại. |
+
+## BC-008 — Đơn vị so sánh nhóm UM (06/11/2026)
+
+- Classification: requirement elaboration for implementation/review; Business impact: YES.
+- Source: PDF 7.5, trang vật lý 29 yêu cầu so sánh nhóm theo số khách hàng, hoạt động và đại lý. PDF không được sửa trong đợt này.
+- Theo yêu cầu triển khai tự động kế hoạch R0–R11, mặc định đã công khai là UM và cây nhân sự phía dưới, tính cả UM. Câu hỏi tùy chọn về chỉ đếm SA chưa có phản hồi thay thế tại thời điểm triển khai; không gọi mặc định này là trích nguyên văn PDF hoặc một quyết định lịch sử của owner.
+- UM lồng nhau được cộng một lần trong nhóm ngoài cùng. DM/UM chỉ nhận aggregate trong report_scope hiện có; không mở raw customer rows hoặc quyền quản trị.
+- Nhân sự không thuộc UM vẫn trong báo cáo cá nhân/tổng quan; số nhân sự dùng cơ cấu hiện tại, không phải snapshot lịch sử.
+- Evidence/contract: docs/team-report-contract.md, migration 20261106030000, pgTAP 017, team-report-browser.cjs. Hosted acceptance và canonical alignment vẫn cần bằng chứng riêng.

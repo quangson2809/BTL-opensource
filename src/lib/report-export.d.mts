@@ -1,5 +1,6 @@
-export type ExportOptions = { format: "csv" | "xlsx"; scope: "all" | "self" | "team"; columns: string[] };
+export type ExportOptions = { format: "csv" | "xlsx"; scope: "all" | "self" | "team"; dataset: "people" | "teams"; columns: string[] };
 export const REPORT_COLUMNS: readonly { key: string; label: string }[];
+export const TEAM_REPORT_COLUMNS: readonly { key: string; label: string }[];
 export function resolveExportOptions(params: URLSearchParams): ExportOptions;
 export function exportTable(data: unknown, rangeLabel: string, options: ExportOptions): (string | number)[][];
 export function tableToCsv(table: (string | number)[][]): string;

@@ -14,7 +14,7 @@ export async function GET(request: Request) {
   const supabase = await createClient();
   const { data: claimsData, error: claimsError } = await supabase.auth.getClaims();
   if (claimsError || typeof claimsData?.claims?.sub !== "string") return new NextResponse("Unauthorized", { status: 401 });
-  const { data, error } = await supabase.rpc("report_scope", { period_start: range.start, period_end: range.end });
+  const { data, error } = await supabase.rpc(options.dataset === "teams" ? "report_team_scope" : "report_scope", { period_start: range.start, period_end: range.end });
   if (error) return new NextResponse("Report scope denied", { status: 403 });
   try {
     const table = exportTable(data ?? [], range.label, options);
