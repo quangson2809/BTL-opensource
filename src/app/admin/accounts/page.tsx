@@ -69,7 +69,7 @@ export default async function AccountsPage({ searchParams }: AccountsPageProps) 
         <PageHeader
           title="Quản trị tài khoản"
           description="Tra cứu tài khoản, kiểm tra trạng thái và mở hồ sơ quản trị."
-          actions={<Link className="button-link" href="/admin/roles">Vai trò & quyền</Link>}
+          actions={<><Link className="button-link" href="/admin/accounts/new">Tạo tài khoản</Link><Link className="button-link button-secondary" href="/admin/roles">Vai trò & quyền</Link></>}
         />
 
         {params.error ? (

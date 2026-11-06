@@ -12,10 +12,12 @@ import { requireAdmin } from "@/lib/admin";
 import { PendingSubmitButton } from "@/components/pending-submit-button";
 import { PageHeader } from "@/components/page-header";
 import { StatusBadge } from "@/components/status-badge";
+import { FormDraftClear } from "@/components/form-draft-clear";
 
 export const dynamic = "force-dynamic";
 
 const statusMessages: Record<string, string> = {
+  created: "Đã tạo tài khoản. Gửi lại cùng yêu cầu không thay đổi thông tin đã lưu.",
   approved: "Đã phê duyệt tài khoản.",
   locked: "Đã khóa tài khoản.",
   unlocked: "Đã mở khóa tài khoản.",
@@ -78,6 +80,7 @@ export default async function AccountDetailPage({
 
   return (
     <main>
+      <FormDraftClear scopeKey={currentAccountId} persistKeys={["admin-account-create"]} clearOn={query.status === "created"} />
       <section className="page-content account-detail-page">
         <PageHeader
           title={account.ho_ten}
