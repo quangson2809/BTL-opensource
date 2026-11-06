@@ -115,7 +115,7 @@ jobs:
           export NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY="$ANON_KEY"
           export SUPABASE_SECRET_KEY="$SERVICE_ROLE_KEY"
 
-          npm exec --yes --package=playwright -- playwright install --with-deps chromium
+          npm exec --yes --package=playwright@1.58.2 -- playwright install --with-deps chromium
 
           ./node_modules/.bin/next dev -p 3000 > /tmp/idaily-browser.log 2>&1 &
           APP_PID=$!
@@ -132,7 +132,7 @@ jobs:
             sleep 1
           done
 
-          if ! npm exec --yes --package=playwright -- sh -c 'NODE_PATH="$(dirname "$(dirname "$(command -v playwright)")")" node tests/form-resilience-browser.cjs'; then
+          if ! npm exec --yes --package=playwright@1.58.2 -- sh -c 'NODE_PATH="$(dirname "$(dirname "$(command -v playwright)")")" node scripts/run-browser-checks.mjs'; then
             cat /tmp/idaily-browser.log
             exit 1
           fi
@@ -192,7 +192,7 @@ jobs:
             fi
             sleep 1
           done
-          if ! PHASE6_SCREENSHOT_PREFIX=after- PHASE6_SOURCE_SHA="${{ github.event.pull_request.head.sha || github.sha }}" npm exec --yes --package=playwright -- sh -c 'NODE_PATH="$(dirname "$(dirname "$(command -v playwright)")")" node tests/phase6-visual-screenshots.cjs'; then
+          if ! PHASE6_SCREENSHOT_PREFIX=after- PHASE6_SOURCE_SHA="${{ github.event.pull_request.head.sha || github.sha }}" npm exec --yes --package=playwright@1.58.2 -- sh -c 'NODE_PATH="$(dirname "$(dirname "$(command -v playwright)")")" node tests/phase6-visual-screenshots.cjs'; then
             cat /tmp/idaily-visual.log
             exit 1
           fi
@@ -232,7 +232,7 @@ jobs:
             fi
             sleep 1
           done
-          if ! PHASE6_SCREENSHOT_PREFIX=before- PHASE6_SOURCE_SHA=1aeb11802438c53583a587b9fb25c7d62daa6223 PHASE6_CAPTURE_ONLY=true npm exec --yes --package=playwright -- sh -c 'NODE_PATH="$(dirname "$(dirname "$(command -v playwright)")")" node tests/phase6-visual-screenshots.cjs'; then
+          if ! PHASE6_SCREENSHOT_PREFIX=before- PHASE6_SOURCE_SHA=1aeb11802438c53583a587b9fb25c7d62daa6223 PHASE6_CAPTURE_ONLY=true npm exec --yes --package=playwright@1.58.2 -- sh -c 'NODE_PATH="$(dirname "$(dirname "$(command -v playwright)")")" node tests/phase6-visual-screenshots.cjs'; then
             cat /tmp/idaily-visual-baseline.log
             exit 1
           fi
