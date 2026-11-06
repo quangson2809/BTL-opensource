@@ -78,7 +78,10 @@ export async function requireDm() {
   const { data: mappings, error: mappingsError } = await context.supabase
     .from("phan_quyen_vai_tro")
     .select("quyen_id")
-    .in("vai_tro_id", assignments.map((assignment) => assignment.vai_tro_id));
+    .in(
+      "vai_tro_id",
+      assignments.map((assignment) => assignment.vai_tro_id),
+    );
 
   if (mappingsError || !mappings?.length) {
     redirect("/access-denied");

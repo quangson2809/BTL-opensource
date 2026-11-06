@@ -1,10 +1,12 @@
 import Link from "next/link";
 
 import { requireAdmin } from "@/lib/admin";
+
 import { PageHeader } from "@/components/page-header";
 import { StatusBadge } from "@/components/status-badge";
 import { ListPagination, ResultSummary } from "@/components/list-controls";
 import { EmptyState } from "@/components/empty-state";
+
 import { parsePositivePage, sanitizePostgrestOrSearch } from "@/lib/list-query.mjs";
 
 export const dynamic = "force-dynamic";
@@ -19,11 +21,10 @@ export default async function AccountsPage({ searchParams }: AccountsPageProps) 
   const params = await searchParams;
   const { supabase } = await requireAdmin();
   const search = sanitizePostgrestOrSearch(params.q);
-  const status = params.trang_thai && accountStatuses.has(params.trang_thai) ? params.trang_thai : "";
+  const status =
+    params.trang_thai && accountStatuses.has(params.trang_thai) ? params.trang_thai : "";
 
-  let countQuery = supabase
-    .from("tai_khoan")
-    .select("id", { count: "exact", head: true });
+  let countQuery = supabase.from("tai_khoan").select("id", { count: "exact", head: true });
   if (search) {
     countQuery = countQuery.or(
       `ho_ten.ilike.%${search}%,email.ilike.%${search}%,ma_dai_ly.ilike.%${search}%`,
@@ -69,12 +70,14 @@ export default async function AccountsPage({ searchParams }: AccountsPageProps) 
         <PageHeader
           title="Quản trị tài khoản"
           description="Tra cứu tài khoản, kiểm tra trạng thái và mở hồ sơ quản trị."
-          actions={<Link className="button-link" href="/admin/roles">Vai trò & quyền</Link>}
+          actions={
+            <Link className="button-link" href="/admin/roles">
+              Vai trò & quyền
+            </Link>
+          }
         />
 
-        {params.error ? (
-          <p className="message error">Yêu cầu quản trị không hợp lệ.</p>
-        ) : null}
+        {params.error ? <p className="message error">Yêu cầu quản trị không hợp lệ.</p> : null}
 
         <form className="filter-grid" method="get">
           <label>
@@ -102,19 +105,38 @@ export default async function AccountsPage({ searchParams }: AccountsPageProps) 
           filterParams={filterParams}
           activeFilters={[
             ...(search ? [{ key: "q", label: "Từ khóa", value: search }] : []),
-            ...(status ? [{ key: "trang_thai", label: "Trạng thái", value: status === "CHO_PHE_DUYET" ? "Chờ phê duyệt" : status === "DANG_HOAT_DONG" ? "Đang hoạt động" : "Đã khóa" }] : []),
+            ...(status
+              ? [
+                  {
+                    key: "trang_thai",
+                    label: "Trạng thái",
+                    value:
+                      status === "CHO_PHE_DUYET"
+                        ? "Chờ phê duyệt"
+                        : status === "DANG_HOAT_DONG"
+                          ? "Đang hoạt động"
+                          : "Đã khóa",
+                  },
+                ]
+              : []),
           ]}
         />
         <div className="stack">
           {total === 0 ? (
             <EmptyState
               title={hasFilters ? "Không tìm thấy kết quả" : "Chưa có tài khoản"}
-              description={hasFilters ? "Thử thay đổi từ khóa hoặc xóa bộ lọc để xem kết quả khác." : "Tài khoản sẽ xuất hiện khi được tạo trong hệ thống."}
+              description={
+                hasFilters
+                  ? "Thử thay đổi từ khóa hoặc xóa bộ lọc để xem kết quả khác."
+                  : "Tài khoản sẽ xuất hiện khi được tạo trong hệ thống."
+              }
             />
           ) : null}
           {(visibleAccounts ?? []).map((account) => (
             <article className="record-row" key={account.id}>
-              <p><strong>{account.ho_ten}</strong></p>
+              <p>
+                <strong>{account.ho_ten}</strong>
+              </p>
               <p>{account.email}</p>
               <p className="secondary-text">
                 {account.ma_dai_ly} · <StatusBadge value={account.trang_thai} />
@@ -125,7 +147,12 @@ export default async function AccountsPage({ searchParams }: AccountsPageProps) 
             </article>
           ))}
         </div>
-        <ListPagination basePath="/admin/accounts" currentPage={currentPage} pageCount={pageCount} params={filterParams} />
+        <ListPagination
+          basePath="/admin/accounts"
+          currentPage={currentPage}
+          pageCount={pageCount}
+          params={filterParams}
+        />
       </section>
     </main>
   );

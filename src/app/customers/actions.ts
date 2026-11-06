@@ -28,10 +28,7 @@ function customerPayload(formData: FormData) {
     nhom_tinh_cach: field(formData, "nhom_tinh_cach"),
   };
 
-  if (
-    Object.values(payload).some((value) => !value) ||
-    !isValidDateOnly(payload.ngay_sinh)
-  ) {
+  if (Object.values(payload).some((value) => !value) || !isValidDateOnly(payload.ngay_sinh)) {
     return null;
   }
 

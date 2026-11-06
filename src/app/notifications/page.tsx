@@ -14,6 +14,7 @@ import {
   markNotificationRead,
   sendNotification,
 } from "@/app/notifications/actions";
+
 import { requireBusinessAccount } from "@/lib/business";
 import { parsePositivePage, sanitizePostgrestOrSearch } from "@/lib/list-query.mjs";
 
@@ -34,21 +35,18 @@ type NotificationsPageProps = {
 const notificationTypes = new Set(["TIN_TỨC", "TỰ_ĐỘNG_HỆ_THỐNG"]);
 const notificationStatuses = new Set(["CHƯA_GỬI", "ĐÃ_GỬI"]);
 
-export default async function NotificationsPage({
-  searchParams,
-}: NotificationsPageProps) {
+export default async function NotificationsPage({ searchParams }: NotificationsPageProps) {
   const query = await searchParams;
   const { supabase, accountId } = await requireBusinessAccount();
 
   const search = sanitizePostgrestOrSearch(query.q);
   const type = query.loai && notificationTypes.has(query.loai) ? query.loai : "";
-  const status = query.trang_thai && notificationStatuses.has(query.trang_thai) ? query.trang_thai : "";
+  const status =
+    query.trang_thai && notificationStatuses.has(query.trang_thai) ? query.trang_thai : "";
   const [dmResult, countResult] = await Promise.all([
     supabase.rpc("has_role", { role_code: "DM" }),
     (async () => {
-      let countQuery = supabase
-        .from("thong_bao")
-        .select("id", { count: "exact", head: true });
+      let countQuery = supabase.from("thong_bao").select("id", { count: "exact", head: true });
       if (search) {
         countQuery = countQuery.or(`tieu_de.ilike.%${search}%,noi_dung.ilike.%${search}%`);
       }
@@ -89,12 +87,13 @@ export default async function NotificationsPage({
 
   const visibleNotifications = data ?? [];
   const notificationIds = visibleNotifications.map((notification) => notification.id);
-  const recipientResult = notificationIds.length > 0
-    ? await supabase
-        .from("thong_bao_nguoi_nhan")
-        .select("id,thong_bao_id,tai_khoan_id,da_doc")
-        .in("thong_bao_id", notificationIds)
-    : { data: [], error: null };
+  const recipientResult =
+    notificationIds.length > 0
+      ? await supabase
+          .from("thong_bao_nguoi_nhan")
+          .select("id,thong_bao_id,tai_khoan_id,da_doc")
+          .in("thong_bao_id", notificationIds)
+      : { data: [], error: null };
 
   if (recipientResult.error) {
     throw new Error("Không thể tải trạng thái người nhận.");
@@ -128,7 +127,14 @@ export default async function NotificationsPage({
           title="Thông báo"
         />
 
-        <FormDraftClear scopeKey={accountId} persistKeys={["notification-draft", ...(query.id ? ["notification-edit-" + query.id] : [])]} clearOn={query.status === "created" || query.status === "updated"} />
+        <FormDraftClear
+          scopeKey={accountId}
+          persistKeys={[
+            "notification-draft",
+            ...(query.id ? ["notification-edit-" + query.id] : []),
+          ]}
+          clearOn={query.status === "created" || query.status === "updated"}
+        />
         {query.status ? <ActionFeedback status={query.status} /> : null}
         {query.error ? <ActionFeedback error={query.error} /> : null}
 
@@ -166,8 +172,24 @@ export default async function NotificationsPage({
           filterParams={filterParams}
           activeFilters={[
             ...(search ? [{ key: "q", label: "Từ khóa", value: search }] : []),
-            ...(type ? [{ key: "loai", label: "Loại thông báo", value: type === "TIN_TỨC" ? "Tin tức" : "Tự động hệ thống" }] : []),
-            ...(status ? [{ key: "trang_thai", label: "Trạng thái", value: status === "CHƯA_GỬI" ? "Chưa gửi" : "Đã gửi" }] : []),
+            ...(type
+              ? [
+                  {
+                    key: "loai",
+                    label: "Loại thông báo",
+                    value: type === "TIN_TỨC" ? "Tin tức" : "Tự động hệ thống",
+                  },
+                ]
+              : []),
+            ...(status
+              ? [
+                  {
+                    key: "trang_thai",
+                    label: "Trạng thái",
+                    value: status === "CHƯA_GỬI" ? "Chưa gửi" : "Đã gửi",
+                  },
+                ]
+              : []),
           ]}
         />
 
@@ -185,8 +207,7 @@ export default async function NotificationsPage({
             />
           ) : null}
           {visibleNotifications.map((notification) => {
-            const recipientRowsForNotification =
-              rowsByNotification.get(notification.id) ?? [];
+            const recipientRowsForNotification = rowsByNotification.get(notification.id) ?? [];
             const ownRecipientRow = recipientRowsForNotification.find(
               (row) => row.tai_khoan_id === accountId,
             );
@@ -195,11 +216,15 @@ export default async function NotificationsPage({
 
             return (
               <article className="record-row" key={notification.id}>
-                <p><strong>{notification.tieu_de}</strong></p>
+                <p>
+                  <strong>{notification.tieu_de}</strong>
+                </p>
                 <p>{notification.noi_dung}</p>
                 <p className="secondary-text">
                   {notification.loai} · <StatusBadge value={notification.trang_thai} /> ·{" "}
-                  {new Date(notification.created_at).toLocaleString("vi-VN", { timeZone: "Asia/Ho_Chi_Minh" })}
+                  {new Date(notification.created_at).toLocaleString("vi-VN", {
+                    timeZone: "Asia/Ho_Chi_Minh",
+                  })}
                 </p>
                 {owned ? (
                   <p className="secondary-text">
@@ -208,9 +233,7 @@ export default async function NotificationsPage({
                 ) : null}
                 {owned && isDraft ? (
                   <div className="actions">
-                    <Link href={"/notifications/" + notification.id + "/edit"}>
-                      Sửa bản nháp
-                    </Link>
+                    <Link href={"/notifications/" + notification.id + "/edit"}>Sửa bản nháp</Link>
                     <GuardedForm action={deleteNotificationDraft}>
                       <input name="notification_id" type="hidden" value={notification.id} />
                       <PendingSubmitButton
@@ -239,14 +262,17 @@ export default async function NotificationsPage({
                     </PendingSubmitButton>
                   </GuardedForm>
                 ) : null}
-                {ownRecipientRow?.da_doc ? (
-                  <p className="secondary-text">Đã đọc</p>
-                ) : null}
+                {ownRecipientRow?.da_doc ? <p className="secondary-text">Đã đọc</p> : null}
               </article>
             );
           })}
         </div>
-        <ListPagination basePath="/notifications" currentPage={currentPage} pageCount={pageCount} params={filterParams} />
+        <ListPagination
+          basePath="/notifications"
+          currentPage={currentPage}
+          pageCount={pageCount}
+          params={filterParams}
+        />
       </section>
     </main>
   );

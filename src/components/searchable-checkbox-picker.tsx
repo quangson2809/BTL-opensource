@@ -129,7 +129,9 @@ export function SearchableCheckboxPicker({
       </p>
 
       {options.length === 0 ? (
-        <p className="searchable-picker-empty" role="status">{emptyMessage}</p>
+        <p className="searchable-picker-empty" role="status">
+          {emptyMessage}
+        </p>
       ) : (
         <>
           {required ? (
@@ -138,61 +140,75 @@ export function SearchableCheckboxPicker({
             </p>
           ) : null}
           <div
-            aria-describedby={[
-              required ? id + "-required-help" : null,
-              selectionError ? id + "-selection-error" : null,
-            ].filter(Boolean).join(" ") || undefined}
+            aria-describedby={
+              [
+                required ? id + "-required-help" : null,
+                selectionError ? id + "-selection-error" : null,
+              ]
+                .filter(Boolean)
+                .join(" ") || undefined
+            }
             aria-invalid={selectionError || undefined}
             aria-label={searchLabel}
             className="searchable-picker-list"
             id={id + "-list"}
             role="group"
           >
-          {groupedOptions.map(({ groupName, options: groupOptions }) => {
-            const visibleGroup = groupOptions.some(matches);
-            return (
-              <fieldset className="searchable-picker-group" hidden={!visibleGroup} key={groupName}>
-                <legend>{groupName}</legend>
-                {groupOptions.map((option) => {
-                  const visible = matches(option);
-                  return (
-                    <label
-                      className="searchable-picker-option"
-                      hidden={!visible}
-                      key={option.id}
-                    >
-                      <input
-                        checked={selectedSet.has(option.id)}
-                        name={name}
-                        onChange={(event) => {
-                          const checked = event.target.checked;
-                          setSelectedIds((current) => checked
-                            ? (current.includes(option.id) ? current : [...current, option.id])
-                            : current.filter((selectedId) => selectedId !== option.id));
-                          setSelectionError(false);
-                        }}
-                        type="checkbox"
-                        value={option.id}
-                      />
-                      <span className="searchable-picker-option-copy">
-                        <strong>{option.label}</strong>
-                        {option.detail ? <span className="secondary-text">{option.detail}</span> : null}
-                      </span>
-                    </label>
-                  );
-                })}
-              </fieldset>
-            );
-          })}
-          {matchedCount === 0 ? (
-            <p className="searchable-picker-empty" role="status">{noResultsMessage}</p>
-          ) : null}
+            {groupedOptions.map(({ groupName, options: groupOptions }) => {
+              const visibleGroup = groupOptions.some(matches);
+              return (
+                <fieldset
+                  className="searchable-picker-group"
+                  hidden={!visibleGroup}
+                  key={groupName}
+                >
+                  <legend>{groupName}</legend>
+                  {groupOptions.map((option) => {
+                    const visible = matches(option);
+                    return (
+                      <label className="searchable-picker-option" hidden={!visible} key={option.id}>
+                        <input
+                          checked={selectedSet.has(option.id)}
+                          name={name}
+                          onChange={(event) => {
+                            const checked = event.target.checked;
+                            setSelectedIds((current) =>
+                              checked
+                                ? current.includes(option.id)
+                                  ? current
+                                  : [...current, option.id]
+                                : current.filter((selectedId) => selectedId !== option.id),
+                            );
+                            setSelectionError(false);
+                          }}
+                          type="checkbox"
+                          value={option.id}
+                        />
+                        <span className="searchable-picker-option-copy">
+                          <strong>{option.label}</strong>
+                          {option.detail ? (
+                            <span className="secondary-text">{option.detail}</span>
+                          ) : null}
+                        </span>
+                      </label>
+                    );
+                  })}
+                </fieldset>
+              );
+            })}
+            {matchedCount === 0 ? (
+              <p className="searchable-picker-empty" role="status">
+                {noResultsMessage}
+              </p>
+            ) : null}
           </div>
         </>
       )}
 
       {required && selectionError ? (
-        <p className="message error" id={id + "-selection-error"} role="alert">{requiredMessage}</p>
+        <p className="message error" id={id + "-selection-error"} role="alert">
+          {requiredMessage}
+        </p>
       ) : null}
 
       {selectedOptions.length > 0 ? (
@@ -207,7 +223,9 @@ export function SearchableCheckboxPicker({
                   aria-label={"Bỏ chọn " + option.label}
                   className="searchable-picker-remove"
                   onClick={() => {
-                    setSelectedIds((current) => current.filter((selectedId) => selectedId !== option.id));
+                    setSelectedIds((current) =>
+                      current.filter((selectedId) => selectedId !== option.id),
+                    );
                     setSelectionError(false);
                   }}
                   type="button"

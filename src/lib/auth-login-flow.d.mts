@@ -1,10 +1,7 @@
 import type { LoginFailureCategory } from "./auth-login-errors.mjs";
 
 type AuthFlowClient = {
-  signInWithPassword(input: {
-    email: string;
-    password: string;
-  }): Promise<{
+  signInWithPassword(input: { email: string; password: string }): Promise<{
     data: { user: { id: string } | null } | null;
     error: unknown | null;
   }>;

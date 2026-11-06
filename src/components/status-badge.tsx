@@ -24,8 +24,20 @@ const labels: Record<string, string> = {
 };
 
 function toneFor(value: string) {
-  if (["DANG_HOAT_DONG", "ĐÃ_GỬI", "DA_GUI", "ĐÃ_ĐỌC", "DA_DOC"].includes(value)) return "is-success";
-  if (["CHO_PHE_DUYET", "CHƯA_GỬI", "CHUA_GUI", "ĐANG_GỬI", "DANG_GUI", "CHƯA_ĐỌC", "CHUA_DOC"].includes(value)) return "is-pending";
+  if (["DANG_HOAT_DONG", "ĐÃ_GỬI", "DA_GUI", "ĐÃ_ĐỌC", "DA_DOC"].includes(value))
+    return "is-success";
+  if (
+    [
+      "CHO_PHE_DUYET",
+      "CHƯA_GỬI",
+      "CHUA_GUI",
+      "ĐANG_GỬI",
+      "DANG_GUI",
+      "CHƯA_ĐỌC",
+      "CHUA_DOC",
+    ].includes(value)
+  )
+    return "is-pending";
   if (["KHOA", "THẤT_BẠI", "THAT_BAI"].includes(value)) return "is-danger";
   if (["GẶP_GỠ", "TƯ_VẤN"].includes(value)) return "is-info";
   return "is-neutral";
@@ -34,5 +46,9 @@ function toneFor(value: string) {
 export function StatusBadge({ value }: StatusBadgeProps) {
   const normalized = value?.trim() ?? "";
   if (!normalized) return <span className="status-badge is-neutral">Chưa xác định</span>;
-  return <span className={"status-badge " + toneFor(normalized)}>{labels[normalized] ?? normalized.replaceAll("_", " ")}</span>;
+  return (
+    <span className={"status-badge " + toneFor(normalized)}>
+      {labels[normalized] ?? normalized.replaceAll("_", " ")}
+    </span>
+  );
 }

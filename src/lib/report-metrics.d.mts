@@ -1,7 +1,4 @@
-export type ReportMetricKey =
-  | "customer_count"
-  | "activity_count"
-  | "connected_customer_count";
+export type ReportMetricKey = "customer_count" | "activity_count" | "connected_customer_count";
 
 export type ReportMetric = {
   key: ReportMetricKey;

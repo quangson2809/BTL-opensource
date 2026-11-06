@@ -41,12 +41,17 @@ function hasEditedControls(form: HTMLFormElement) {
   return controls.some((control) => {
     if (!canPersist(control)) return false;
 
-    if (control instanceof HTMLInputElement && (control.type === "checkbox" || control.type === "radio")) {
+    if (
+      control instanceof HTMLInputElement &&
+      (control.type === "checkbox" || control.type === "radio")
+    ) {
       return control.checked !== control.defaultChecked;
     }
 
     if (control instanceof HTMLSelectElement) {
-      return Array.from(control.options).some((option) => option.selected !== option.defaultSelected);
+      return Array.from(control.options).some(
+        (option) => option.selected !== option.defaultSelected,
+      );
     }
 
     return control.value !== control.defaultValue;
@@ -153,8 +158,7 @@ export function FormDraftPersistence({
       encodeURIComponent(persistKey);
 
     const values = readDraft(storageKey);
-    const hasCurrentUserInput =
-      form.dataset.userEdited === "true" || hasEditedControls(form);
+    const hasCurrentUserInput = form.dataset.userEdited === "true" || hasEditedControls(form);
     if (values && !hasCurrentUserInput) {
       // Restore after errors, refresh, or returning to the same form, but never
       // overwrite values entered before this effect attached its listeners.

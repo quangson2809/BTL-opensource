@@ -6,16 +6,12 @@ import { redirect } from "next/navigation";
 import { executeLogin } from "@/lib/auth-login-flow.mjs";
 import { getAuthCallbackUrl } from "@/lib/auth-callback-url.mjs";
 import { meetsPasswordPolicy } from "@/lib/password-policy.mjs";
-import {
-  createLoginFailureLog,
-  type LoginFailureCategory,
-} from "@/lib/auth-login-errors.mjs";
+import { createLoginFailureLog, type LoginFailureCategory } from "@/lib/auth-login-errors.mjs";
 import {
   createRegistrationFailureLog,
   executeRegistration,
   type RegistrationFailureCategory,
 } from "@/lib/auth-registration.mjs";
-
 import { requireActiveBusinessAccount } from "@/lib/business";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
@@ -39,19 +35,13 @@ async function logLoginFailure(
 
   try {
     const requestHeaders = await headers();
-    requestId =
-      requestHeaders.get("x-vercel-id") ??
-      requestHeaders.get("x-request-id") ??
-      null;
+    requestId = requestHeaders.get("x-vercel-id") ?? requestHeaders.get("x-request-id") ?? null;
   } catch {
     // Logging must not break the authentication response if request context is unavailable.
   }
 
-  console.warn(
-    JSON.stringify(createLoginFailureLog({ category, error, requestId, source })),
-  );
+  console.warn(JSON.stringify(createLoginFailureLog({ category, error, requestId, source })));
 }
-
 
 async function logRegistrationFailure({
   category,
@@ -68,47 +58,58 @@ async function logRegistrationFailure({
 
   try {
     const requestHeaders = await headers();
-    requestId =
-      requestHeaders.get("x-vercel-id") ??
-      requestHeaders.get("x-request-id") ??
-      null;
+    requestId = requestHeaders.get("x-vercel-id") ?? requestHeaders.get("x-request-id") ?? null;
   } catch {
     // Missing request context must not prevent registration error handling.
   }
 
   console.warn(
-    JSON.stringify(
-      createRegistrationFailureLog({ category, error, source, requestId, event }),
-    ),
+    JSON.stringify(createRegistrationFailureLog({ category, error, source, requestId, event })),
   );
 }
 
-function classifyOtpDeliveryError(error: unknown): "rate-limited" | "email-not-authorized" | "email-provider" | "service" {
-  const value = error !== null && typeof error === "object"
-    ? error as { code?: unknown; message?: unknown; status?: unknown; name?: unknown }
-    : {};
+function classifyOtpDeliveryError(
+  error: unknown,
+): "rate-limited" | "email-not-authorized" | "email-provider" | "service" {
+  const value =
+    error !== null && typeof error === "object"
+      ? (error as { code?: unknown; message?: unknown; status?: unknown; name?: unknown })
+      : {};
   const code = typeof value.code === "string" ? value.code.toLowerCase() : "";
   const message = typeof value.message === "string" ? value.message.toLowerCase() : "";
   const status = typeof value.status === "number" ? value.status : 0;
 
   if (
     status === 429 ||
-    /rate.?limit|too many requests|over_email_send_rate_limit|over_request_rate_limit/.test(code + " " + message)
-  ) return "rate-limited";
+    /rate.?limit|too many requests|over_email_send_rate_limit|over_request_rate_limit/.test(
+      code + " " + message,
+    )
+  )
+    return "rate-limited";
   if (
-    /email_address_not_authorized|recipient.*not authorized|only.*team.*email|email.*not.*authorized|testing purposes/.test(code + " " + message)
-  ) return "email-not-authorized";
+    /email_address_not_authorized|recipient.*not authorized|only.*team.*email|email.*not.*authorized|testing purposes/.test(
+      code + " " + message,
+    )
+  )
+    return "email-not-authorized";
   if (
-    /smtp|email provider|sending email|send.*email|mail server|failed to send/.test(code + " " + message) ||
+    /smtp|email provider|sending email|send.*email|mail server|failed to send/.test(
+      code + " " + message,
+    ) ||
     status >= 500
-  ) return "email-provider";
+  )
+    return "email-provider";
   return "service";
 }
 
-async function logOtpDeliveryFailure(flow: "password-change" | "password-recovery", error: unknown) {
-  const value = error !== null && typeof error === "object"
-    ? error as { code?: unknown; message?: unknown; status?: unknown; name?: unknown }
-    : {};
+async function logOtpDeliveryFailure(
+  flow: "password-change" | "password-recovery",
+  error: unknown,
+) {
+  const value =
+    error !== null && typeof error === "object"
+      ? (error as { code?: unknown; message?: unknown; status?: unknown; name?: unknown })
+      : {};
   let requestId: string | null = null;
   try {
     const requestHeaders = await headers();
@@ -117,15 +118,17 @@ async function logOtpDeliveryFailure(flow: "password-change" | "password-recover
     // Logging must not break the response.
   }
   // Do not log the email address, OTP, access token, or raw provider message.
-  console.error(JSON.stringify({
-    event: "auth.otp_delivery.failed",
-    flow,
-    category: classifyOtpDeliveryError(error),
-    providerErrorCode: typeof value.code === "string" ? value.code.slice(0, 80) : null,
-    providerErrorName: typeof value.name === "string" ? value.name.slice(0, 80) : null,
-    providerStatus: typeof value.status === "number" ? value.status : null,
-    requestId,
-  }));
+  console.error(
+    JSON.stringify({
+      event: "auth.otp_delivery.failed",
+      flow,
+      category: classifyOtpDeliveryError(error),
+      providerErrorCode: typeof value.code === "string" ? value.code.slice(0, 80) : null,
+      providerErrorName: typeof value.name === "string" ? value.name.slice(0, 80) : null,
+      providerStatus: typeof value.status === "number" ? value.status : null,
+      requestId,
+    }),
+  );
 }
 
 export async function register(formData: FormData) {
@@ -185,17 +188,31 @@ export async function register(formData: FormData) {
           return { exists: Boolean(data), error };
         },
         findExistingAgentCode: async (agentCode) => {
-          const { data, error } = await admin.from("tai_khoan").select("id").eq("ma_dai_ly", agentCode).maybeSingle();
+          const { data, error } = await admin
+            .from("tai_khoan")
+            .select("id")
+            .eq("ma_dai_ly", agentCode)
+            .maybeSingle();
           return { exists: Boolean(data), error };
         },
         findEligibleManagerByAgentCode: async (managerCode) => {
-          const { data: manager, error: managerError } = await admin.from("tai_khoan").select("id,trang_thai").eq("ma_dai_ly", managerCode).maybeSingle();
+          const { data: manager, error: managerError } = await admin
+            .from("tai_khoan")
+            .select("id,trang_thai")
+            .eq("ma_dai_ly", managerCode)
+            .maybeSingle();
           if (managerError) return { eligible: false, error: managerError };
-          if (!manager || manager.trang_thai !== "DANG_HOAT_DONG") return { eligible: false, error: null };
-          const { data: assignments, error: roleError } = await admin.from("phan_cong_vai_tro").select("vai_tro(ma_vai_tro)").eq("tai_khoan_id", manager.id);
+          if (!manager || manager.trang_thai !== "DANG_HOAT_DONG")
+            return { eligible: false, error: null };
+          const { data: assignments, error: roleError } = await admin
+            .from("phan_cong_vai_tro")
+            .select("vai_tro(ma_vai_tro)")
+            .eq("tai_khoan_id", manager.id);
           if (roleError) return { eligible: false, error: roleError };
           const eligible = (assignments ?? []).some((assignment) => {
-            const role = Array.isArray(assignment.vai_tro) ? assignment.vai_tro[0] : assignment.vai_tro;
+            const role = Array.isArray(assignment.vai_tro)
+              ? assignment.vai_tro[0]
+              : assignment.vai_tro;
             return role?.ma_vai_tro === "DM" || role?.ma_vai_tro === "UM";
           });
           return { eligible, error: null };
@@ -246,9 +263,7 @@ export async function login(formData: FormData) {
           .eq("id", userId)
           .maybeSingle();
         return {
-          data: result.data
-            ? { id: result.data.id, trang_thai: result.data.trang_thai }
-            : null,
+          data: result.data ? { id: result.data.id, trang_thai: result.data.trang_thai } : null,
           error: result.error,
         };
       },
@@ -333,9 +348,7 @@ export async function requestPasswordRecovery(formData: FormData) {
 
   // Use the same success response regardless of whether the address exists to
   // avoid turning this endpoint into an account-enumeration mechanism.
-  redirect(
-    "/password/recovery/verify?email=" + encodeURIComponent(email) + "&status=otp-sent",
-  );
+  redirect("/password/recovery/verify?email=" + encodeURIComponent(email) + "&status=otp-sent");
 }
 
 export async function verifyRecoveryOtp(formData: FormData) {

@@ -6,6 +6,7 @@ import { useEffect, useRef, useState } from "react";
 import type { ReactNode } from "react";
 
 import { logout } from "@/app/auth/actions";
+
 import { createClient } from "@/lib/supabase/client";
 
 type NavigationItem = {
@@ -130,11 +131,7 @@ export function AppFrame({ children }: Readonly<{ children: ReactNode }>) {
   useEffect(() => {
     const closeAccountMenuOutside = (event: PointerEvent) => {
       const menu = accountMenuRef.current;
-      if (
-        !menu?.open ||
-        !(event.target instanceof Node) ||
-        menu.contains(event.target)
-      ) {
+      if (!menu?.open || !(event.target instanceof Node) || menu.contains(event.target)) {
         return;
       }
       menu.open = false;
@@ -167,18 +164,13 @@ export function AppFrame({ children }: Readonly<{ children: ReactNode }>) {
           return;
         }
 
-        const [accountResult, adminResult, dmResult, umResult, saResult] =
-          await Promise.all([
-            supabase
-              .from("tai_khoan")
-              .select("ho_ten,email")
-              .eq("id", user.id)
-              .maybeSingle(),
-            supabase.rpc("has_role", { role_code: "ADMIN" }),
-            supabase.rpc("has_role", { role_code: "DM" }),
-            supabase.rpc("has_role", { role_code: "UM" }),
-            supabase.rpc("has_role", { role_code: "SA" }),
-          ]);
+        const [accountResult, adminResult, dmResult, umResult, saResult] = await Promise.all([
+          supabase.from("tai_khoan").select("ho_ten,email").eq("id", user.id).maybeSingle(),
+          supabase.rpc("has_role", { role_code: "ADMIN" }),
+          supabase.rpc("has_role", { role_code: "DM" }),
+          supabase.rpc("has_role", { role_code: "UM" }),
+          supabase.rpc("has_role", { role_code: "SA" }),
+        ]);
 
         if (cancelled) return;
 
@@ -258,10 +250,7 @@ export function AppFrame({ children }: Readonly<{ children: ReactNode }>) {
       if (event.shiftKey && (document.activeElement === first || focusIsOutside)) {
         event.preventDefault();
         last.focus();
-      } else if (
-        !event.shiftKey &&
-        (document.activeElement === last || focusIsOutside)
-      ) {
+      } else if (!event.shiftKey && (document.activeElement === last || focusIsOutside)) {
         event.preventDefault();
         first.focus();
       }
@@ -299,9 +288,7 @@ export function AppFrame({ children }: Readonly<{ children: ReactNode }>) {
   const breadcrumbs = breadcrumbSegments.map((segment, index) => ({
     href: breadcrumbHref(breadcrumbSegments, index),
     key: "/" + breadcrumbSegments.slice(0, index + 1).join("/"),
-    label: isIdentifierSegment(segment)
-      ? "Chi tiết"
-      : routeLabels[segment] ?? segment,
+    label: isIdentifierSegment(segment) ? "Chi tiết" : (routeLabels[segment] ?? segment),
     current: index === breadcrumbSegments.length - 1,
   }));
 
@@ -342,7 +329,9 @@ export function AppFrame({ children }: Readonly<{ children: ReactNode }>) {
           href="/dashboard"
           onClick={() => setMobileNavigationOpen(false)}
         >
-          <span aria-hidden="true" className="brand-mark">iD</span>
+          <span aria-hidden="true" className="brand-mark">
+            iD
+          </span>
           <span>
             <span className="brand-name">IDAILY</span>
             <span className="brand-caption">Không gian làm việc</span>
@@ -355,15 +344,16 @@ export function AppFrame({ children }: Readonly<{ children: ReactNode }>) {
             <Link
               aria-current={isActivePath(pathname, item.href) ? "page" : undefined}
               className={
-                "navigation-link" +
-                (isActivePath(pathname, item.href) ? " is-active" : "")
+                "navigation-link" + (isActivePath(pathname, item.href) ? " is-active" : "")
               }
               href={item.href}
               key={item.href}
               onClick={() => setMobileNavigationOpen(false)}
             >
               <span>{item.label}</span>
-              <span aria-hidden="true" className="navigation-arrow">›</span>
+              <span aria-hidden="true" className="navigation-arrow">
+                ›
+              </span>
             </Link>
           ))}
         </nav>
@@ -427,7 +417,11 @@ export function AppFrame({ children }: Readonly<{ children: ReactNode }>) {
 
           <nav aria-label="Breadcrumb" className="workspace-breadcrumbs">
             <ol className="workspace-breadcrumb-list">
-              <li><Link href="/dashboard" onClick={closeAccountMenu}>IDAILY</Link></li>
+              <li>
+                <Link href="/dashboard" onClick={closeAccountMenu}>
+                  IDAILY
+                </Link>
+              </li>
               {breadcrumbs.map((crumb) => (
                 <li key={crumb.key}>
                   <span aria-hidden="true">/</span>
@@ -436,9 +430,7 @@ export function AppFrame({ children }: Readonly<{ children: ReactNode }>) {
                       {crumb.label}
                     </Link>
                   ) : (
-                    <span aria-current={crumb.current ? "page" : undefined}>
-                      {crumb.label}
-                    </span>
+                    <span aria-current={crumb.current ? "page" : undefined}>{crumb.label}</span>
                   )}
                 </li>
               ))}
@@ -462,12 +454,20 @@ export function AppFrame({ children }: Readonly<{ children: ReactNode }>) {
                   {accountName.trim().charAt(0).toLocaleUpperCase("vi-VN") || "T"}
                 </span>
                 <span className="account-menu-label">Tài khoản</span>
-                <span aria-hidden="true" className="account-menu-chevron">⌄</span>
+                <span aria-hidden="true" className="account-menu-chevron">
+                  ⌄
+                </span>
               </summary>
               <div className="workspace-account-menu-panel">
                 <div className="account-menu-profile">
                   <strong>{accountName}</strong>
-                  <span>{!accountLoaded ? "Đang tải thông tin tài khoản…" : accountContextError ? "Không thể tải thông tin tài khoản." : accountEmail}</span>
+                  <span>
+                    {!accountLoaded
+                      ? "Đang tải thông tin tài khoản…"
+                      : accountContextError
+                        ? "Không thể tải thông tin tài khoản."
+                        : accountEmail}
+                  </span>
                 </div>
                 <Link href="/profile" onClick={closeAccountMenu}>
                   Hồ sơ đại lý

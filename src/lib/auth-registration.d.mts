@@ -80,7 +80,9 @@ type RegistrationAuthClient = {
 type RegistrationAdminClient = {
   findExistingPhone(phone: string): Promise<{ exists: boolean; error: unknown | null }>;
   findExistingAgentCode(code: string): Promise<{ exists: boolean; error: unknown | null }>;
-  findEligibleManagerByAgentCode(code: string): Promise<{ eligible: boolean; error: unknown | null }>;
+  findEligibleManagerByAgentCode(
+    code: string,
+  ): Promise<{ eligible: boolean; error: unknown | null }>;
 };
 
 export function executeRegistration(input: {

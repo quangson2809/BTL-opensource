@@ -88,9 +88,7 @@ export async function updateRole(formData: FormData) {
   }
 
   if (!validRoleName(roleName) || selectedPermissions === null) {
-    redirect(
-      "/admin/roles/" + encodeURIComponent(roleId) + "/edit?error=invalid",
-    );
+    redirect("/admin/roles/" + encodeURIComponent(roleId) + "/edit?error=invalid");
   }
 
   const { supabase } = await requireAdmin();

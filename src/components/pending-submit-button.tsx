@@ -3,10 +3,7 @@
 import { useFormStatus } from "react-dom";
 import type { ReactNode } from "react";
 
-import {
-  getSubmitPresentation,
-  shouldCancelSubmission,
-} from "@/lib/interaction-contracts.mjs";
+import { getSubmitPresentation, shouldCancelSubmission } from "@/lib/interaction-contracts.mjs";
 
 type PendingSubmitButtonProps = {
   children: ReactNode;
@@ -31,9 +28,8 @@ export function PendingSubmitButton({
       aria-disabled={isDisabled}
       disabled={isDisabled}
       onClick={(event) => {
-        const cancelled = shouldCancelSubmission(
-          confirmMessage,
-          (message) => window.confirm(message),
+        const cancelled = shouldCancelSubmission(confirmMessage, (message) =>
+          window.confirm(message),
         );
         if (cancelled) event.preventDefault();
       }}

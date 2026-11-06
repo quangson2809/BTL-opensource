@@ -10,28 +10,32 @@ import { ListPagination, ResultSummary } from "@/components/list-controls";
 import { PendingSubmitButton } from "@/components/pending-submit-button";
 
 import { deleteActivity } from "@/app/activities/actions";
+
 import { requireBusinessAccount } from "@/lib/business";
 import { parsePositivePage, sanitizePostgrestOrSearch } from "@/lib/list-query.mjs";
 
 export const dynamic = "force-dynamic";
 
 type ActivitiesPageProps = {
-  searchParams: Promise<{ q?: string; loai?: string; status?: string; error?: string; page?: string; id?: string }>;
+  searchParams: Promise<{
+    q?: string;
+    loai?: string;
+    status?: string;
+    error?: string;
+    page?: string;
+    id?: string;
+  }>;
 };
 
 const activityTypes = new Set(["KHẢO_SÁT", "GẶP_GỠ", "TƯ_VẤN"]);
 
-export default async function ActivitiesPage({
-  searchParams,
-}: ActivitiesPageProps) {
+export default async function ActivitiesPage({ searchParams }: ActivitiesPageProps) {
   const query = await searchParams;
   const search = sanitizePostgrestOrSearch(query.q);
   const { supabase, accountId } = await requireBusinessAccount();
   const type = query.loai && activityTypes.has(query.loai) ? query.loai : "";
 
-  let countQuery = supabase
-    .from("hoat_dong")
-    .select("id", { count: "exact", head: true });
+  let countQuery = supabase.from("hoat_dong").select("id", { count: "exact", head: true });
   if (type) countQuery = countQuery.eq("loai_hoat_dong", type);
   if (search) countQuery = countQuery.ilike("dia_diem", "%" + search + "%");
 
@@ -62,12 +66,10 @@ export default async function ActivitiesPage({
 
   const visibleActivities = activities ?? [];
   const accountIds = [...new Set(visibleActivities.map((activity) => activity.tai_khoan_id))];
-  const accountResult = accountIds.length > 0
-    ? await supabase
-        .from("tai_khoan")
-        .select("id,ho_ten,ma_dai_ly")
-        .in("id", accountIds)
-    : { data: [], error: null };
+  const accountResult =
+    accountIds.length > 0
+      ? await supabase.from("tai_khoan").select("id,ho_ten,ma_dai_ly").in("id", accountIds)
+      : { data: [], error: null };
 
   if (accountResult.error) {
     throw new Error("Không thể tải tên người thực hiện trong phạm vi được cấp quyền.");
@@ -94,7 +96,11 @@ export default async function ActivitiesPage({
           description="Theo dõi lịch sử hoạt động theo phạm vi dữ liệu được cấp quyền."
           title="Hoạt động kinh doanh"
         />
-        <FormDraftClear scopeKey={accountId} persistKeys={["activity-create", ...(query.id ? ["activity-edit-" + query.id] : [])]} clearOn={query.status === "created" || query.status === "updated"} />
+        <FormDraftClear
+          scopeKey={accountId}
+          persistKeys={["activity-create", ...(query.id ? ["activity-edit-" + query.id] : [])]}
+          clearOn={query.status === "created" || query.status === "updated"}
+        />
         {query.status ? <ActionFeedback status={query.status} /> : null}
         {query.error ? <ActionFeedback error={query.error} /> : null}
 
@@ -125,7 +131,16 @@ export default async function ActivitiesPage({
           filterParams={filterParams}
           activeFilters={[
             ...(search ? [{ key: "q", label: "Địa điểm", value: search }] : []),
-            ...(type ? [{ key: "loai", label: "Loại hoạt động", value: type === "KHẢO_SÁT" ? "Khảo sát" : type === "GẶP_GỠ" ? "Gặp gỡ" : "Tư vấn" }] : []),
+            ...(type
+              ? [
+                  {
+                    key: "loai",
+                    label: "Loại hoạt động",
+                    value:
+                      type === "KHẢO_SÁT" ? "Khảo sát" : type === "GẶP_GỠ" ? "Gặp gỡ" : "Tư vấn",
+                  },
+                ]
+              : []),
           ]}
         />
 
@@ -147,13 +162,16 @@ export default async function ActivitiesPage({
             return (
               <article className="record-row" key={activity.id}>
                 <p>
-                  <strong>{activity.loai_hoat_dong}</strong> <StatusBadge value={activity.loai_hoat_dong} /> —{" "}
+                  <strong>{activity.loai_hoat_dong}</strong>{" "}
+                  <StatusBadge value={activity.loai_hoat_dong} /> —{" "}
                   {names.get(activity.tai_khoan_id) ?? "Người thực hiện trong scope"}
                 </p>
                 <p>{activity.dia_diem}</p>
                 <p className="secondary-text">
-                  {new Date(activity.thoi_gian).toLocaleString("vi-VN", { timeZone: "Asia/Ho_Chi_Minh" })} ·{" "}
-                  {activity.so_khach_hang_ket_noi} khách hàng kết nối
+                  {new Date(activity.thoi_gian).toLocaleString("vi-VN", {
+                    timeZone: "Asia/Ho_Chi_Minh",
+                  })}{" "}
+                  · {activity.so_khach_hang_ket_noi} khách hàng kết nối
                 </p>
                 {owned ? (
                   <div className="actions">
@@ -175,7 +193,12 @@ export default async function ActivitiesPage({
             );
           })}
         </div>
-        <ListPagination basePath="/activities" currentPage={currentPage} pageCount={pageCount} params={filterParams} />
+        <ListPagination
+          basePath="/activities"
+          currentPage={currentPage}
+          pageCount={pageCount}
+          params={filterParams}
+        />
       </section>
     </main>
   );

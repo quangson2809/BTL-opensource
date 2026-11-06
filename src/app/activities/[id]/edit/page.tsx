@@ -1,12 +1,14 @@
 import { notFound } from "next/navigation";
+
 import { DraftCancelLink } from "@/components/draft-cancel-link";
 import { GuardedForm } from "@/components/guarded-form";
-
 import { ActionFeedback } from "@/components/action-feedback";
 import { FormDraftPersistence } from "@/components/form-draft-persistence";
 import { PageHeader } from "@/components/page-header";
 import { PendingSubmitButton } from "@/components/pending-submit-button";
+
 import { updateActivity } from "@/app/activities/actions";
+
 import { requireBusinessAccount } from "@/lib/business";
 
 export const dynamic = "force-dynamic";
@@ -27,7 +29,9 @@ function localDateTime(value: string) {
     hourCycle: "h23",
   }).formatToParts(new Date(value));
   const values = Object.fromEntries(parts.map((part) => [part.type, part.value]));
-  return values.year + "-" + values.month + "-" + values.day + "T" + values.hour + ":" + values.minute;
+  return (
+    values.year + "-" + values.month + "-" + values.day + "T" + values.hour + ":" + values.minute
+  );
 }
 
 export default async function EditActivityPage({ params, searchParams }: EditActivityPageProps) {
@@ -51,27 +55,93 @@ export default async function EditActivityPage({ params, searchParams }: EditAct
         <PageHeader
           title="Chỉnh sửa hoạt động"
           description="Cập nhật thông tin bản ghi đã chọn."
-          actions={<DraftCancelLink className="button-link button-secondary" href="/activities" scopeKey={accountId} persistKeys={[persistKey]}>Quay lại lịch sử</DraftCancelLink>}
+          actions={
+            <DraftCancelLink
+              className="button-link button-secondary"
+              href="/activities"
+              scopeKey={accountId}
+              persistKeys={[persistKey]}
+            >
+              Quay lại lịch sử
+            </DraftCancelLink>
+          }
         />
         {query.error ? <ActionFeedback error={query.error} /> : null}
-        <FormDraftPersistence persistKey={persistKey} scopeKey={accountId} hasError={Boolean(query.error)} />
-        <p className="form-required-note"><span aria-hidden="true">*</span> Các trường trong biểu mẫu đều bắt buộc.</p>
-        <GuardedForm action={updateActivity} className="stack form-layout" data-persist-key={persistKey}>
+        <FormDraftPersistence
+          persistKey={persistKey}
+          scopeKey={accountId}
+          hasError={Boolean(query.error)}
+        />
+        <p className="form-required-note">
+          <span aria-hidden="true">*</span> Các trường trong biểu mẫu đều bắt buộc.
+        </p>
+        <GuardedForm
+          action={updateActivity}
+          className="stack form-layout"
+          data-persist-key={persistKey}
+        >
           <input name="activity_id" type="hidden" value={activity.id} />
           <fieldset className="form-section">
             <legend>Chi tiết hoạt động</legend>
             <div className="form-grid">
-              <label><span className="field-label">Loại hoạt động <span aria-hidden="true" className="required-indicator">*</span></span>
+              <label>
+                <span className="field-label">
+                  Loại hoạt động{" "}
+                  <span aria-hidden="true" className="required-indicator">
+                    *
+                  </span>
+                </span>
                 <select defaultValue={activity.loai_hoat_dong} name="loai_hoat_dong" required>
-                  <option value="KHẢO_SÁT">Khảo sát</option><option value="GẶP_GỠ">Gặp gỡ</option><option value="TƯ_VẤN">Tư vấn</option>
+                  <option value="KHẢO_SÁT">Khảo sát</option>
+                  <option value="GẶP_GỠ">Gặp gỡ</option>
+                  <option value="TƯ_VẤN">Tư vấn</option>
                 </select>
               </label>
-              <label><span className="field-label">Địa điểm <span aria-hidden="true" className="required-indicator">*</span></span><input defaultValue={activity.dia_diem} name="dia_diem" required /></label>
-              <label><span className="field-label">Thời gian <span aria-hidden="true" className="required-indicator">*</span></span><input defaultValue={localDateTime(activity.thoi_gian)} name="thoi_gian" required type="datetime-local" /></label>
-              <label><span className="field-label">Số khách hàng kết nối <span aria-hidden="true" className="required-indicator">*</span></span><input defaultValue={activity.so_khach_hang_ket_noi} min="0" name="so_khach_hang_ket_noi" required type="number" /></label>
+              <label>
+                <span className="field-label">
+                  Địa điểm{" "}
+                  <span aria-hidden="true" className="required-indicator">
+                    *
+                  </span>
+                </span>
+                <input defaultValue={activity.dia_diem} name="dia_diem" required />
+              </label>
+              <label>
+                <span className="field-label">
+                  Thời gian{" "}
+                  <span aria-hidden="true" className="required-indicator">
+                    *
+                  </span>
+                </span>
+                <input
+                  defaultValue={localDateTime(activity.thoi_gian)}
+                  name="thoi_gian"
+                  required
+                  type="datetime-local"
+                />
+              </label>
+              <label>
+                <span className="field-label">
+                  Số khách hàng kết nối{" "}
+                  <span aria-hidden="true" className="required-indicator">
+                    *
+                  </span>
+                </span>
+                <input
+                  defaultValue={activity.so_khach_hang_ket_noi}
+                  min="0"
+                  name="so_khach_hang_ket_noi"
+                  required
+                  type="number"
+                />
+              </label>
             </div>
           </fieldset>
-          <div className="form-actions"><PendingSubmitButton pendingLabel="Đang lưu thay đổi…">Lưu thay đổi</PendingSubmitButton></div>
+          <div className="form-actions">
+            <PendingSubmitButton pendingLabel="Đang lưu thay đổi…">
+              Lưu thay đổi
+            </PendingSubmitButton>
+          </div>
         </GuardedForm>
       </section>
     </main>

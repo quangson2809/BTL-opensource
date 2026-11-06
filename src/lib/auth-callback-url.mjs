@@ -4,9 +4,7 @@ function normalizeOrigin(value) {
   }
 
   const candidate = value.trim();
-  const withProtocol = /^https?:\/\//i.test(candidate)
-    ? candidate
-    : `https://${candidate}`;
+  const withProtocol = /^https?:\/\//i.test(candidate) ? candidate : `https://${candidate}`;
 
   let parsed;
   try {
@@ -41,8 +39,7 @@ export function getAuthCallbackUrl({
   nodeEnv = "development",
   vercelEnvironment,
 } = {}) {
-  const configuredUrl =
-    typeof configuredSiteUrl === "string" ? configuredSiteUrl.trim() : "";
+  const configuredUrl = typeof configuredSiteUrl === "string" ? configuredSiteUrl.trim() : "";
   const isPreviewDeployment = vercelEnvironment === "preview";
 
   // Preview callbacks should return to the preview deployment, not production.
@@ -51,21 +48,15 @@ export function getAuthCallbackUrl({
     : projectProductionUrl || deploymentUrl;
 
   const selectedSiteUrl =
-    configuredUrl ||
-    deploymentOrigin ||
-    (nodeEnv !== "production" ? "http://localhost:3000" : "");
+    configuredUrl || deploymentOrigin || (nodeEnv !== "production" ? "http://localhost:3000" : "");
 
   if (!selectedSiteUrl) {
-    throw new Error(
-      "Missing site URL configuration for production Auth callback.",
-    );
+    throw new Error("Missing site URL configuration for production Auth callback.");
   }
 
   const parsedOrigin = normalizeOrigin(selectedSiteUrl);
   if (!parsedOrigin) {
-    throw new Error(
-      "Missing site URL configuration for production Auth callback.",
-    );
+    throw new Error("Missing site URL configuration for production Auth callback.");
   }
 
   if (nodeEnv === "production" && isLoopbackHost(parsedOrigin.hostname)) {

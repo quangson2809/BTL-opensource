@@ -23,12 +23,7 @@ function activityPayload(formData: FormData) {
   const connected = parseNonNegativeInt32(field(formData, "so_khach_hang_ket_noi"));
   const parsedTime = parseVietnamLocalDateTime(thoiGian);
 
-  if (
-    !activityTypes.has(loaiHoatDong) ||
-    !diaDiem ||
-    !parsedTime ||
-    connected === null
-  ) {
+  if (!activityTypes.has(loaiHoatDong) || !diaDiem || !parsedTime || connected === null) {
     return null;
   }
 

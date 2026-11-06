@@ -20,20 +20,10 @@ async function rejectAuthenticatedUser({ authClient, category, error, source, lo
   try {
     const result = await authClient.signOutLocal();
     if (result && result.error) {
-      await logSafely(
-        logFailure,
-        CATEGORY.AUTH_SERVICE_ERROR,
-        result.error,
-        "session-cleanup",
-      );
+      await logSafely(logFailure, CATEGORY.AUTH_SERVICE_ERROR, result.error, "session-cleanup");
     }
   } catch (cleanupError) {
-    await logSafely(
-      logFailure,
-      CATEGORY.AUTH_SERVICE_ERROR,
-      cleanupError,
-      "session-cleanup",
-    );
+    await logSafely(logFailure, CATEGORY.AUTH_SERVICE_ERROR, cleanupError, "session-cleanup");
   }
 
   await logSafely(logFailure, category, error, source);
@@ -73,9 +63,7 @@ export async function executeLogin({
   const user = authResult && authResult.data && authResult.data.user;
   const authError = authResult && authResult.error;
   if (authError || !user) {
-    const category = authError
-      ? classifyLoginAuthError(authError)
-      : CATEGORY.AUTH_SERVICE_ERROR;
+    const category = authError ? classifyLoginAuthError(authError) : CATEGORY.AUTH_SERVICE_ERROR;
     await logSafely(logFailure, category, authError, "supabase-auth");
     return redirectForCategory(category);
   }

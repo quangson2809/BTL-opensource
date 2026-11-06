@@ -3,8 +3,8 @@ import Link from "next/link";
 import { FormDraftClear } from "@/components/form-draft-clear";
 import { PageHeader } from "@/components/page-header";
 import { EmptyState } from "@/components/empty-state";
-import { permissionGroupForCode } from "@/lib/permission-groups.mjs";
 
+import { permissionGroupForCode } from "@/lib/permission-groups.mjs";
 import { requireAdmin } from "@/lib/admin";
 import { sanitizePostgrestOrSearch } from "@/lib/list-query.mjs";
 
@@ -25,17 +25,9 @@ export default async function RolesPage({ searchParams }: RolesPageProps) {
   const search = sanitizePostgrestOrSearch(query.q).toLocaleLowerCase("vi-VN");
 
   const [roleResult, permissionResult, mappingResult] = await Promise.all([
-    supabase
-      .from("vai_tro")
-      .select("id,ma_vai_tro,ten_vai_tro,mo_ta")
-      .order("ma_vai_tro"),
-    supabase
-      .from("quyen")
-      .select("id,ma_quyen,ten_quyen,mo_ta")
-      .order("ma_quyen"),
-    supabase
-      .from("phan_quyen_vai_tro")
-      .select("vai_tro_id,quyen_id"),
+    supabase.from("vai_tro").select("id,ma_vai_tro,ten_vai_tro,mo_ta").order("ma_vai_tro"),
+    supabase.from("quyen").select("id,ma_quyen,ten_quyen,mo_ta").order("ma_quyen"),
+    supabase.from("phan_quyen_vai_tro").select("vai_tro_id,quyen_id"),
   ]);
 
   if (roleResult.error || permissionResult.error || mappingResult.error) {
@@ -57,14 +49,15 @@ export default async function RolesPage({ searchParams }: RolesPageProps) {
   const matchesSearch = (values: Array<string | null | undefined>) =>
     values.join(" ").replace(/_/g, " ").toLocaleLowerCase("vi-VN").includes(search);
   const visibleRoles = search
-    ? allRoles.filter((role) =>
-        matchesSearch([role.ma_vai_tro, role.ten_vai_tro, role.mo_ta]) ||
-        [...(permissionIdsByRole.get(role.id) ?? [])].some((permissionId) => {
-          const permission = permissionsById.get(permissionId);
-          return permission
-            ? matchesSearch([permission.ma_quyen, permission.ten_quyen, permission.mo_ta])
-            : false;
-        }),
+    ? allRoles.filter(
+        (role) =>
+          matchesSearch([role.ma_vai_tro, role.ten_vai_tro, role.mo_ta]) ||
+          [...(permissionIdsByRole.get(role.id) ?? [])].some((permissionId) => {
+            const permission = permissionsById.get(permissionId);
+            return permission
+              ? matchesSearch([permission.ma_quyen, permission.ten_quyen, permission.mo_ta])
+              : false;
+          }),
       )
     : allRoles;
   const permissions = search
@@ -98,7 +91,11 @@ export default async function RolesPage({ searchParams }: RolesPageProps) {
             </>
           }
         />
-        <FormDraftClear scopeKey={accountId} persistKeys={["role-create", ...(query.id ? ["role-edit-" + query.id] : [])]} clearOn={query.status === "created" || query.status === "updated"} />
+        <FormDraftClear
+          scopeKey={accountId}
+          persistKeys={["role-create", ...(query.id ? ["role-edit-" + query.id] : [])]}
+          clearOn={query.status === "created" || query.status === "updated"}
+        />
         {query.status && statusMessages[query.status] ? (
           <p aria-live="polite" className="message success" role="status">
             {statusMessages[query.status]}
@@ -106,18 +103,27 @@ export default async function RolesPage({ searchParams }: RolesPageProps) {
         ) : null}
 
         <p className="field-help">
-          Mã vai trò hệ thống được giữ cố định. Danh mục quyền hiện tại do migration
-          quản lý; tại đây bạn tạo/sửa vai trò và chọn các quyền đã được định nghĩa.
-          Permission chỉ được áp dụng ở policy/RPC có kiểm tra permission tương ứng.
+          Mã vai trò hệ thống được giữ cố định. Danh mục quyền hiện tại do migration quản lý; tại
+          đây bạn tạo/sửa vai trò và chọn các quyền đã được định nghĩa. Permission chỉ được áp dụng
+          ở policy/RPC có kiểm tra permission tương ứng.
         </p>
 
         <form className="filter-grid" method="get" role="search">
           <label>
             Tìm vai trò hoặc quyền
-            <input autoComplete="off" defaultValue={query.q ?? ""} name="q" placeholder="Mã, tên hoặc mô tả" />
+            <input
+              autoComplete="off"
+              defaultValue={query.q ?? ""}
+              name="q"
+              placeholder="Mã, tên hoặc mô tả"
+            />
           </label>
           <button type="submit">Tìm kiếm</button>
-          {search ? <Link className="button-link button-secondary" href="/admin/roles">Xóa tìm kiếm</Link> : null}
+          {search ? (
+            <Link className="button-link button-secondary" href="/admin/roles">
+              Xóa tìm kiếm
+            </Link>
+          ) : null}
         </form>
 
         <section aria-labelledby="role-catalog-title" className="detail-section">
@@ -126,53 +132,59 @@ export default async function RolesPage({ searchParams }: RolesPageProps) {
             {visibleRoles.length === 0 ? (
               <EmptyState
                 title={search ? "Không tìm thấy vai trò phù hợp" : "Chưa có vai trò"}
-                description={search ? "Thử từ khóa khác để tìm theo mã, tên hoặc quyền được gán." : "Tạo vai trò để bắt đầu cấu hình các quyền được cấp cho người dùng."}
+                description={
+                  search
+                    ? "Thử từ khóa khác để tìm theo mã, tên hoặc quyền được gán."
+                    : "Tạo vai trò để bắt đầu cấu hình các quyền được cấp cho người dùng."
+                }
               />
             ) : (
               visibleRoles.map((role) => {
-              const rolePermissions = mappings
-                .filter((mapping) => mapping.vai_tro_id === role.id)
-                .map((mapping) =>
-                  allPermissions.find((permission) => permission.id === mapping.quyen_id),
-                )
-                .filter((permission) => permission !== undefined);
+                const rolePermissions = mappings
+                  .filter((mapping) => mapping.vai_tro_id === role.id)
+                  .map((mapping) =>
+                    allPermissions.find((permission) => permission.id === mapping.quyen_id),
+                  )
+                  .filter((permission) => permission !== undefined);
 
-              
-
-            return (
-                <article className="role-assignment" key={role.id}>
-                  <div>
-                    <p>
-                      <strong>{role.ma_vai_tro}</strong> — {role.ten_vai_tro}
-                      {["ADMIN", "DM", "UM", "SA"].includes(role.ma_vai_tro) ? (
-                        <span className="secondary-text"> · Vai trò hệ thống</span>
-                      ) : null}
-                    </p>
-                    <p className="secondary-text">{role.mo_ta ?? "Không có mô tả."}</p>
-                    <p>
-                      <strong>Quyền:</strong>{" "}
-                      {rolePermissions.length > 0
-                        ? rolePermissions
-                            .map((permission) => permission.ma_quyen + " — " + permission.ten_quyen)
-                            .join(", ")
-                        : "Không có"}
-                    </p>
-                  </div>
-                  <div className="actions">
-                    {role.ma_vai_tro === "ADMIN" ? (
-                      <p className="secondary-text">Vai trò tối cao; không thể chỉnh sửa quyền.</p>
-                    ) : (
-                      <Link
-                        className="button-link button-secondary"
-                        href={"/admin/roles/" + role.id + "/edit"}
-                      >
-                        Quản lý quyền
-                      </Link>
-                    )}
-                  </div>
-                </article>
-              );
-            })
+                return (
+                  <article className="role-assignment" key={role.id}>
+                    <div>
+                      <p>
+                        <strong>{role.ma_vai_tro}</strong> — {role.ten_vai_tro}
+                        {["ADMIN", "DM", "UM", "SA"].includes(role.ma_vai_tro) ? (
+                          <span className="secondary-text"> · Vai trò hệ thống</span>
+                        ) : null}
+                      </p>
+                      <p className="secondary-text">{role.mo_ta ?? "Không có mô tả."}</p>
+                      <p>
+                        <strong>Quyền:</strong>{" "}
+                        {rolePermissions.length > 0
+                          ? rolePermissions
+                              .map(
+                                (permission) => permission.ma_quyen + " — " + permission.ten_quyen,
+                              )
+                              .join(", ")
+                          : "Không có"}
+                      </p>
+                    </div>
+                    <div className="actions">
+                      {role.ma_vai_tro === "ADMIN" ? (
+                        <p className="secondary-text">
+                          Vai trò tối cao; không thể chỉnh sửa quyền.
+                        </p>
+                      ) : (
+                        <Link
+                          className="button-link button-secondary"
+                          href={"/admin/roles/" + role.id + "/edit"}
+                        >
+                          Quản lý quyền
+                        </Link>
+                      )}
+                    </div>
+                  </article>
+                );
+              })
             )}
           </div>
         </section>
@@ -180,7 +192,11 @@ export default async function RolesPage({ searchParams }: RolesPageProps) {
         <section aria-labelledby="permission-catalog-title" className="detail-section">
           <h2 id="permission-catalog-title">Danh mục quyền hiện có</h2>
           {(permissions ?? []).length === 0 ? (
-            <p className="secondary-text">{search ? "Không tìm thấy quyền phù hợp." : "Chưa có quyền được định nghĩa trong migration."}</p>
+            <p className="secondary-text">
+              {search
+                ? "Không tìm thấy quyền phù hợp."
+                : "Chưa có quyền được định nghĩa trong migration."}
+            </p>
           ) : (
             <div className="stack">
               {Array.from(permissionsByGroup.entries()).map(([group, groupedPermissions]) => (

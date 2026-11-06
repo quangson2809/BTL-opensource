@@ -18,10 +18,7 @@ function notificationDraftPayload(formData: FormData) {
   const type = field(formData, "loai");
   const recipients = formData
     .getAll("recipient_ids")
-    .filter(
-      (value): value is string =>
-        typeof value === "string" && value.trim().length > 0,
-    )
+    .filter((value): value is string => typeof value === "string" && value.trim().length > 0)
     .map((value) => value.trim());
 
   if (
@@ -80,17 +77,8 @@ export async function updateNotificationDraft(formData: FormData) {
 
   if (error) {
     const errorCode =
-      error.code === "42501"
-        ? "forbidden"
-        : error.code === "22023"
-          ? "not-draft"
-          : "update";
-    redirect(
-      "/notifications/" +
-        encodeURIComponent(notificationId) +
-        "/edit?error=" +
-        errorCode,
-    );
+      error.code === "42501" ? "forbidden" : error.code === "22023" ? "not-draft" : "update";
+    redirect("/notifications/" + encodeURIComponent(notificationId) + "/edit?error=" + errorCode);
   }
 
   redirect("/notifications?status=updated&id=" + encodeURIComponent(notificationId));

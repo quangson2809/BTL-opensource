@@ -7,12 +7,7 @@ type EmptyStateProps = {
   actionLabel?: string;
 };
 
-export function EmptyState({
-  title,
-  description,
-  actionHref,
-  actionLabel,
-}: EmptyStateProps) {
+export function EmptyState({ title, description, actionHref, actionLabel }: EmptyStateProps) {
   return (
     <section aria-label={title} className="empty-state" role="status">
       <h2>{title}</h2>

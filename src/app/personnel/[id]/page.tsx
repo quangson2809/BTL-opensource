@@ -9,17 +9,13 @@ type PersonnelDetailPageProps = {
   params: Promise<{ id: string }>;
 };
 
-export default async function PersonnelDetailPage({
-  params,
-}: PersonnelDetailPageProps) {
+export default async function PersonnelDetailPage({ params }: PersonnelDetailPageProps) {
   const { id } = await params;
   const { supabase } = await requireManager();
   const [accountResult, summaryResult] = await Promise.all([
     supabase
       .from("tai_khoan")
-      .select(
-        "id,ho_ten,email,so_dien_thoai,ma_dai_ly,manager_id,trang_thai",
-      )
+      .select("id,ho_ten,email,so_dien_thoai,ma_dai_ly,manager_id,trang_thai")
       .eq("id", id)
       .maybeSingle(),
     supabase.rpc("personnel_summary", { target_account_id: id }),
@@ -51,14 +47,11 @@ export default async function PersonnelDetailPage({
           <p>Trạng thái: {accountResult.data.trang_thai}</p>
           <p>Khách hàng: {summary?.customer_count ?? 0}</p>
           <p>Hoạt động: {summary?.activity_count ?? 0}</p>
-          <p>
-            Tổng lượt khách hàng kết nối:{" "}
-            {summary?.connected_customer_count ?? 0}
-          </p>
+          <p>Tổng lượt khách hàng kết nối: {summary?.connected_customer_count ?? 0}</p>
         </div>
         <p className="secondary-text">
-          Thống kê khách hàng chỉ là số tổng hợp; manager không được mở hoặc sửa
-          hồ sơ khách hàng cấp dưới.
+          Thống kê khách hàng chỉ là số tổng hợp; manager không được mở hoặc sửa hồ sơ khách hàng
+          cấp dưới.
         </p>
       </section>
     </main>

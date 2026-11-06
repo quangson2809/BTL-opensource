@@ -2,7 +2,9 @@ import { ErrorState } from "@/components/error-state";
 import { PageHeader } from "@/components/page-header";
 import { PendingSubmitButton } from "@/components/pending-submit-button";
 import { StatusBadge } from "@/components/status-badge";
+
 import { updateAgencyProfile } from "@/app/profile/actions";
+
 import { requireActiveBusinessAccount } from "@/lib/business";
 import { getCurrentRoleCodes } from "@/lib/role-access";
 
@@ -20,10 +22,14 @@ const errorMessages: Record<string, string> = {
   invalid: "Họ và tên chứa ký tự không hợp lệ.",
   "invalid-phone": "Số điện thoại không đúng định dạng.",
   "phone-taken": "Số điện thoại này đã được sử dụng bởi tài khoản khác. Hãy dùng số khác.",
-  permission: "Tài khoản hiện không có quyền cập nhật hồ sơ. Hãy đăng xuất, đăng nhập lại; nếu vẫn gặp lỗi, liên hệ quản trị viên.",
-  "invalid-data": "Thông tin không phù hợp với quy tắc dữ liệu. Hãy kiểm tra họ tên và số điện thoại rồi thử lại.",
-  "not-updated": "Không có hồ sơ nào được cập nhật. Phiên đăng nhập có thể đã hết hạn hoặc tài khoản không còn đủ điều kiện cập nhật.",
-  service: "Máy chủ chưa lưu được hồ sơ. Dữ liệu chưa được xác nhận là đã thay đổi; hãy thử lại sau. Nếu lỗi tiếp diễn, cung cấp thời điểm thao tác cho quản trị viên để tra nhật ký.",
+  permission:
+    "Tài khoản hiện không có quyền cập nhật hồ sơ. Hãy đăng xuất, đăng nhập lại; nếu vẫn gặp lỗi, liên hệ quản trị viên.",
+  "invalid-data":
+    "Thông tin không phù hợp với quy tắc dữ liệu. Hãy kiểm tra họ tên và số điện thoại rồi thử lại.",
+  "not-updated":
+    "Không có hồ sơ nào được cập nhật. Phiên đăng nhập có thể đã hết hạn hoặc tài khoản không còn đủ điều kiện cập nhật.",
+  service:
+    "Máy chủ chưa lưu được hồ sơ. Dữ liệu chưa được xác nhận là đã thay đổi; hãy thử lại sau. Nếu lỗi tiếp diễn, cung cấp thời điểm thao tác cho quản trị viên để tra nhật ký.",
   save: "Không thể lưu hồ sơ lúc này. Vui lòng thử lại.",
 };
 
@@ -41,16 +47,12 @@ function formatDate(value: string) {
   });
 }
 
-export default async function AgencyProfilePage({
-  searchParams,
-}: AgencyProfilePageProps) {
+export default async function AgencyProfilePage({ searchParams }: AgencyProfilePageProps) {
   const { supabase, accountId } = await requireActiveBusinessAccount();
   const [profileResult, roleCodes] = await Promise.all([
     supabase
       .from("tai_khoan")
-      .select(
-        "id,ho_ten,email,so_dien_thoai,ma_dai_ly,manager_id,trang_thai,created_at,updated_at",
-      )
+      .select("id,ho_ten,email,so_dien_thoai,ma_dai_ly,manager_id,trang_thai,created_at,updated_at")
       .eq("id", accountId)
       .maybeSingle(),
     getCurrentRoleCodes(supabase, accountId),
@@ -107,8 +109,8 @@ export default async function AgencyProfilePage({
           >
             <h2 id="agency-profile-edit-title">Thông tin cá nhân</h2>
             <p className="agency-profile-note">
-              Họ và tên và số điện thoại có thể cập nhật. Dữ liệu được kiểm tra
-              lại ở máy chủ; số điện thoại phải chưa được tài khoản khác sử dụng.
+              Họ và tên và số điện thoại có thể cập nhật. Dữ liệu được kiểm tra lại ở máy chủ; số
+              điện thoại phải chưa được tài khoản khác sử dụng.
             </p>
             <form action={updateAgencyProfile} className="agency-profile-form">
               <label htmlFor="agency-profile-name">Họ và tên</label>
@@ -130,9 +132,7 @@ export default async function AgencyProfilePage({
                 required
                 type="tel"
               />
-              <PendingSubmitButton pendingLabel="Đang lưu hồ sơ…">
-                Lưu thay đổi
-              </PendingSubmitButton>
+              <PendingSubmitButton pendingLabel="Đang lưu hồ sơ…">Lưu thay đổi</PendingSubmitButton>
             </form>
           </section>
 
@@ -142,13 +142,15 @@ export default async function AgencyProfilePage({
           >
             <h2 id="agency-profile-system-title">Thông tin do hệ thống quản lý</h2>
             <p className="agency-profile-note">
-              Các trường này chỉ đọc. Email và số điện thoại chưa được mở cập nhật
-              vì cần chính sách xác minh và đồng bộ danh tính tương ứng.
+              Các trường này chỉ đọc. Email và số điện thoại chưa được mở cập nhật vì cần chính sách
+              xác minh và đồng bộ danh tính tương ứng.
             </p>
             <dl className="agency-profile-details">
               <div className="agency-profile-field">
                 <dt>ID tài khoản</dt>
-                <dd><code>{profile.id}</code></dd>
+                <dd>
+                  <code>{profile.id}</code>
+                </dd>
               </div>
               <div className="agency-profile-field">
                 <dt>Email đăng nhập</dt>
@@ -168,7 +170,9 @@ export default async function AgencyProfilePage({
               </div>
               <div className="agency-profile-field">
                 <dt>Trạng thái tài khoản</dt>
-                <dd><StatusBadge value={profile.trang_thai} /></dd>
+                <dd>
+                  <StatusBadge value={profile.trang_thai} />
+                </dd>
               </div>
               <div className="agency-profile-field">
                 <dt>Quan hệ quản lý</dt>

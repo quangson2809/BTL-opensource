@@ -5,11 +5,7 @@ export function asRecord(value) {
 export function safeLogToken(value, maxLength = 96) {
   if (typeof value !== "string") return null;
   const token = value.trim();
-  if (
-    token.length === 0 ||
-    token.length > maxLength ||
-    !/^[A-Za-z0-9._:-]+$/.test(token)
-  ) {
+  if (token.length === 0 || token.length > maxLength || !/^[A-Za-z0-9._:-]+$/.test(token)) {
     return null;
   }
   return token;
@@ -22,9 +18,7 @@ export function errorStringField(error, key) {
 
 export function normalizeProviderErrorStatus(error) {
   const status = asRecord(error)?.status;
-  return Number.isInteger(status) && status >= 100 && status <= 599
-    ? status
-    : null;
+  return Number.isInteger(status) && status >= 100 && status <= 599 ? status : null;
 }
 
 export function normalizeOccurredAt(occurredAt) {

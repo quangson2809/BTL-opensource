@@ -36,9 +36,7 @@ export default async function CustomersPage({ searchParams }: CustomersPageProps
   const status = query.tinh_trang && customerStatuses.has(query.tinh_trang) ? query.tinh_trang : "";
   const group = query.nhom && personalityGroups.has(query.nhom) ? query.nhom : "";
 
-  let countQuery = supabase
-    .from("khach_hang")
-    .select("id", { count: "exact", head: true });
+  let countQuery = supabase.from("khach_hang").select("id", { count: "exact", head: true });
   if (search) {
     countQuery = countQuery.or(
       `ho_ten.ilike.%${search}%,ma_khach_hang.ilike.%${search}%,so_dien_thoai.ilike.%${search}%`,
@@ -103,11 +101,7 @@ export default async function CustomersPage({ searchParams }: CustomersPageProps
         <form className="filter-grid" method="get">
           <label>
             Tìm kiếm
-            <input
-              defaultValue={query.q ?? ""}
-              name="q"
-              placeholder="Tên, mã hoặc số điện thoại"
-            />
+            <input defaultValue={query.q ?? ""} name="q" placeholder="Tên, mã hoặc số điện thoại" />
           </label>
           <label>
             Loại
@@ -151,7 +145,20 @@ export default async function CustomersPage({ searchParams }: CustomersPageProps
           filterParams={filterParams}
           activeFilters={[
             ...(search ? [{ key: "q", label: "Từ khóa", value: search }] : []),
-            ...(type ? [{ key: "loai", label: "Loại", value: type === "MUC_TIEU" ? "Mục tiêu" : type === "NUOI_DUONG" ? "Nuôi dưỡng" : "Đối tác" }] : []),
+            ...(type
+              ? [
+                  {
+                    key: "loai",
+                    label: "Loại",
+                    value:
+                      type === "MUC_TIEU"
+                        ? "Mục tiêu"
+                        : type === "NUOI_DUONG"
+                          ? "Nuôi dưỡng"
+                          : "Đối tác",
+                  },
+                ]
+              : []),
             ...(status ? [{ key: "tinh_trang", label: "Tình trạng", value: status }] : []),
             ...(group ? [{ key: "nhom", label: "Nhóm tính cách", value: group }] : []),
           ]}
@@ -177,7 +184,8 @@ export default async function CustomersPage({ searchParams }: CustomersPageProps
               </p>
               <p>{customer.so_dien_thoai}</p>
               <p className="secondary-text">
-                {customer.loai_khach_hang} · <StatusBadge value={customer.tinh_trang} /> · {customer.nhom_tinh_cach}
+                {customer.loai_khach_hang} · <StatusBadge value={customer.tinh_trang} /> ·{" "}
+                {customer.nhom_tinh_cach}
               </p>
               <p className="secondary-text">
                 <Link href={"/customers/" + customer.id}>Xem chi tiết</Link>
@@ -185,7 +193,12 @@ export default async function CustomersPage({ searchParams }: CustomersPageProps
             </article>
           ))}
         </div>
-        <ListPagination basePath="/customers" currentPage={currentPage} pageCount={pageCount} params={filterParams} />
+        <ListPagination
+          basePath="/customers"
+          currentPage={currentPage}
+          pageCount={pageCount}
+          params={filterParams}
+        />
       </section>
     </main>
   );

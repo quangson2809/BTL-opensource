@@ -38,13 +38,20 @@ export function ResultSummary({
         <p>
           {hasFilters ? "Kết quả lọc: " : "Tổng số: "}
           <strong>{total}</strong> {label}
-          {total > 0 ? <span className="list-range"> · Hiển thị {from}–{to}</span> : null}
+          {total > 0 ? (
+            <span className="list-range">
+              {" "}
+              · Hiển thị {from}–{to}
+            </span>
+          ) : null}
         </p>
         {activeFilters.length > 0 ? (
           <ul aria-label="Bộ lọc đang áp dụng" className="active-filters">
             {activeFilters.map((filter) => (
               <li className="filter-chip" key={filter.key}>
-                <span>{filter.label}: <strong>{filter.value}</strong></span>
+                <span>
+                  {filter.label}: <strong>{filter.value}</strong>
+                </span>
                 <Link
                   aria-label={"Xóa bộ lọc " + filter.label}
                   className="filter-chip-remove"
@@ -79,10 +86,28 @@ export function ListPagination({ basePath, currentPage, pageCount, params }: Lis
   }
   return (
     <nav aria-label="Phân trang kết quả" className="pagination">
-      <span>Trang {currentPage}/{pageCount}</span>
+      <span>
+        Trang {currentPage}/{pageCount}
+      </span>
       <div className="pagination-actions">
-        {currentPage > 1 ? <Link href={pageHref(currentPage - 1)} rel="prev">Trước</Link> : <span aria-disabled="true" className="pagination-disabled">Trước</span>}
-        {currentPage < pageCount ? <Link href={pageHref(currentPage + 1)} rel="next">Tiếp</Link> : <span aria-disabled="true" className="pagination-disabled">Tiếp</span>}
+        {currentPage > 1 ? (
+          <Link href={pageHref(currentPage - 1)} rel="prev">
+            Trước
+          </Link>
+        ) : (
+          <span aria-disabled="true" className="pagination-disabled">
+            Trước
+          </span>
+        )}
+        {currentPage < pageCount ? (
+          <Link href={pageHref(currentPage + 1)} rel="next">
+            Tiếp
+          </Link>
+        ) : (
+          <span aria-disabled="true" className="pagination-disabled">
+            Tiếp
+          </span>
+        )}
       </div>
     </nav>
   );

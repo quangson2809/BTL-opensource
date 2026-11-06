@@ -64,9 +64,7 @@ export async function GET(request: Request) {
     ]),
   ];
 
-  const csv =
-    "\uFEFF" +
-    csvRows.map((row) => row.map(csvCell).join(",")).join("\r\n");
+  const csv = "\uFEFF" + csvRows.map((row) => row.map(csvCell).join(",")).join("\r\n");
 
   return new NextResponse(csv, {
     status: 200,

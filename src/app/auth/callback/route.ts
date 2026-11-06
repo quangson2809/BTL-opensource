@@ -21,7 +21,5 @@ export async function GET(request: Request) {
   // Clear the temporary Auth session and require normal password login after approval.
   await supabase.auth.signOut({ scope: "local" });
 
-  return NextResponse.redirect(
-    new URL("/login?status=email-confirmed", requestUrl.origin),
-  );
+  return NextResponse.redirect(new URL("/login?status=email-confirmed", requestUrl.origin));
 }

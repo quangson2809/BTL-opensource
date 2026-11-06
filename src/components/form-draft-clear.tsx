@@ -8,11 +8,7 @@ type FormDraftClearProps = {
   clearOn: boolean;
 };
 
-export function FormDraftClear({
-  scopeKey,
-  persistKeys,
-  clearOn,
-}: FormDraftClearProps) {
+export function FormDraftClear({ scopeKey, persistKeys, clearOn }: FormDraftClearProps) {
   useEffect(() => {
     if (!clearOn) return;
 

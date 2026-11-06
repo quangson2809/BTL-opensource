@@ -1,4 +1,5 @@
 import Link from "next/link";
+
 import { GuardedForm } from "@/components/guarded-form";
 import { FormDraftClear } from "@/components/form-draft-clear";
 import { FormDraftPersistence } from "@/components/form-draft-persistence";
@@ -19,9 +20,7 @@ type VerifyRecoveryPageProps = {
   searchParams: Promise<{ email?: string; error?: string; status?: string }>;
 };
 
-export default async function VerifyRecoveryPage({
-  searchParams,
-}: VerifyRecoveryPageProps) {
+export default async function VerifyRecoveryPage({ searchParams }: VerifyRecoveryPageProps) {
   const params = await searchParams;
   const email = params.email ?? "";
   const errorMessage = params.error ? errorMessages[params.error] : undefined;
@@ -36,20 +35,30 @@ export default async function VerifyRecoveryPage({
             Nếu email tồn tại, OTP 8 số đã được gửi và có hiệu lực 10 phút.
           </p>
         ) : null}
-        {errorMessage ? <p role="alert" aria-live="assertive" className="message error">{errorMessage}</p> : null}
-        <FormDraftClear scopeKey="public-auth" persistKeys={["password-recovery"]} clearOn={otpSent} />
-        <FormDraftPersistence persistKey="password-recovery-verify" scopeKey="public-auth" hasError={Boolean(errorMessage)} />
+        {errorMessage ? (
+          <p role="alert" aria-live="assertive" className="message error">
+            {errorMessage}
+          </p>
+        ) : null}
+        <FormDraftClear
+          scopeKey="public-auth"
+          persistKeys={["password-recovery"]}
+          clearOn={otpSent}
+        />
+        <FormDraftPersistence
+          persistKey="password-recovery-verify"
+          scopeKey="public-auth"
+          hasError={Boolean(errorMessage)}
+        />
 
-        <GuardedForm action={verifyRecoveryOtp} className="stack" data-persist-key="password-recovery-verify">
+        <GuardedForm
+          action={verifyRecoveryOtp}
+          className="stack"
+          data-persist-key="password-recovery-verify"
+        >
           <label>
             Email
-            <input
-              name="email"
-              type="email"
-              autoComplete="email"
-              defaultValue={email}
-              required
-            />
+            <input name="email" type="email" autoComplete="email" defaultValue={email} required />
           </label>
           <label>
             OTP
@@ -61,17 +70,14 @@ export default async function VerifyRecoveryPage({
           </label>
           <label>
             Xác nhận mật khẩu mới
-            <input
-              name="confirm_password"
-              type="password"
-              autoComplete="new-password"
-              required
-            />
+            <input name="confirm_password" type="password" autoComplete="new-password" required />
           </label>
           <p className="secondary-text">
             Tối thiểu 8 ký tự, có chữ thường, chữ hoa và số. Mật khẩu mới phải khác mật khẩu cũ.
           </p>
-          <PendingSubmitButton pendingLabel="Đang xác minh…">Xác minh và đặt lại mật khẩu</PendingSubmitButton>
+          <PendingSubmitButton pendingLabel="Đang xác minh…">
+            Xác minh và đặt lại mật khẩu
+          </PendingSubmitButton>
         </GuardedForm>
 
         <p className="secondary-text">

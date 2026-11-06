@@ -7,10 +7,7 @@ import { shouldRedirectUnauthenticated } from "@/lib/supabase/proxy-route-policy
 export async function updateSession(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request });
   // Preserve cookie refresh/cleanup even when an unauthenticated request is redirected.
-  const refreshedCookieWriters = new Map<
-    string,
-    (response: NextResponse) => void
-  >();
+  const refreshedCookieWriters = new Map<string, (response: NextResponse) => void>();
   const { url, publishableKey } = getSupabasePublicConfig();
 
   const supabase = createServerClient(url, publishableKey, {
@@ -34,10 +31,7 @@ export async function updateSession(request: NextRequest) {
   const { data: claimsData, error: claimsError } = await supabase.auth.getClaims();
   const isAuthenticated = !claimsError && typeof claimsData?.claims?.sub === "string";
 
-  if (
-    shouldRedirectUnauthenticated(request.nextUrl.pathname) &&
-    !isAuthenticated
-  ) {
+  if (shouldRedirectUnauthenticated(request.nextUrl.pathname) && !isAuthenticated) {
     const loginUrl = request.nextUrl.clone();
     loginUrl.pathname = "/login";
     loginUrl.search = "";

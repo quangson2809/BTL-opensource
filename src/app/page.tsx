@@ -1,4 +1,5 @@
 import Link from "next/link";
+
 import { PublicHeader } from "@/components/public-header";
 
 const features = [
@@ -37,8 +38,8 @@ export default function Home() {
               <span>Kết nối hiệu quả.</span>
             </h1>
             <p className="hero-copy">
-              IDAILY hỗ trợ đội ngũ kinh doanh bảo hiểm quản lý khách hàng,
-              hoạt động và thông tin nội bộ trong một không gian làm việc thống nhất.
+              IDAILY hỗ trợ đội ngũ kinh doanh bảo hiểm quản lý khách hàng, hoạt động và thông tin
+              nội bộ trong một không gian làm việc thống nhất.
             </p>
             <div className="hero-actions">
               <Link className="button-link" href="/login">
@@ -64,8 +65,8 @@ export default function Home() {
             <p className="eyebrow">Không gian làm việc</p>
             <h2 id="features-title">Tập trung vào công việc quan trọng</h2>
             <p>
-              Các chức năng hiển thị và dữ liệu có thể truy cập phụ thuộc vào
-              trạng thái tài khoản và vai trò được cấp.
+              Các chức năng hiển thị và dữ liệu có thể truy cập phụ thuộc vào trạng thái tài khoản
+              và vai trò được cấp.
             </p>
           </div>
 

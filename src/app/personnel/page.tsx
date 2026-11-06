@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import { EmptyState } from "@/components/empty-state";
+
 import { sanitizePostgrestOrSearch } from "@/lib/list-query.mjs";
 import { requireManager } from "@/lib/business";
 
@@ -80,9 +81,7 @@ export default async function PersonnelPage({ searchParams }: PersonnelPageProps
           let ancestor: AccountRow | undefined = account;
           while (ancestor) {
             visibleIds.add(ancestor.id);
-            ancestor = ancestor.manager_id
-              ? accountsById.get(ancestor.manager_id)
-              : undefined;
+            ancestor = ancestor.manager_id ? accountsById.get(ancestor.manager_id) : undefined;
           }
         }
 
@@ -108,7 +107,11 @@ export default async function PersonnelPage({ searchParams }: PersonnelPageProps
             />
           </label>
           <button type="submit">Tìm kiếm</button>
-          {search ? <Link className="button-link button-secondary" href="/personnel">Xóa tìm kiếm</Link> : null}
+          {search ? (
+            <Link className="button-link button-secondary" href="/personnel">
+              Xóa tìm kiếm
+            </Link>
+          ) : null}
         </form>
         {visibleRows.length === 0 ? (
           <EmptyState
@@ -133,9 +136,7 @@ export default async function PersonnelPage({ searchParams }: PersonnelPageProps
                 <p className="secondary-text">
                   {account.email} · {account.trang_thai}
                 </p>
-                <Link href={`/personnel/${account.id}`}>
-                  Xem chi tiết và thống kê
-                </Link>
+                <Link href={`/personnel/${account.id}`}>Xem chi tiết và thống kê</Link>
               </article>
             ))}
           </div>

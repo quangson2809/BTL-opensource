@@ -32,8 +32,7 @@ export const LOGIN_ERROR_MESSAGES = Object.freeze({
 // Owned by the password-verification hook in
 // supabase/migrations/20261002090000_auth_session_foundation.sql.
 // The integration test verifies this exact signal against the real local Auth stack.
-export const TEMPORARY_LOCK_HOOK_MESSAGE =
-  "Account temporarily locked. Try again later.";
+export const TEMPORARY_LOCK_HOOK_MESSAGE = "Account temporarily locked. Try again later.";
 
 const INVALID_CREDENTIAL_CODES = new Set([
   "invalid_credentials",
@@ -63,10 +62,7 @@ export function classifyLoginAuthError(error) {
   if (code === "email_not_confirmed") {
     return LOGIN_FAILURE_CATEGORIES.EMAIL_NOT_CONFIRMED;
   }
-  if (
-    INVALID_CREDENTIAL_CODES.has(code) ||
-    value.name === "AuthInvalidCredentialsError"
-  ) {
+  if (INVALID_CREDENTIAL_CODES.has(code) || value.name === "AuthInvalidCredentialsError") {
     return LOGIN_FAILURE_CATEGORIES.INVALID_CREDENTIALS;
   }
   if (RATE_LIMIT_CODES.has(code) || value.status === 429) {

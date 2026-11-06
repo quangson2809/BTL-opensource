@@ -1,13 +1,14 @@
-
 import { DraftCancelLink } from "@/components/draft-cancel-link";
 import { FormDraftPersistence } from "@/components/form-draft-persistence";
 import { GuardedForm } from "@/components/guarded-form";
 import { PageHeader } from "@/components/page-header";
 import { PendingSubmitButton } from "@/components/pending-submit-button";
 import { SearchableCheckboxPicker } from "@/components/searchable-checkbox-picker";
+
 import { permissionGroupForCode } from "@/lib/permission-groups.mjs";
 
 import { createRole } from "@/app/admin/roles/actions";
+
 import { requireAdmin } from "@/lib/admin";
 
 export const dynamic = "force-dynamic";
@@ -41,7 +42,12 @@ export default async function NewRolePage({ searchParams }: NewRolePageProps) {
           title="Tạo vai trò"
           description="Tạo mã vai trò mới và chọn các quyền đã được định nghĩa trong danh mục."
           actions={
-            <DraftCancelLink className="button-link button-secondary" href="/admin/roles" scopeKey={accountId} persistKeys={["role-create"]}>
+            <DraftCancelLink
+              className="button-link button-secondary"
+              href="/admin/roles"
+              scopeKey={accountId}
+              persistKeys={["role-create"]}
+            >
               Quay lại vai trò & quyền
             </DraftCancelLink>
           }
@@ -55,13 +61,20 @@ export default async function NewRolePage({ searchParams }: NewRolePageProps) {
         <p className="form-required-note">
           <span aria-hidden="true">*</span> Trường bắt buộc
         </p>
-        <FormDraftPersistence persistKey="role-create" scopeKey={accountId} hasError={Boolean(query.error)} />
+        <FormDraftPersistence
+          persistKey="role-create"
+          scopeKey={accountId}
+          hasError={Boolean(query.error)}
+        />
         <GuardedForm action={createRole} className="stack" data-persist-key="role-create">
           <fieldset className="form-section">
             <legend>Thông tin vai trò</legend>
             <div className="form-grid">
               <label>
-                Mã vai trò <span aria-hidden="true" className="required-indicator">*</span>
+                Mã vai trò{" "}
+                <span aria-hidden="true" className="required-indicator">
+                  *
+                </span>
                 <input
                   autoCapitalize="characters"
                   autoComplete="off"
@@ -72,7 +85,10 @@ export default async function NewRolePage({ searchParams }: NewRolePageProps) {
                 />
               </label>
               <label>
-                Tên vai trò <span aria-hidden="true" className="required-indicator">*</span>
+                Tên vai trò{" "}
+                <span aria-hidden="true" className="required-indicator">
+                  *
+                </span>
                 <input autoComplete="off" name="ten_vai_tro" required />
               </label>
               <label className="field-full">
@@ -81,16 +97,16 @@ export default async function NewRolePage({ searchParams }: NewRolePageProps) {
               </label>
             </div>
             <p className="field-help">
-              Mã vai trò sẽ được chuẩn hóa thành chữ hoa và giữ cố định sau khi tạo.
-              Các mã ADMIN, DM, UM và SA dành riêng cho vai trò hệ thống.
+              Mã vai trò sẽ được chuẩn hóa thành chữ hoa và giữ cố định sau khi tạo. Các mã ADMIN,
+              DM, UM và SA dành riêng cho vai trò hệ thống.
             </p>
           </fieldset>
 
           <fieldset className="form-section">
             <legend>Quyền được gán</legend>
             <p className="field-help">
-              Chọn trong danh mục hiện có. Việc gán quyền chỉ ảnh hưởng ở các policy/RPC
-              có kiểm tra permission tương ứng; không tự tạo quyền truy cập màn hình mới.
+              Chọn trong danh mục hiện có. Việc gán quyền chỉ ảnh hưởng ở các policy/RPC có kiểm tra
+              permission tương ứng; không tự tạo quyền truy cập màn hình mới.
             </p>
             <SearchableCheckboxPicker
               name="permission_ids"
@@ -98,7 +114,8 @@ export default async function NewRolePage({ searchParams }: NewRolePageProps) {
                 id: permission.id,
                 label: permission.ma_quyen + " — " + permission.ten_quyen,
                 detail: permission.mo_ta ?? undefined,
-                searchText: permission.ma_quyen + " " + permission.ten_quyen + " " + (permission.mo_ta ?? ""),
+                searchText:
+                  permission.ma_quyen + " " + permission.ten_quyen + " " + (permission.mo_ta ?? ""),
                 group: permissionGroupForCode(permission.ma_quyen),
               }))}
               searchLabel="Tìm quyền"
@@ -110,10 +127,13 @@ export default async function NewRolePage({ searchParams }: NewRolePageProps) {
           </fieldset>
 
           <div className="form-actions">
-            <PendingSubmitButton pendingLabel="Đang tạo vai trò…">
-              Tạo vai trò
-            </PendingSubmitButton>
-            <DraftCancelLink className="button-link button-secondary" href="/admin/roles" scopeKey={accountId} persistKeys={["role-create"]}>
+            <PendingSubmitButton pendingLabel="Đang tạo vai trò…">Tạo vai trò</PendingSubmitButton>
+            <DraftCancelLink
+              className="button-link button-secondary"
+              href="/admin/roles"
+              scopeKey={accountId}
+              persistKeys={["role-create"]}
+            >
               Hủy
             </DraftCancelLink>
           </div>

@@ -6,9 +6,11 @@ import { GuardedForm } from "@/components/guarded-form";
 import { PageHeader } from "@/components/page-header";
 import { PendingSubmitButton } from "@/components/pending-submit-button";
 import { SearchableCheckboxPicker } from "@/components/searchable-checkbox-picker";
+
 import { permissionGroupForCode } from "@/lib/permission-groups.mjs";
 
 import { updateRole } from "@/app/admin/roles/actions";
+
 import { requireAdmin } from "@/lib/admin";
 import { isUuid } from "@/lib/input-validation.mjs";
 
@@ -24,32 +26,20 @@ type EditRolePageProps = {
 const errorMessages: Record<string, string> = {
   invalid: "Tên vai trò hoặc danh sách quyền không hợp lệ.",
   duplicate: "Tên vai trò đã tồn tại.",
-  forbidden: "Máy chủ từ chối thay đổi quyền cho vai trò này. Vai trò ADMIN là bất biến; hãy kiểm tra quyền quản trị và migration đã được áp dụng.",
+  forbidden:
+    "Máy chủ từ chối thay đổi quyền cho vai trò này. Vai trò ADMIN là bất biến; hãy kiểm tra quyền quản trị và migration đã được áp dụng.",
   save: "Không thể cập nhật vai trò. Hãy kiểm tra trạng thái migration và nhật ký lỗi rồi thử lại.",
 };
 
-export default async function EditRolePage({
-  params,
-  searchParams,
-}: EditRolePageProps) {
+export default async function EditRolePage({ params, searchParams }: EditRolePageProps) {
   const [{ id }, query] = await Promise.all([params, searchParams]);
   if (!isUuid(id)) notFound();
 
   const { supabase, accountId } = await requireAdmin();
   const [roleResult, permissionsResult, mappingResult] = await Promise.all([
-    supabase
-      .from("vai_tro")
-      .select("id,ma_vai_tro,ten_vai_tro,mo_ta")
-      .eq("id", id)
-      .maybeSingle(),
-    supabase
-      .from("quyen")
-      .select("id,ma_quyen,ten_quyen,mo_ta")
-      .order("ma_quyen"),
-    supabase
-      .from("phan_quyen_vai_tro")
-      .select("quyen_id")
-      .eq("vai_tro_id", id),
+    supabase.from("vai_tro").select("id,ma_vai_tro,ten_vai_tro,mo_ta").eq("id", id).maybeSingle(),
+    supabase.from("quyen").select("id,ma_quyen,ten_quyen,mo_ta").order("ma_quyen"),
+    supabase.from("phan_quyen_vai_tro").select("quyen_id").eq("vai_tro_id", id),
   ]);
 
   if (roleResult.error) {
@@ -73,7 +63,12 @@ export default async function EditRolePage({
           title="Sửa vai trò và quyền"
           description="Cập nhật tập quyền của vai trò bất cứ lúc nào. Mã vai trò luôn cố định."
           actions={
-            <DraftCancelLink className="button-link button-secondary" href="/admin/roles" scopeKey={accountId} persistKeys={["role-edit-" + roleResult.data.id]}>
+            <DraftCancelLink
+              className="button-link button-secondary"
+              href="/admin/roles"
+              scopeKey={accountId}
+              persistKeys={["role-edit-" + roleResult.data.id]}
+            >
               Quay lại vai trò & quyền
             </DraftCancelLink>
           }
@@ -84,8 +79,16 @@ export default async function EditRolePage({
           </p>
         ) : null}
 
-        <FormDraftPersistence persistKey={"role-edit-" + roleResult.data.id} scopeKey={accountId} hasError={Boolean(query.error)} />
-        <GuardedForm action={updateRole} className="stack" data-persist-key={"role-edit-" + roleResult.data.id}>
+        <FormDraftPersistence
+          persistKey={"role-edit-" + roleResult.data.id}
+          scopeKey={accountId}
+          hasError={Boolean(query.error)}
+        />
+        <GuardedForm
+          action={updateRole}
+          className="stack"
+          data-persist-key={"role-edit-" + roleResult.data.id}
+        >
           <input name="role_id" type="hidden" value={roleResult.data.id} />
           <fieldset className="form-section">
             <legend>Thông tin vai trò</legend>
@@ -106,15 +109,17 @@ export default async function EditRolePage({
               </label>
             </div>
             <p className="field-help">
-              Mã, tên và mô tả vai trò không được thay đổi tại màn hình này. Bạn có thể cập nhật tập quyền bên dưới, kể cả với vai trò hệ thống.
+              Mã, tên và mô tả vai trò không được thay đổi tại màn hình này. Bạn có thể cập nhật tập
+              quyền bên dưới, kể cả với vai trò hệ thống.
             </p>
           </fieldset>
 
           <fieldset className="form-section">
             <legend>Quyền được gán</legend>
             <p className="field-help">
-              Lưu thay đổi sẽ thay thế tập quyền hiện tại trong cùng một transaction. Áp dụng cho DM, UM, SA và vai trò tùy chỉnh. Vai trò ADMIN và tập quyền của ADMIN không thể chỉnh sửa.
-              Các permission chỉ có tác dụng ở policy/RPC kiểm tra permission tương ứng.
+              Lưu thay đổi sẽ thay thế tập quyền hiện tại trong cùng một transaction. Áp dụng cho
+              DM, UM, SA và vai trò tùy chỉnh. Vai trò ADMIN và tập quyền của ADMIN không thể chỉnh
+              sửa. Các permission chỉ có tác dụng ở policy/RPC kiểm tra permission tương ứng.
             </p>
             <SearchableCheckboxPicker
               name="permission_ids"
@@ -123,7 +128,8 @@ export default async function EditRolePage({
                 id: permission.id,
                 label: permission.ma_quyen + " — " + permission.ten_quyen,
                 detail: permission.mo_ta ?? undefined,
-                searchText: permission.ma_quyen + " " + permission.ten_quyen + " " + (permission.mo_ta ?? ""),
+                searchText:
+                  permission.ma_quyen + " " + permission.ten_quyen + " " + (permission.mo_ta ?? ""),
                 group: permissionGroupForCode(permission.ma_quyen),
               }))}
               searchLabel="Tìm quyền"
@@ -138,7 +144,12 @@ export default async function EditRolePage({
             <PendingSubmitButton pendingLabel="Đang lưu thay đổi…">
               Lưu thay đổi
             </PendingSubmitButton>
-            <DraftCancelLink className="button-link button-secondary" href="/admin/roles" scopeKey={accountId} persistKeys={["role-edit-" + roleResult.data.id]}>
+            <DraftCancelLink
+              className="button-link button-secondary"
+              href="/admin/roles"
+              scopeKey={accountId}
+              persistKeys={["role-edit-" + roleResult.data.id]}
+            >
               Hủy
             </DraftCancelLink>
           </div>

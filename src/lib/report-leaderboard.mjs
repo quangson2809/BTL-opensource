@@ -12,11 +12,12 @@ export function rankReportRows(rows) {
       activity_count: Number(row.activity_count),
       connected_customer_count: Number(row.connected_customer_count),
     }))
-    .sort((left, right) =>
-      right.activity_count - left.activity_count ||
-      right.customer_count - left.customer_count ||
-      left.ho_ten.localeCompare(right.ho_ten, "vi") ||
-      left.account_id.localeCompare(right.account_id),
+    .sort(
+      (left, right) =>
+        right.activity_count - left.activity_count ||
+        right.customer_count - left.customer_count ||
+        left.ho_ten.localeCompare(right.ho_ten, "vi") ||
+        left.account_id.localeCompare(right.account_id),
     );
 
   let previousActivityCount = null;

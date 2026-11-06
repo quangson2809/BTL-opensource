@@ -3,6 +3,7 @@ import Link from "next/link";
 import { EmptyState } from "@/components/empty-state";
 import { PageHeader } from "@/components/page-header";
 import { StatusBadge } from "@/components/status-badge";
+
 import { requireBusinessAccount } from "@/lib/business";
 
 export const dynamic = "force-dynamic";
@@ -113,17 +114,12 @@ export default async function DashboardPage() {
             <Link className="metric-card" href="/admin/accounts">
               <span className="metric-label">Tài khoản toàn hệ thống</span>
               <strong className="metric-value">{accountCount}</strong>
-              <span className="metric-link">
-                Chờ duyệt: {pendingAccountCount} · Quản trị →
-              </span>
+              <span className="metric-link">Chờ duyệt: {pendingAccountCount} · Quản trị →</span>
             </Link>
           ) : null}
         </div>
 
-        <section
-          aria-labelledby="dashboard-actions-title"
-          className="dashboard-section"
-        >
+        <section aria-labelledby="dashboard-actions-title" className="dashboard-section">
           <div className="section-heading dashboard-section-heading">
             <h2 id="dashboard-actions-title">Cần xử lý</h2>
             <p>Các việc cần chú ý được tính từ trạng thái dữ liệu thực tế.</p>
@@ -168,10 +164,7 @@ export default async function DashboardPage() {
           </div>
         </section>
 
-        <section
-          aria-labelledby="dashboard-recent-title"
-          className="dashboard-section"
-        >
+        <section aria-labelledby="dashboard-recent-title" className="dashboard-section">
           <div className="section-heading dashboard-section-heading">
             <h2 id="dashboard-recent-title">Hoạt động gần đây</h2>
             <p>5 hoạt động mới nhất mà tài khoản này được phép xem.</p>

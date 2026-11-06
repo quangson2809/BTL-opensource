@@ -7,8 +7,7 @@ export function reportTotals(rows) {
     (sum, row) => ({
       customer_count: sum.customer_count + Number(row.customer_count),
       activity_count: sum.activity_count + Number(row.activity_count),
-      connected_customer_count:
-        sum.connected_customer_count + Number(row.connected_customer_count),
+      connected_customer_count: sum.connected_customer_count + Number(row.connected_customer_count),
     }),
     { customer_count: 0, activity_count: 0, connected_customer_count: 0 },
   );

@@ -3,7 +3,10 @@
 import { redirect } from "next/navigation";
 
 import { requireActiveBusinessAccount } from "@/lib/business";
-import { validateAgencyProfileName, validateAgencyProfilePhone } from "@/lib/agency-profile-validation.mjs";
+import {
+  validateAgencyProfileName,
+  validateAgencyProfilePhone,
+} from "@/lib/agency-profile-validation.mjs";
 
 export async function updateAgencyProfile(formData: FormData) {
   const { supabase, accountId } = await requireActiveBusinessAccount();
